@@ -1,1 +1,5 @@
 @import "tailwindcss";
+@theme {
+  --color-babyJanaBlue: #0099ff;
+  --color-lightGray: #cccccc;
+}
