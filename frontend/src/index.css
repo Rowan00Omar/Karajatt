@@ -1,5 +1,14 @@
 @import "tailwindcss";
 @theme {
-  --color-babyJanaBlue: #0099ff;
+  --color-babyJanaBlue: #4a60e9;
+  --color-brightSupBlue: #e1e5fc;
   --color-lightGray: #cccccc;
+  --color-brightRed: #f25f3a;
+  --color-brightRedLight: #f6866a;
+  --color-brightSupRed: #fdece7;
+  --color-darkBlue: #242d52;
+  --color-darkGrayishBlue: #9095a7;
+  --color-veryDarkBlue: #1d1e25;
+  --color-veryPaleRed: #ffefeb;
+  --color-veryLightGray: #fafafa;
 }

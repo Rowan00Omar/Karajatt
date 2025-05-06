@@ -10,21 +10,8 @@ import {
 const Navbar = () => {
   return (
     <>
-      {/* Desktop Nav */}
-
-      <nav className="hidden md:flex container w-3/5 fixed justify-between bg-babyJanaBlue/15  items-center p-6 ">
-        <div className="flex justify-between items-center float-left space-x-6">
-          <a href="#" className="hover:text-lightGray text-white">
-            <User />
-          </a>
-          <a href="#" className="hover:text-lightGray text-white">
-            <ShoppingBag />
-          </a>
-          <a href="#" className="hover:text-lightGray text-white">
-            <Search />
-          </a>
-        </div>
-        <div className="flex flex-row justify-between items-center space-x-10">
+      <nav className="hidden md:flex   fixed justify-between bg-babyJanaBlue items-center top-0 left-0 w-full p-6 z-50 ">
+        <div className="flex flex-row space-x-10">
           <a
             href="#"
             className="flex hover:text-lightGray text-white font-black text-xl"
@@ -36,6 +23,18 @@ const Navbar = () => {
             className="flex hover:text-lightGray text-white font-black text-xl"
           >
             اكتشف <ChevronDown />
+          </a>
+        </div>
+        <div className="flex  float-left space-x-6">
+          <a href="#" className="hover:text-lightGray text-white">
+            <Search />
+          </a>
+
+          <a href="#" className="hover:text-lightGray text-white">
+            <ShoppingBag />
+          </a>
+          <a href="#" className="hover:text-lightGray text-white">
+            <User />
           </a>
         </div>
       </nav>

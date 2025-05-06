@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./App.css";
 import Navbar from "./components/Navbar";
 import LandingPage from "./pages/LandingPage";
-import SearchForm from "./components/Searchform";
+import SearchForm from "./components/SearchForm";
 import SearchResults from "./components/SearchResults";
 
 function App() {
@@ -10,11 +10,10 @@ function App() {
 
   return (
     <>
-      {/* <Navbar />
-      <LandingPage /> */}
-      <div className="min-h-screen bg-[#0000] w-full">
+      <LandingPage />
+      {/* <div className="min-h-screen bg-[#0000] w-full">
       <SearchForm />
-    </div>
+    </div> */}
     </>
   );
 }
