@@ -11,24 +11,31 @@ const Navbar = () => {
   return (
     <>
       {/* Desktop Nav */}
-      <nav className="hidden md:flex container w-2/5 fixed justify-between items-center ">
+
+      <nav className="hidden md:flex container w-3/5 fixed justify-between bg-babyJanaBlue/15  items-center p-6 ">
         <div className="flex justify-between items-center float-left space-x-6">
-          <a href="#" className="hover:text-lightGray">
+          <a href="#" className="hover:text-lightGray text-white">
             <User />
           </a>
-          <a href="#" className="hover:text-lightGray">
+          <a href="#" className="hover:text-lightGray text-white">
             <ShoppingBag />
           </a>
-          <a href="#" className="hover:text-lightGray">
+          <a href="#" className="hover:text-lightGray text-white">
             <Search />
           </a>
         </div>
         <div className="flex flex-row justify-between items-center space-x-10">
-          <a href="#" className="flex hover:text-lightGray">
-            Chat <ChevronDown />
+          <a
+            href="#"
+            className="flex hover:text-lightGray text-white font-black text-xl"
+          >
+            محادثات <ChevronDown />
           </a>
-          <a href="#" className="flex hover:text-lightGray">
-            Explore <ChevronDown />
+          <a
+            href="#"
+            className="flex hover:text-lightGray text-white font-black text-xl"
+          >
+            اكتشف <ChevronDown />
           </a>
         </div>
       </nav>
