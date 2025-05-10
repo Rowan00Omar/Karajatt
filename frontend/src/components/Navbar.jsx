@@ -10,7 +10,7 @@ import {
 const Navbar = () => {
   return (
     <>
-      <nav className="hidden md:flex   fixed justify-between bg-babyJanaBlue items-center top-0 left-0 w-full p-6 z-50 ">
+      <nav className="hidden md:flex   fixed justify-between bg-indigo-500 items-center top-0 left-0 w-full p-6 z-50 ">
         <div className="flex flex-row space-x-10">
           <a
             href="#"

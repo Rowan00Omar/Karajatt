@@ -4,17 +4,31 @@ import Navbar from "./components/Navbar";
 import LandingPage from "./pages/LandingPage";
 import SearchForm from "./components/SearchForm";
 import SearchResults from "./components/SearchResults";
-
+import SellerUpload from "./pages/SellerUpload";
+import Login from "./pages/Login";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Footer from "./components/Footer";
+import Signup from "./pages/Signup";
 function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <>
-      <LandingPage />
-      {/* <div className="min-h-screen bg-[#0000] w-full">
-      <SearchForm />
-    </div> */}
-    </>
+    <div className="min-h-screen flex flex-col">
+      <BrowserRouter>
+        <Navbar />
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/upload-part" element={<SellerUpload />} />
+            <Route path="find-part" element={<SearchForm />} />
+            <Route path="signup" element={<Signup />} />
+          </Routes>
+        </main>
+
+        <Footer />
+      </BrowserRouter>
+    </div>
   );
 }
 

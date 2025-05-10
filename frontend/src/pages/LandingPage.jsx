@@ -16,8 +16,6 @@ const LandingPage = () => {
       <Features />
       {/* CTA Section */}
       <Cta />
-      {/* Footer */}
-      <Footer />
     </>
   );
 };
