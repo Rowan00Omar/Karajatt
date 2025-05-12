@@ -1,9 +1,8 @@
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import Button from "../components/Button";
 import { Card, CardContent } from "../components/Card";
 import { Select, SelectItem } from "../components/Select";
 import Input from "../components/Input";
-import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 const manufacturers = ["Toyota", "Ford", "Honda"];
 const models = {
@@ -11,13 +10,7 @@ const models = {
   Ford: ["Fiesta", "Focus", "Mustang"],
   Honda: ["Civic", "Accord", "CR-V"],
 };
-const categories = [
-  "Engine",
-  "Transmission",
-  "Suspension",
-  "Interior",
-  "Exterior",
-];
+
 const parts = {
   Engine: ["Alternator", "Radiator", "Spark Plug"],
   Transmission: ["Clutch", "Gearbox", "Driveshaft"],
@@ -25,7 +18,7 @@ const parts = {
   Interior: ["Dashboard", "Seat", "Steering Wheel"],
   Exterior: ["Bumper", "Mirror", "Headlight"],
 };
-const partStatus = ["Acceptable", "Good", "Very good", "Excellent"];
+const partStatus = ["مقبولة", "جيدة", "جيدة جدا", "ممتازة"];
 
 const SellerUpload = () => {
   const [manufacturer, setManufacturer] = useState("");
@@ -37,14 +30,22 @@ const SellerUpload = () => {
   const [images, setImages] = useState([]);
   const [status, setStatus] = useState([]);
   const [numberOfParts, setNumberOfParts] = useState("");
-  const [partName, setPartName] = useState("");
+  const [title, setTitle] = useState("");
   const [extraDetails, setExtraDetails] = useState("");
   const [timeInStock, setTimeInStock] = useState("");
   const [price, setPrice] = useState("");
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(data))
+      .catch((err) => console.error("Failed to fetch categories", err));
+  }, []);
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 4) {
-      alert("You can upload up to 4 images only.");
+      alert("لا تستطيع رفع اكثر من 4 صور");
       return;
     }
     setImages(files);
@@ -69,16 +70,16 @@ const SellerUpload = () => {
   return (
     <>
       <Navbar />
-      <Card className="max-w-xl mx-auto mt-24 mb-16">
+      <Card className="max-w-xl mx-auto mt-24 mb-16 ">
         <CardContent className="space-y-4 p-6">
-          <h2 className="text-xl font-bold">Upload New Car Part</h2>
+          <h2 className="text-xl font-bold">ارفع قطعة جديدة</h2>
           <form
             onSubmit={handleSubmit}
             className="space-y-4 flex flex-col text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
           >
             <Select onValueChange={setManufacturer} value={manufacturer}>
               <SelectItem disabled value="">
-                Select Manufacturer
+                اختر الماركة
               </SelectItem>
               {manufacturers.map((m) => (
                 <SelectItem key={m} value={m}>
@@ -94,7 +95,7 @@ const SellerUpload = () => {
                 className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
               >
                 <SelectItem disabled value="">
-                  Select Model
+                  اختر الموديل
                 </SelectItem>
                 {models[manufacturer].map((m) => (
                   <SelectItem key={m} value={m}>
@@ -105,14 +106,14 @@ const SellerUpload = () => {
             )}
             <Input
               type="text"
-              placeholder="Enter the Title"
-              value={partName}
-              onChange={(e) => setPartName(e.target.value)}
+              placeholder="ادخل عنوان الاعلان"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
             />
             <Input
               type="number"
-              placeholder="Enter your Price"
+              placeholder="ادخل السعر"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
@@ -120,7 +121,7 @@ const SellerUpload = () => {
             <div className="flex gap-4">
               <Input
                 type="number"
-                placeholder="Enter Start Year (e.g. 2020)"
+                placeholder="ادخل سنة البداية"
                 value={startYear}
                 onChange={handleStartYearChange}
                 min="1900"
@@ -129,7 +130,7 @@ const SellerUpload = () => {
               />
               <Input
                 type="number"
-                placeholder="Enter End Year (e.g. 2020)"
+                placeholder="ادخل سنة النهاية"
                 value={endYear}
                 onChange={handleEndYearChange}
                 min="1900"
@@ -143,7 +144,7 @@ const SellerUpload = () => {
               className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
             >
               <SelectItem disabled value="">
-                Select Category
+                اختر النوع
               </SelectItem>
               {categories.map((c) => (
                 <SelectItem key={c} value={c}>
@@ -159,9 +160,9 @@ const SellerUpload = () => {
                 className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
               >
                 <SelectItem disabled value="">
-                  Select Part
+                  اختر القطعة
                 </SelectItem>
-                {parts[category].map((p) => (
+                {parts[category]?.map((p) => (
                   <SelectItem key={p} value={p}>
                     {p}
                   </SelectItem>
@@ -171,7 +172,7 @@ const SellerUpload = () => {
 
             <Input
               type="number"
-              placeholder="Number of Parts"
+              placeholder="ادخل عدد القطع"
               value={numberOfParts}
               onChange={(e) => setNumberOfParts(e.target.value)}
               min="1"
@@ -181,10 +182,10 @@ const SellerUpload = () => {
             <Select
               onValueChange={setStatus}
               value={status}
-              className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
+              className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue focus:ring-1 focus:ring-babyJanaBlue"
             >
               <SelectItem disabled value="">
-                Select Status
+                اختر الحالة
               </SelectItem>
               {partStatus.map((c) => (
                 <SelectItem key={c} value={c}>
@@ -194,27 +195,36 @@ const SellerUpload = () => {
             </Select>
             <Input
               type="number"
-              placeholder="Enter Time in Stock"
+              placeholder="ادخل مدة تخزينه"
               value={timeInStock}
               onChange={(e) => setTimeInStock(e.target.value)}
               className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
             />
             <Input
               type="text"
-              placeholder="Enter Extra Details"
+              placeholder="ادخل تفاصيل اضافية"
               value={extraDetails}
               onChange={(e) => setExtraDetails(e.target.value)}
               className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
             />
-            <Input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
-
+            <div className="flex items-center justify-center h-full">
+              <label
+                htmlFor="imageUpload"
+                className="cursor-pointer inline-flex items-center px-4 py-2 bg-babyJanaBlue text-white text-sm font-medium rounded-md shadow hover:bg-darkerJanaBlue transition"
+              >
+                اختر صور المنشور
+              </label>
+              <input
+                id="imageUpload"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
             <Button type="submit" className="self-center">
-              Submit
+              استمر
             </Button>
           </form>
         </CardContent>

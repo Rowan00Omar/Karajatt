@@ -1,10 +1,8 @@
 import { useState } from "react";
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import LandingPage from "./pages/LandingPage";
 import SearchForm from "./components/SearchForm";
-import SearchResults from "./components/SearchResults";
 import SellerUpload from "./pages/SellerUpload";
 import Login from "./pages/Login";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -32,6 +30,13 @@ function App() {
 
         <Footer />
       </BrowserRouter>
+      {/* <SidebarProvider>
+        <AppSidebar />
+        <main>
+          <SidebarTrigger />
+          {children}
+        </main>
+      </SidebarProvider> */}
     </div>
   );
 }
