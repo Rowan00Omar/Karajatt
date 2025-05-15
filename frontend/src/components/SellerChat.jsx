@@ -1,19 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 const SellerChat = ({ product, onClose }) => {
   const [chatHistory, setChatHistory] = useState([]);
-  const hasSent = useRef(false); // <-- prevents duplicate execution
+  const hasSent = useRef(false);
 
   useEffect(() => {
     if (hasSent.current) return;
 
     const userMessage = `اريد صورة واضحة لـ ${product.name}`;
-    setChatHistory([{ from: 'user', text: userMessage }]);
+    setChatHistory([{ from: "user", text: userMessage }]);
 
     setTimeout(() => {
-      setChatHistory(prev => [
+      setChatHistory((prev) => [
         ...prev,
-        { from: 'seller', image: product.extraImages?.[0] },
+        { from: "seller", image: product.extraImages?.[0] },
       ]);
     }, 1000);
 
@@ -24,12 +24,21 @@ const SellerChat = ({ product, onClose }) => {
     <div className="fixed bottom-5 right-5 bg-white border shadow-lg rounded-lg w-96 max-w-full z-50">
       <div className="p-4 border-b flex justify-between items-center bg-blue-100">
         <span className="font-semibold text-blue-900">محادثة مع البائع</span>
-        <button onClick={onClose} className="text-red-500 text-lg">&times;</button>
+        <button onClick={onClose} className="text-red-500 text-lg">
+          &times;
+        </button>
       </div>
       <div className="p-4 max-h-80 overflow-y-auto space-y-2 text-right">
         {chatHistory.map((msg, idx) =>
           msg.text ? (
-            <div key={idx} className={`p-2 rounded-lg ${msg.from === 'user' ? 'bg-blue-200 ml-auto' : 'bg-gray-200 mr-auto'}`}>
+            <div
+              key={idx}
+              className={`p-2 rounded-lg ${
+                msg.from === "user"
+                  ? "bg-blue-200 ml-auto"
+                  : "bg-gray-200 mr-auto"
+              }`}
+            >
               {msg.text}
             </div>
           ) : (

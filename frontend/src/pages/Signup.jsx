@@ -4,9 +4,11 @@ import axios from "axios";
 import { LogIn } from "lucide-react";
 import Input from "../components/Input";
 import Button from "../components/Button";
+
 const Signup = () => {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [name, setname] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,7 +19,8 @@ const Signup = () => {
     setError("");
 
     if (
-      name === "" ||
+      firstName === "" ||
+      lastName === "" ||
       email === "" ||
       password === "" ||
       confirmPassword === ""
@@ -32,8 +35,9 @@ const Signup = () => {
     }
 
     try {
-      const response = await axios.post("/auth/register", {
-        name,
+      const response = await axios.post("/api/auth/register", {
+        first_name: firstName,
+        last_name: lastName,
         email,
         password,
       });
@@ -59,16 +63,22 @@ const Signup = () => {
           <LogIn className="text-babyJanaBlue self-center my-2" size={32} />
           <h2 className="text-3xl">Sign Up</h2>
         </div>
-        {error && <p className="error-message">{error}</p>}
+        {error && <p className="error-message text-red-500">{error}</p>}
 
         <Input
           className="rounded-md my-2"
           type="text"
-          placeholder="Enter your name"
-          value={name}
-          onChange={(e) => setname(e.target.value)}
+          placeholder="Enter First Name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
         />
-
+        <Input
+          className="rounded-md my-2"
+          type="text"
+          placeholder="Enter Last Name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+        />
         <Input
           className="rounded-md my-2"
           type="email"
@@ -94,14 +104,14 @@ const Signup = () => {
         />
 
         <Button
-          className="bg-babyJanaBlue text-white  text-xl cursor-pointer my-2"
+          className="bg-babyJanaBlue text-white text-xl cursor-pointer my-2"
           type="submit"
         >
           Sign Up
         </Button>
 
         <p className="mt-2.5 text-babyJanaBlue">
-          Already have an account?
+          Already have an account?{" "}
           <Link
             className="text-darkerJanaBlue font-bold hover:underline"
             to="/login"

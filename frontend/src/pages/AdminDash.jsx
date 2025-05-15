@@ -2,24 +2,27 @@
 
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Chart as AreaChart } from "../components/Area";
+import { Chart as AreaChartNew } from "@/components/AreaNew";
 import { Chart as BarChart } from "@/components/Bar";
 import AdminBar from "@/components/AdminBar";
 import { Chart as PieChart } from "@/components/Pie";
 import { AdminSectionCard } from "@/components/AdminSectionCard";
+import { Area } from "recharts";
 const AdminDash = () => {
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full">
-        <AdminBar className="w-[400px] h-full flex-shrink-0 border-r" />
-        <main className="w-[750px]">
-          <div className="flex-1 min-w-0 w-full  ">
-            <div className="h-[50px] p-4">
-              <AreaChart />
-            </div>
+    <div className="flex h-screen w-full">
+      <main className="w-full items-center">
+        <div className="flex flex-1 flex-col space-y-5 min-w-0 justify-center items-center   ">
+          <div className="w-full max-w-2/3 h-auto pt-5 ">
+            <AreaChartNew />
           </div>
-        </main>
-      </div>
-    </SidebarProvider>
+          <div className="flex md:flex-row flex-col w-full max-w-2/3 justify-between ">
+            <BarChart />
+            <BarChart />
+          </div>
+        </div>
+      </main>
+    </div>
   );
 };
 export default AdminDash;

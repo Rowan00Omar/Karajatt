@@ -17,14 +17,13 @@ function App() {
   const [count, setCount] = useState(0);
   return (
     <div className="min-h-screen flex flex-col">
-      {/* <BrowserRouter>
+      <BrowserRouter>
         <Navbar />
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<SearchForm />} />
             <Route path="/login" element={<Login />} />
             <Route path="/upload-part" element={<SellerUpload />} />
-            <Route path="find-part" element={<SearchForm />} />
             <Route path="signup" element={<Signup />} />
             <Route path="/part/:id" element={<ProductDetail />} />
             <Route path="/admin-dahsboard" element={<AdminDash />} />
@@ -32,11 +31,11 @@ function App() {
         </main>
 
         <Footer />
-      </BrowserRouter> */}
-      <SidebarProvider>
+      </BrowserRouter>
+      {/* <SidebarProvider>
         <AdminBar />
         <AdminDash />
-      </SidebarProvider>
+      </SidebarProvider> */}
     </div>
   );
 }

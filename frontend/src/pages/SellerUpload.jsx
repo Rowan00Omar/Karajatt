@@ -4,28 +4,18 @@ import { Card, CardContent } from "../components/Card";
 import { Select, SelectItem } from "../components/Select";
 import Input from "../components/Input";
 import Navbar from "../components/Navbar";
-const manufacturers = ["Toyota", "Ford", "Honda"];
-const models = {
-  Toyota: ["Corolla", "Camry", "RAV4"],
-  Ford: ["Fiesta", "Focus", "Mustang"],
-  Honda: ["Civic", "Accord", "CR-V"],
-};
 
-const parts = {
-  Engine: ["Alternator", "Radiator", "Spark Plug"],
-  Transmission: ["Clutch", "Gearbox", "Driveshaft"],
-  Suspension: ["Shock Absorber", "Strut", "Control Arm"],
-  Interior: ["Dashboard", "Seat", "Steering Wheel"],
-  Exterior: ["Bumper", "Mirror", "Headlight"],
-};
 const partStatus = ["مقبولة", "جيدة", "جيدة جدا", "ممتازة"];
 
 const SellerUpload = () => {
+  const [manufacturers, setManufacturers] = useState([]);
   const [manufacturer, setManufacturer] = useState("");
+  const [models, setModels] = useState([]);
   const [model, setModel] = useState("");
   const [startYear, setStartYear] = useState("");
   const [endYear, setEndYear] = useState("");
   const [category, setCategory] = useState("");
+  const [parts, setParts] = useState([]);
   const [part, setPart] = useState("");
   const [images, setImages] = useState([]);
   const [status, setStatus] = useState([]);
@@ -35,13 +25,93 @@ const SellerUpload = () => {
   const [timeInStock, setTimeInStock] = useState("");
   const [price, setPrice] = useState("");
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState({
+    parts: false,
+    part: false,
+    categories: false,
+    category: false,
+    model: false,
+    models: false,
+  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const manufacturersRes = await fetch("/api/filtering/manufacturers");
+        const manufacturersData = await manufacturersRes.json();
+        setManufacturers(manufacturersData);
+
+        const categoriesRes = await fetch("/api/filtering/categories");
+        const categoriesData = await categoriesRes.json();
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/categories")
-      .then((res) => res.json())
-      .then((data) => setCategories(data))
-      .catch((err) => console.error("Failed to fetch categories", err));
-  }, []);
+    const fetchModels = async () => {
+      if (!manufacturer) {
+        setModels([]);
+        return;
+      }
+      setLoading((prev) => ({ ...prev, models: true }));
+      try {
+        const res = await fetch(
+          `/api/filtering/models?manufacturer=${encodeURIComponent(
+            manufacturer
+          )}`
+        );
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const data = await res.json();
+        setModels(data);
+        setModel("");
+      } catch (err) {
+        console.error("Failed to fetch models:", err);
+        setModels([]);
+      } finally {
+        setLoading((prev) => ({ ...prev, models: false }));
+      }
+    };
+
+    fetchModels();
+  }, [manufacturer]);
+
+  useEffect(() => {
+    const fetchParts = async () => {
+      if (!category) {
+        setParts([]);
+        setPart("");
+        return;
+      }
+      setLoading((prev) => ({ ...prev, parts: true }));
+      try {
+        const res = await fetch(
+          `/api/filtering/parts?category=${encodeURIComponent(category)}`
+        );
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setParts(data);
+        setPart("");
+      } catch (err) {
+        console.error("Failed to fetch parts:", err);
+        setParts([]);
+      } finally {
+        setLoading((prev) => ({ ...prev, parts: false }));
+      }
+    };
+
+    fetchParts();
+  }, [category]);
+
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 4) {
@@ -95,9 +165,9 @@ const SellerUpload = () => {
                 className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
               >
                 <SelectItem disabled value="">
-                  اختر الموديل
+                  اختر نوع السيارة
                 </SelectItem>
-                {models[manufacturer].map((m) => (
+                {models.map((m) => (
                   <SelectItem key={m} value={m}>
                     {m}
                   </SelectItem>
@@ -162,7 +232,7 @@ const SellerUpload = () => {
                 <SelectItem disabled value="">
                   اختر القطعة
                 </SelectItem>
-                {parts[category]?.map((p) => (
+                {parts.map((p) => (
                   <SelectItem key={p} value={p}>
                     {p}
                   </SelectItem>

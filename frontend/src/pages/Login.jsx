@@ -21,7 +21,7 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("/auth/login", {
+      const response = await axios.post("/api/auth/login", {
         email,
         password,
       });
@@ -76,7 +76,7 @@ const Login = () => {
           Don't have an account?{" "}
           <Link
             className="text-babyJanaBlue font-bold hover:underline"
-            to="/sign-up"
+            to="/signup"
           >
             Sign Up
           </Link>

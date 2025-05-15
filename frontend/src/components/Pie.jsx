@@ -2,7 +2,6 @@
 
 import { TrendingUp } from "lucide-react";
 import { Pie, PieChart, Cell } from "recharts";
-
 import {
   Card,
   CardContent,
@@ -11,6 +10,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
+
 import {
   ChartConfig,
   ChartContainer,
@@ -26,7 +26,6 @@ const chartData = [
   { browser: "other", visitors: 90, fill: "#4a60e9" },
 ];
 
-// Arabic labels mapping
 const chartConfig = {
   chrome: "كرونة",
   safari: "كبوت",
