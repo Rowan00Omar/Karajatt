@@ -1,4 +1,16 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+import {
+  Calendar,
+  Home,
+  Inbox,
+  Search,
+  Settings,
+  BadgeDollarSign,
+  Warehouse,
+  User,
+  PanelRightOpen,
+  PanelLeftOpen,
+} from "lucide-react";
+
 import {
   Sidebar,
   SidebarContent,
@@ -8,57 +20,69 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
+  SidebarSeparator,
+  SidebarHeader,
 } from "./ui/sidebar";
 const items = [
   {
-    title: "Home",
+    title: "المبيعات و الطلبات",
     url: "#",
-    icon: Home,
+    icon: BadgeDollarSign,
   },
   {
-    title: "Inbox",
+    title: "المخزون والمنتجات",
     url: "#",
-    icon: Inbox,
+    icon: Warehouse,
   },
   {
-    title: "Calendar",
+    title: "المستخدمون و السلوك",
     url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
+    icon: User,
   },
 ];
-export function AdminBar() {
+export function AdminBar({ isOpen }) {
   return (
-    <Sidebar>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+    <div className="flex" dir="rtl">
+      <Sidebar side="right" collapsible="icon" variant="sidebar">
+        <SidebarHeader>
+          {isOpen ? (
+            <SidebarMenuButton>
+              <PanelLeftOpen />
+            </SidebarMenuButton>
+          ) : (
+            <SidebarMenuButton>
+              <PanelRightOpen />
+            </SidebarMenuButton>
+          )}
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Application</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url}>
+                        <span>{item.title}</span>
+                        <item.icon />
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarSeparator />
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>ِAhlan</SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
+    </div>
   );
 }
 export default AdminBar;

@@ -39,7 +39,6 @@ const SellerUpload = () => {
         const manufacturersRes = await fetch("/api/filtering/manufacturers");
         const manufacturersData = await manufacturersRes.json();
         setManufacturers(manufacturersData);
-
         const categoriesRes = await fetch("/api/filtering/categories");
         const categoriesData = await categoriesRes.json();
         setCategories(categoriesData);
@@ -222,7 +221,17 @@ const SellerUpload = () => {
                 </SelectItem>
               ))}
             </Select>
-
+            <Select
+              onValueChange={setCategory}
+              value={category}
+              className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
+            >
+              <SelectItem disabled value="">
+                حالة الاستخدام
+              </SelectItem>
+              <SelectItem>مجددة</SelectItem>
+              <SelectItem>مستعملة</SelectItem>
+            </Select>
             {category && (
               <Select
                 onValueChange={setPart}

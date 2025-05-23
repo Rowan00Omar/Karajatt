@@ -12,27 +12,30 @@ import Signup from "./pages/Signup";
 import AdminBar from "./components/AdminBar";
 import { SidebarProvider } from "./components/ui/sidebar";
 import AdminDash from "./pages/AdminDash";
+import { CartProvider } from "./context/CartContext";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [open, setOpen] = useState(true);
   return (
     <div className="min-h-screen flex flex-col">
-      <BrowserRouter>
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<SearchForm />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/upload-part" element={<SellerUpload />} />
-            <Route path="signup" element={<Signup />} />
-            <Route path="/part/:id" element={<ProductDetail />} />
-            <Route path="/admin-dahsboard" element={<AdminDash />} />
-          </Routes>
-        </main>
+      <CartProvider>
+        <BrowserRouter>
+          <Navbar />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<SearchForm />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/upload-part" element={<SellerUpload />} />
+              <Route path="signup" element={<Signup />} />
+              <Route path="/part/:id" element={<ProductDetail />} />
+              <Route path="/admin-dahsboard" element={<AdminDash />} />
+            </Routes>
+          </main>
 
-        <Footer />
-      </BrowserRouter>
-      {/* <SidebarProvider>
+          <Footer />
+        </BrowserRouter>
+      </CartProvider>
+      {/* <SidebarProvider open={open} onOpenChange={setOpen}>
         <AdminBar />
         <AdminDash />
       </SidebarProvider> */}

@@ -11,7 +11,7 @@ export function Select({
     <select
       value={value}
       onChange={(e) => onValueChange(e.target.value)}
-      className={` p-2 border rounded ${className} w-full`}
+      className={`p-2 border rounded ${className} `}
     >
       {children}
     </select>
