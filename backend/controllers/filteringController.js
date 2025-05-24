@@ -18,7 +18,6 @@ exports.manufacturers = async (req, res) => {
     const [rows] = await db.query(
       "SELECT DISTINCT company_name AS manufacturer FROM cars ORDER BY company_name"
     );
-    const manufacturers = rows.map((row) => row.company_name);
     res.json(rows.map((item) => item.manufacturer));
   } catch (err) {
     console.error(err);
