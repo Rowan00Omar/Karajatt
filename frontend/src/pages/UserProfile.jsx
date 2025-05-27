@@ -1,10 +1,21 @@
-import { UserIcon, ReceiptRefundIcon } from '@heroicons/react/24/outline';
-import React, { useState } from "react";
+import {
+  UserIcon,
+  ReceiptRefundIcon,
+} from "@heroicons/react/24/outline";
+import { Dialog, Transition } from "@headlessui/react";
+import React, { useState, Fragment } from "react";
 
 const UserProfile = () => {
   const [username] = useState("محمد أحمد");
   const [email] = useState("mohamed@example.com");
-  const [orderHistory] = useState([
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const initials = username
+    .split(" ")
+    .map((n) => n[0])
+    .join("");
+
+  const orderHistory = [
     {
       id: 1,
       partName: "Brake Pads",
@@ -26,43 +37,57 @@ const UserProfile = () => {
       price: "$18.00",
       seller: "FastParts Inc.",
     },
-  ]);
+  ];
+
+  const handleDelete = () => {
+    setIsModalOpen(true);
+  };
 
   return (
-    <div className="min-h-screen bg-white py-10 px-4 flex justify-center" dir="rtl">
-      <div className="w-full max-w-3xl flex flex-col gap-8 text-right">
-        {/* User Info Card */}
-        <div className="w-full bg-white border border-gray-200 shadow-lg rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <UserIcon className="w-6 h-6 text-[#4a60e9]" />
-            <h2 className="text-xl font-semibold text-[#4a60e9]">بيانات المستخدم</h2>
+    <div className="min-h-screen bg-white py-25 px-4 flex justify-center" dir="rtl">
+      <div className="w-full max-w-4xl flex flex-col gap-8 text-right">
+        {/* User Info */}
+        <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-[#4a60e9] text-white w-12 h-12 flex items-center justify-center rounded-full text-lg font-semibold">
+              {initials}
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-[#4a60e9]">بيانات المستخدم</h2>
+            </div>
           </div>
+
           <div className="mb-4">
-            <p className="text-sm text-gray-500">الأسم بالكامل</p>
+            <p className="text-sm text-gray-500">الاسم الكامل</p>
             <p className="text-lg font-medium text-gray-900">{username}</p>
           </div>
+
           <div className="mb-6">
-            <p className="text-sm text-gray-500">البريد الألكتروني</p>
+            <p className="text-sm text-gray-500">البريد الإلكتروني</p>
             <p className="text-lg font-medium text-gray-900">{email}</p>
           </div>
-          <button className="w-32 mt-4 bg-red-600 hover:bg-red-700 text-white py-2 rounded-md transition">
+
+          <button
+            onClick={handleDelete}
+            className="w-32 bg-red-600 hover:bg-red-700 text-white py-2 rounded-md transition"
+          >
             حذف الحساب
           </button>
         </div>
 
-        {/* Order History Table */}
-        <div className="w-full bg-white border border-gray-200 shadow-lg rounded-xl p-6 overflow-x-auto">
+        {/* Order History */}
+        <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-6 overflow-x-auto">
           <div className="flex items-center gap-2 mb-4">
             <ReceiptRefundIcon className="w-6 h-6 text-[#4a60e9]" />
             <h2 className="text-xl font-semibold text-[#4a60e9]">الطلبات السابقة</h2>
           </div>
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm text-right">
             <thead className="text-gray-500 border-b">
               <tr>
-                <th className="py-2 pr-4 text-right">اسم القطعة</th>
-                <th className="py-2 pr-4 text-right">تاريخ الطلب</th>
-                <th className="py-2 pr-4 text-right">السعر</th>
-                <th className="py-2 text-right">اسم البائع</th>
+                <th className="py-2 pr-4">اسم القطعة</th>
+                <th className="py-2 pr-4">تاريخ الطلب</th>
+                <th className="py-2 pr-4">السعر</th>
+                <th className="py-2">اسم البائع</th>
               </tr>
             </thead>
             <tbody className="text-gray-800">
@@ -77,6 +102,62 @@ const UserProfile = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Confirmation Modal */}
+        <Transition appear show={isModalOpen} as={Fragment}>
+          <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black bg-opacity-25" />
+            </Transition.Child>
+
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-right shadow-xl transition-all">
+                  <Dialog.Title className="text-lg font-medium text-gray-900">
+                    هل أنت متأكد من حذف الحساب؟
+                  </Dialog.Title>
+                  <div className="mt-4 text-sm text-gray-500">
+                    سيتم حذف حسابك نهائيًا ولا يمكن استعادته.
+                  </div>
+
+                  <div className="mt-6 flex gap-3 justify-end">
+                    <button
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
+                      onClick={() => setIsModalOpen(false)}
+                    >
+                      إلغاء
+                    </button>
+                    <button
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        // perform actual delete here
+                      }}
+                    >
+                      نعم، احذف
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </Dialog>
+        </Transition>
       </div>
     </div>
   );
