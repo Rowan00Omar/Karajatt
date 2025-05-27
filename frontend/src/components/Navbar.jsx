@@ -32,9 +32,7 @@ const Navbar = () => {
           <a href="#" className="hover:text-lightGray text-white p-2">
             <Search className="w-6 h-6" />
           </a>
-          <a href="#" className="hover:text-lightGray text-white p-2">
-            <Bell className="w-6 h-6" />
-          </a>
+
           <div className="hover:text-lightGray text-white p-2">
             <CartButton />
           </div>

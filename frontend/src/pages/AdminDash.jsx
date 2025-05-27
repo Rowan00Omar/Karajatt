@@ -11,17 +11,20 @@ import { Area } from "recharts";
 const AdminDash = () => {
   return (
     <div className="flex h-screen w-full">
-      <main className="w-full items-center">
-        <div className="flex flex-1 flex-col space-y-5 min-w-0 justify-center items-center   ">
-          <div className="w-full max-w-2/3 h-auto pt-5 ">
-            <AreaChartNew />
+      <SidebarProvider>
+        <AdminBar />
+        <main className="w-full items-center">
+          <div className="flex flex-1 flex-col space-y-5 min-w-0 justify-center items-center   ">
+            <div className="w-full max-w-2/3 h-auto pt-5 ">
+              <AreaChartNew />
+            </div>
+            <div className="flex md:flex-row flex-col w-full max-w-2/3 justify-between ">
+              <BarChart />
+              <BarChart />
+            </div>
           </div>
-          <div className="flex md:flex-row flex-col w-full max-w-2/3 justify-between ">
-            <BarChart />
-            <BarChart />
-          </div>
-        </div>
-      </main>
+        </main>
+      </SidebarProvider>
     </div>
   );
 };

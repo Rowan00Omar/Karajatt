@@ -24,10 +24,13 @@ exports.register = async (req, res) => {
         last_name.trim(),
         email.toLowerCase(),
         hashedPassword,
-        role || "user",
+        "user",
       ]
     );
 
+    const token = jwt.sign({ id: userRows[0].id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -53,9 +56,26 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ id: userRows[0].id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
-
     res.json({ token });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+exports.UserInfo = async (req, res) => {
+  try {
+    console.log("hit");
+    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      req.user.id,
+    ]);
+    if (rows.length > 0) {
+      const user = rows[0];
+      res.json({ role: user.role, id: user.id });
+      console.log("Role:", user.role);
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (err) {
+    console.error("Server error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 };

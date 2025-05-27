@@ -4,7 +4,7 @@ import axios from "axios";
 import { LogIn } from "lucide-react";
 import Input from "../components/Input";
 import Button from "../components/Button";
-
+import Footer from "@/components/Footer";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,15 +21,38 @@ const Login = () => {
     }
 
     try {
+      // Login request
       const response = await axios.post("/api/auth/login", {
         email,
         password,
       });
 
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
+      const token = response.data.token;
+
+      if (token) {
+        // Save token to localStorage
+        localStorage.setItem("token", token);
         alert("Login successful!");
-        navigate("/");
+
+        // Fetch user info (including role)
+        const userInfo = await axios.get("/api/auth/userInfo", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const role = userInfo.data.role;
+
+        // Redirect based on role
+        if (role === "admin") {
+          navigate("/adminHome");
+        } else if (role === "user") {
+          navigate("/home");
+        } else if (role === "seller") {
+          navigate("/sellerHome");
+        } else {
+          navigate("/");
+        }
       }
     } catch (err) {
       setError(
@@ -39,46 +62,47 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center w-full h-auto mt-48">
+    <div className="flex justify-center items-center w-full h-auto pb-48 mt-48">
       <form
         className="p-16 rounded-lg shadow-lg text-center flex flex-col w-1/3"
         onSubmit={handleSubmit}
+        dir="rtl"
       >
         <div className="flex flex-row space-x-3 justify-center items-center">
           <LogIn className="text-babyJanaBlue self-center my-2" size={32} />
-          <h2 className="text-3xl">Login</h2>
+          <h2 className="text-3xl">تسجيل الدخول</h2>
         </div>
         {error && <p className="text-red-500 text-lg">{error}</p>}
 
         <Input
           className="rounded-md my-3"
           type="email"
-          placeholder="Enter your email"
+          placeholder="ادخل البريد الألكتروني"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <Input
           className="rounded-md my-3"
           type="password"
-          placeholder="Enter your password"
+          placeholder="كلمة السر"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
         <Button
-          className="bg-babyJanaBlue text-white  text-xl cursor-pointer my-3"
+          className="bg-babyJanaBlue text-white text-xl cursor-pointer my-3"
           type="submit"
         >
-          Login
+          تسجيل الدخول
         </Button>
 
         <p className="mt-2.5">
-          Don't have an account?{" "}
+          ليس لديك حساب؟
           <Link
             className="text-babyJanaBlue font-bold hover:underline"
             to="/signup"
           >
-            Sign Up
+            انشاء حساب
           </Link>
         </p>
       </form>

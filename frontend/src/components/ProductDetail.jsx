@@ -92,7 +92,6 @@ const ProductDetail = () => {
       <Navbar />
       <div className="max-w-6xl mx-auto px-4 pt-25" dir="rtl">
         <div className="bg-white shadow-xl rounded-2xl border border-blue-200 overflow-hidden flex flex-col lg:flex-row gap-8">
-          {/* Image Gallery */}
           <div className="lg:w-1/2 p-4 relative">
             <div {...handlers} className="relative">
               <Zoom>

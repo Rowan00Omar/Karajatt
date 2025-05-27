@@ -1,45 +1,65 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
+import axios from "axios";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Navbar from "./components/Navbar";
-import LandingPage from "./pages/LandingPage";
-import SearchForm from "./components/SearchForm";
-import SellerUpload from "./pages/SellerUpload";
-import Login from "./pages/Login";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Footer from "./components/Footer";
-import ProductDetail from "./components/ProductDetail";
+import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import AdminBar from "./components/AdminBar";
-import { SidebarProvider } from "./components/ui/sidebar";
+import SearchForm from "./components/SearchForm";
 import AdminDash from "./pages/AdminDash";
+import withAuthProtection from "./hoc/withAuthProtection";
 import { CartProvider } from "./context/CartContext";
+import SellerUpload from "./pages/SellerUpload";
+import ProductDetail from "./components/ProductDetail";
 
 function App() {
-  const [open, setOpen] = useState(true);
-  return (
-    <div className="min-h-screen flex flex-col">
-      <CartProvider>
-        <BrowserRouter>
-          <Navbar />
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<SearchForm />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/upload-part" element={<SellerUpload />} />
-              <Route path="signup" element={<Signup />} />
-              <Route path="/part/:id" element={<ProductDetail />} />
-              <Route path="/admin-dahsboard" element={<AdminDash />} />
-            </Routes>
-          </main>
+  const [role, setRole] = useState(null);
 
-          <Footer />
-        </BrowserRouter>
-      </CartProvider>
-      {/* <SidebarProvider open={open} onOpenChange={setOpen}>
-        <AdminBar />
-        <AdminDash />
-      </SidebarProvider> */}
-    </div>
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await axios.get("/api/auth/userInfo", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setRole(res.data.role);
+      } catch (err) {
+        console.error("Failed to fetch user role", err);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  const ProtectedSearchForm = withAuthProtection(SearchForm, ["user"]);
+  const ProtectedAdminHome = withAuthProtection(AdminDash, ["admin"]);
+  const ProtectedSellerHome = withAuthProtection(SellerUpload, ["seller"]);
+  return (
+    <>
+      <div className="min-h-screen  flex flex-col">
+        <main className="pb-10">
+          <CartProvider>
+            <Navbar />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/ProductDetail" element={<ProductDetail />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/home" element={<ProtectedSearchForm />} />
+                <Route path="/adminHome" element={<ProtectedAdminHome />} />
+                <Route path="/sellerHome" element={<ProtectedSellerHome />} />
+                <Route path="*" element={<Login />} />
+              </Routes>
+            </BrowserRouter>
+          </CartProvider>
+        </main>
+        <Footer />
+      </div>
+    </>
   );
 }
 

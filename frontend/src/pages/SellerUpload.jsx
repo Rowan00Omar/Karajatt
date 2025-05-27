@@ -4,6 +4,7 @@ import { Card, CardContent } from "../components/Card";
 import { Select, SelectItem } from "../components/Select";
 import Input from "../components/Input";
 import Navbar from "../components/Navbar";
+import axios from "axios";
 
 const partStatus = ["مقبولة", "جيدة", "جيدة جدا", "ممتازة"];
 
@@ -25,6 +26,7 @@ const SellerUpload = () => {
   const [timeInStock, setTimeInStock] = useState("");
   const [price, setPrice] = useState("");
   const [categories, setCategories] = useState([]);
+  const [condition,setCondition] = useState("");
   const [loading, setLoading] = useState({
     parts: false,
     part: false,
@@ -33,6 +35,26 @@ const SellerUpload = () => {
     model: false,
     models: false,
   });
+
+const [id , setId] = useState(null);
+useEffect(() => {
+    const fetchUserInfo = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await axios.get("/api/auth/userInfo", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setId(res.data.id);
+        } catch (err) {
+        console.error("Failed to fetch user role", err);
+      }
+    };
+    fetchUserInfo();
+  }, []);
+
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -120,10 +142,60 @@ const SellerUpload = () => {
     setImages(files);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log({ manufacturer, model, year, category, part, images });
-  };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData();
+  formData.append("manufacturer", manufacturer);
+  formData.append("model", model);
+  formData.append("startYear", startYear);
+  formData.append("endYear", endYear);
+  formData.append("category", category);
+  formData.append("part", part);
+  formData.append("status", status);
+  formData.append("numberOfParts", numberOfParts);
+  formData.append("title", title);
+  formData.append("extraDetails", extraDetails);
+  formData.append("timeInStock", timeInStock);
+  formData.append("price", price);
+  formData.append("condition",condition)
+  formData.append("id",id)
+  
+  
+  try {
+    const res = await axios.post("/api/seller/upload" ,formData , {
+       headers: {
+      "Content-Type": "multipart/form-data",
+    }}
+    )
+     
+
+    const result = res;
+    alert("تم رفع القطعة بنجاح!");
+    console.log(result);
+
+    setManufacturer("");
+    setModel("");
+    setStartYear("");
+    setEndYear("");
+    setCategory("");
+    setPart("");
+    setImages([]);
+    setStatus("");
+    setNumberOfParts("");
+    setTitle("");
+    setExtraDetails("");
+    setTimeInStock("");
+    setPrice("");
+     console.log({ manufacturer, model, startYear,endYear ,  category, part, images });   
+  } catch (err) {
+    console.error("Upload failed:", err);
+    alert("حدث خطأ أثناء رفع القطعة");
+  }
+};
+
+ 
   const handleStartYearChange = (e) => {
     const value = e.target.value;
     if (value === "" || Number(value) <= Number(endYear) || endYear === "") {
@@ -222,8 +294,8 @@ const SellerUpload = () => {
               ))}
             </Select>
             <Select
-              onValueChange={setCategory}
-              value={category}
+              onValueChange={setCondition}
+              value={condition}
               className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
             >
               <SelectItem disabled value="">

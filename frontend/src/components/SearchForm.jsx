@@ -370,6 +370,13 @@ const SearchForm = () => {
             ))}
           </Select>
         )}
+        <Select className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue">
+          <SelectItem disabled value="">
+            اختر الحالة
+          </SelectItem>
+          <SelectItem>مجددة</SelectItem>
+          <SelectItem>مستعملة</SelectItem>
+        </Select>
 
         <Button type="submit" onClick={handleSearch} className="self-center">
           بحث

@@ -5,6 +5,7 @@ import CategoryFilter from "../components/filters/CategoryFilter";
 import CarModelFilter from "../components/filters/CarModelFilter";
 import PriceFilter from "../components/filters/PriceFilter";
 import ConditionFilter from "../components/filters/ConditionFilter";
+import Navbar from "@/components/Navbar";
 
 const ProductsPage = () => {
   return (
