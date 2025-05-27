@@ -16,7 +16,7 @@ const Login = () => {
     setError("");
 
     if (email === "" || password === "") {
-      setError("All fields are required!");
+      setError("يجب ملأ جميع البيانات!");
       return;
     }
 

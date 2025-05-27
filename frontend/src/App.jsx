@@ -13,6 +13,8 @@ import withAuthProtection from "./hoc/withAuthProtection";
 import { CartProvider } from "./context/CartContext";
 import SellerUpload from "./pages/SellerUpload";
 import ProductDetail from "./components/ProductDetail";
+import UserProfile from "./pages/UserProfile";
+import SellerProfile from "./pages/SellerProfile";
 
 function App() {
   const [role, setRole] = useState(null);
@@ -53,6 +55,7 @@ function App() {
                 <Route path="/adminHome" element={<ProtectedAdminHome />} />
                 <Route path="/sellerHome" element={<ProtectedSellerHome />} />
                 <Route path="*" element={<Login />} />
+                <Route path="/userprofile" element={<SellerProfile />} />
               </Routes>
             </BrowserRouter>
           </CartProvider>
