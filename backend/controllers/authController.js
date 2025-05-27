@@ -24,14 +24,14 @@ exports.register = async (req, res) => {
         last_name.trim(),
         email.toLowerCase(),
         hashedPassword,
-        "user",
+        role.trim() ,
       ]
     );
 
     console.log("ziad");
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // res.status(500).json({ error: err.message });
   }
 };
 
@@ -56,7 +56,7 @@ exports.login = async (req, res) => {
     });
     res.json({ token });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // res.status(500).json({ error: err.message });
   }
 };
 exports.logout = async (req, res) => {
@@ -91,6 +91,6 @@ exports.UserInfo = async (req, res) => {
     }
   } catch (err) {
     console.error("Server error:", err);
-    res.status(500).json({ error: "Server error" });
+    // res.status(500).json({ error: "Server error" });
   }
 };

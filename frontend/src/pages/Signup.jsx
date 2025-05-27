@@ -4,6 +4,7 @@ import axios from "axios";
 import { LogIn } from "lucide-react";
 import Input from "../components/Input";
 import Button from "../components/Button";
+import { Select, SelectItem } from "@/components/Select";
 
 const Signup = () => {
   const [firstName, setFirstName] = useState("");
@@ -12,6 +13,7 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [role, setRole] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -23,7 +25,8 @@ const Signup = () => {
       lastName === "" ||
       email === "" ||
       password === "" ||
-      confirmPassword === ""
+      confirmPassword === "" ||
+      role ===""
     ) {
       setError("All fields are required!");
       return;
@@ -40,6 +43,7 @@ const Signup = () => {
         last_name: lastName,
         email,
         password,
+        role
       });
       console.log("ali");
       if (response.status === 201) {
@@ -105,6 +109,13 @@ const Signup = () => {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
+
+        <Select value={role} onValueChange={setRole} 
+          className="p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50">
+          <SelectItem disabled value="">نوع الحساب</SelectItem>
+          <SelectItem value="user">مشتري</SelectItem>
+          <SelectItem value="seller">بائع</SelectItem>
+        </Select>
 
         <Button
           className="bg-babyJanaBlue text-white text-xl cursor-pointer my-2"

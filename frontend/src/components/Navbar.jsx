@@ -31,9 +31,7 @@ const Navbar = () => {
           </a>
         </div>
         <div className="flex items-center space-x-6">
-          <a href="#" className="hover:text-lightGray text-white p-2">
-            <Search className="w-6 h-6" />
-          </a>
+
 
           <div className="hover:text-lightGray text-white p-2">
             <CartButton />

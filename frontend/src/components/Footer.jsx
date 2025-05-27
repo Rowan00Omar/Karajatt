@@ -60,7 +60,7 @@ const Footer = () => {
                   className="flex-1 px-4 rounded-full bg-white focus:outline-none"
                   placeholder="احصل على كل جديد في صندوق بريدك"
                 />
-                <button className="px-6 py-2 text-white rounded-full bg-babytext-babyJanaBlue hover:bg-babytext-babyJanaBlue focus:outline-none">
+                <button className="px-6 py-2 text-white rounded-full bg-babyJanaBlue focus:outline-none">
                   اذهب الآن
                 </button>
               </div>
