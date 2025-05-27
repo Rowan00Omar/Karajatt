@@ -1,6 +1,7 @@
 import {
   UserIcon,
   ReceiptRefundIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
 import React, { useState, Fragment } from "react";
@@ -69,9 +70,9 @@ const UserProfile = () => {
 
           <button
             onClick={handleDelete}
-            className="w-32 bg-red-600 hover:bg-red-700 text-white py-2 rounded-md transition"
+            className="w-fit mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition flex items-center gap-1"
           >
-            حذف الحساب
+          <TrashIcon className="w-5 h-5" /> حذف الحساب
           </button>
         </div>
 

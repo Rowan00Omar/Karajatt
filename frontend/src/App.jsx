@@ -55,7 +55,7 @@ function App() {
                 <Route path="/adminHome" element={<ProtectedAdminHome />} />
                 <Route path="/sellerHome" element={<ProtectedSellerHome />} />
                 <Route path="*" element={<Login />} />
-                <Route path="/userprofile" element={<UserProfile/>} />
+                <Route path="/userprofile" element={<SellerProfile/>} />
               </Routes>
             </BrowserRouter>
           </CartProvider>
