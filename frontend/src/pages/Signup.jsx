@@ -41,7 +41,7 @@ const Signup = () => {
         email,
         password,
       });
-
+      console.log("ali");
       if (response.status === 201) {
         alert("Account created successfully!");
         navigate("/login");

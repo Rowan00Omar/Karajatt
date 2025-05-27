@@ -44,17 +44,15 @@ function App() {
         <main className="pb-10">
           <CartProvider>
             <Navbar />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/ProductDetail" element={<ProductDetail />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/home" element={<ProtectedSearchForm />} />
-                <Route path="/adminHome" element={<ProtectedAdminHome />} />
-                <Route path="/sellerHome" element={<ProtectedSellerHome />} />
-                <Route path="*" element={<Login />} />
-              </Routes>
-            </BrowserRouter>
+            <Routes>
+              <Route path="/ProductDetail" element={<ProductDetail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/home" element={<ProtectedSearchForm />} />
+              <Route path="/adminHome" element={<ProtectedAdminHome />} />
+              <Route path="/sellerHome" element={<ProtectedSellerHome />} />
+              <Route path="*" element={<Login />} />
+            </Routes>
           </CartProvider>
         </main>
         <Footer />

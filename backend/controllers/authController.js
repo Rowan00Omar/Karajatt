@@ -28,9 +28,7 @@ exports.register = async (req, res) => {
       ]
     );
 
-    const token = jwt.sign({ id: userRows[0].id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    console.log("ziad");
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -59,6 +57,23 @@ exports.login = async (req, res) => {
     res.json({ token });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+exports.logout = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (token) {
+      await pool.query(
+        "INSERT INTO revoked_tokens (token, expires_at) VALUES (?, ?)",
+        [token, new Date(Date.now() + 3600 * 1000)]
+      );
+    }
+
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ error: "Logout failed" });
   }
 };
 exports.UserInfo = async (req, res) => {

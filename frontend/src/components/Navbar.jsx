@@ -6,10 +6,12 @@ import {
   MessageCircleMore,
   ChevronDown,
   Bell,
+  LogOut,
 } from "lucide-react";
 import CartButton from "./CartButton";
-
+import useLogout from "@/hooks/useLogout";
 const Navbar = () => {
+  const logout = useLogout();
   return (
     <>
       {/* Desktop Nav */}
@@ -39,6 +41,13 @@ const Navbar = () => {
           <a href="#" className="hover:text-lightGray text-white p-2">
             <User className="w-6 h-6" />
           </a>
+          <button
+            onClick={logout}
+            className="hover:text-lightGray text-white p-2"
+          >
+            {" "}
+            <LogOut className="w-6 h-6" />
+          </button>
         </div>
       </nav>
 
