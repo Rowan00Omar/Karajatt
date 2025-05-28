@@ -6,7 +6,7 @@ import Input from "../components/Input";
 import Button from "../components/Button";
 import { Select, SelectItem } from "@/components/Select";
 
-const Signup = () => {
+const Signup = ({flag = false}) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -115,6 +115,7 @@ const Signup = () => {
           <SelectItem disabled value="">نوع الحساب</SelectItem>
           <SelectItem value="user">مشتري</SelectItem>
           <SelectItem value="seller">بائع</SelectItem>
+          {flag && <SelectItem value="admin">مدير</SelectItem>}
         </Select>
 
         <Button

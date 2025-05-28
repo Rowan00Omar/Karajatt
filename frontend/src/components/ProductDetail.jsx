@@ -10,10 +10,12 @@ import Navbar from "./Navbar";
 import SellerChat from "./SellerChat";
 
 const ProductDetail = () => {
-  const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [feedbacks, setFeedbacks] = useState([]);
-  const [newFeedback, setNewFeedback] = useState({
+
+   const [product, setProduct] = useState({});
+   
+   const [loading, setLoading] = useState(true);
+   const [feedbacks, setFeedbacks] = useState([]);
+   const [newFeedback, setNewFeedback] = useState({
     name: "",
     comment: "",
     rating: 5,
@@ -21,12 +23,80 @@ const ProductDetail = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  
+   const handleBooking = async () => {
+      if (!userId || !_id) {
+          setBookingMessage("User not authenticated or event ID missing.");
+          return;
+      }
+  
+      try {
+          const response = await axios.post("http://localhost:5000/events/BookEventByUser", {
+          userId,
+          eventId: _id,
+          });
+  
+          if (response.status === 200 || response.status === 201) {
+          navigate("/booking-success");
+          } else {
+          setBookingMessage("Booking failed. Please try again.");
+          }
+      } catch (error) {
+          console.error("Booking error:", error);
+          setBookingMessage("An error occurred during booking.");
+      }
+      };
+  
+   const { id } = useParams();
+
+   useEffect(() => {
+      const fetchEvent = async () => {
+        try {
+          const response = await fetch(`/api/product/getSingleProduct/${id}`);
+          if (!response.ok) throw new Error("product not found");
+          const data = await response.json();
+          console.log(data)
+          setProduct(data);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchEvent();
+    },[]);
+  const {
+      company_name,
+      car_name,
+      part_name,
+      category_name,
+      price,
+      description,
+      start_year,
+      end_year,
+      condition,
+      storage_duration,
+      seller_name,
+      rating,
+      review_count,
+      parts_in_stock,
+      status,
+      image_url,
+      extra_image1,
+      extra_image2,
+      extra_image3,
+      title
+    } = product;
+  console.log(product)
+  
+  
   useEffect(() => {
     const mockResults = [
       {
-        id: 1,
-        name: "كمبروسر مكيف سوناتا ٢٠١٨",
-        price: "٢٥٠ ريال",
+        id: id,
+        name: title,
+        price: price,
         image:
           "https://media.istockphoto.com/id/1388637739/photo/mercedez-benz-glc-300-coupe-4matic-2022-matte-grey-closeup-car.jpg?s=612x612&w=0&k=20&c=8Bn62wf33y3wUg2ivDBR1YYkKv9VFPo4ZZqqzvqOuio=",
         extraImages: [
@@ -34,13 +104,13 @@ const ProductDetail = () => {
           "https://images.automatrix.com/1/99094/86R8oepdERG.JPG",
           "https://media.admiddleeast.com/photos/6724cf6793e8a2a64575a73e/16:9/w_2560%2Cc_limit/DK-02991.jpg",
         ],
-        condition: "جيدة جداً",
-        storageDuration: "٦ شهور",
-        compatibleModels: "من ٢٠١٦ إلى ٢٠٢٠",
-        seller: "مؤسسة الحسن لقطع الغيار",
-        rating: 4.8,
+        condition: condition,
+        storageDuration: storage_duration,
+        compatibleModels: "من"+start_year +"الي"+ end_year,
+        seller: seller_name,
+        rating: rating,
         reviews: 32,
-        additionaldetails: "بلا بلا بلا بلا فقط للتيست",
+        additionaldetails: description,
       },
     ];
 
@@ -51,9 +121,15 @@ const ProductDetail = () => {
       { name: "أحمد", rating: 5, comment: "قطعة ممتازة جداً ووصلت بحالة جيدة" },
       { name: "سارة", rating: 4, comment: "مقبولة ولكن تحتاج تنظيف بسيط" },
     ]);
-  }, [id]);
+  }, [loading]);
 
-  const allImages = product ? [product.image, ...product.extraImages] : [];
+ const allImages = [
+  image_url,
+  extra_image1,
+  extra_image2,
+  extra_image3,
+].filter(Boolean);
+
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % allImages.length);
@@ -64,7 +140,6 @@ const ProductDetail = () => {
       (prev) => (prev - 1 + allImages.length) % allImages.length
     );
   };
-
   const handlers = useSwipeable({
     onSwipedLeft: () => nextImage(),
     onSwipedRight: () => prevImage(),
@@ -82,7 +157,7 @@ const ProductDetail = () => {
   }, [product]);
 
   const handlePurchase = () => {
-    alert(`تم إرسال طلب شراء للقطعة: ${product.name}`);
+    alert(`تم إرسال طلب شراء للقطعة: ${product.part_name}`);
   };
 
   if (!product) return <p className="text-center mt-20">جاري التحميل...</p>;
@@ -137,7 +212,7 @@ const ProductDetail = () => {
           <div className="lg:w-1/2 p-6 space-y-4">
             <h1 className="text-2xl font-bold text-blue-900">{product.name}</h1>
             <p className="text-xl font-semibold text-green-600">
-              {product.price}
+              {product.price} ر.س
             </p>
 
             <div className="grid grid-cols-2 gap-4 text-sm text-blue-900">
@@ -150,15 +225,22 @@ const ProductDetail = () => {
               <div>
                 مدة التخزين:{" "}
                 <span className="font-medium text-gray-800">
-                  {product.storageDuration}
+                  {product.storage_duration}
                 </span>
               </div>
               <div>
-                الموديلات الموافقة:{" "}
+                الموديل:
                 <span className="font-medium text-gray-800">
-                  {product.compatibleModels}
+                  {product.car_name}
                 </span>
               </div>
+              <div>
+                التصنيف:
+                <span className="font-medium text-gray-800">
+                  {product.category_name}
+                </span>
+              </div>
+
               <div>
                 تقييم البائع:{" "}
                 <span className="font-medium text-yellow-500">
@@ -168,7 +250,7 @@ const ProductDetail = () => {
               <div>
                 البائع:{" "}
                 <span className="font-medium text-gray-800">
-                  {product.seller}
+                  {product.seller_name}
                 </span>
               </div>
             </div>
@@ -178,7 +260,7 @@ const ProductDetail = () => {
                 تفاصيل إضافية:
               </h2>
               <p className="text-gray-700 text-sm leading-relaxed">
-                {product.additionaldetails}
+                {product.description}
               </p>
             </div>
 

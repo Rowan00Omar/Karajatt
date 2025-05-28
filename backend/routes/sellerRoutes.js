@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const sellerUpload = require("../controllers/sellerController");
-const multer = require("multer");
-const upload = multer();
+const photoupload = require("../middleware/photoUpload")
 
-router.post("/upload", upload.none(), sellerUpload.sellerUpload);
+router.post("/upload", photoupload.array('images', 4) , sellerUpload.sellerUpload);
 router.get("/filtered-part", sellerUpload.filterProducts);
 module.exports = router;
+

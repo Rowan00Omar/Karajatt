@@ -78,19 +78,48 @@ exports.logout = async (req, res) => {
 };
 exports.UserInfo = async (req, res) => {
   try {
-    console.log("hit");
     const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [
       req.user.id,
     ]);
     if (rows.length > 0) {
       const user = rows[0];
       res.json({ role: user.role, id: user.id });
-      console.log("Role:", user.role);
     } else {
       res.status(404).json({ error: "User not found" });
     }
   } catch (err) {
     console.error("Server error:", err);
     // res.status(500).json({ error: "Server error" });
+  }
+};
+exports.getAllUsers = async (req, res) => {
+  try {
+    const [users] = await pool.query("SELECT * from users")
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+exports.deleteUser = async (req, res) => {
+  try {
+    console.log("hit me")
+    const userId = req.params.id; 
+    await pool.query("SET FOREIGN_KEY_CHECKS = 0");
+
+    
+    const [user] = await pool.query("DELETE FROM users WHERE id = ?", [userId]);
+
+    
+    await pool.query("SET FOREIGN_KEY_CHECKS = 1");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found or already deleted" });
+    }
+
+    res.json({ message: "User deleted successfully", deletedUser: user });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).json({ error: "Server error" });
   }
 };

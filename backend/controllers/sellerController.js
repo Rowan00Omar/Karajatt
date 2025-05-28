@@ -1,6 +1,12 @@
+
+
+const fs = require('fs');
+const path = require('path');
 const pool = require("../db");
+const { cloudinaryUploadImage , cloudinaryUploadMultipleImages } = require("../utils/cloudinary");
 
 exports.sellerUpload = async (req, res) => {
+  console.log("hittt")
   const {
     manufacturer,
     model,
@@ -17,8 +23,25 @@ exports.sellerUpload = async (req, res) => {
     condition,
     id,
   } = req.body;
+   console.log(req.body)
 
   try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: "No images uploaded" });
+    }
+   console.log(req.files)
+    const filePaths = req.files.map(file =>
+      path.join(__dirname, "../images", file.filename)
+    );
+
+    const uploadResults = await cloudinaryUploadMultipleImages(filePaths);
+
+
+    filePaths.forEach(filePath => fs.unlinkSync(filePath));
+
+    const [image_url, extra_image1_url = null, extra_image2_url = null, extra_image3_url = null] = uploadResults.map(r => r.secure_url);
+
+
     const [categoryRows] = await pool.query(
       "SELECT id FROM categories WHERE category_name = ?",
       [category.trim()]
@@ -29,11 +52,14 @@ exports.sellerUpload = async (req, res) => {
     }
 
     const category_id = categoryRows[0].id;
+
+    // إدخال المنتج مع الصور الأربعة
     await pool.query(
       `INSERT INTO products (
         company_name, car_name, start_year, end_year, category_id, part_name, status, parts_in_stock,
-        title, description, storage_duration, price,\`condition\`,seller_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)`,
+        title, image_url, extra_image1, extra_image2, extra_image3,
+        description, storage_duration, price, \`condition\`, seller_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         manufacturer.trim(),
         model.trim(),
@@ -44,6 +70,10 @@ exports.sellerUpload = async (req, res) => {
         status.trim(),
         numberOfParts,
         title.trim(),
+        image_url || null,
+        extra_image1_url || null,
+        extra_image2_url || null,
+        extra_image3_url || null,
         extraDetails.trim(),
         timeInStock,
         price,
@@ -52,12 +82,16 @@ exports.sellerUpload = async (req, res) => {
       ]
     );
 
-    res.status(201).json({ message: "Product inserted successfully." });
+    res.status(201).json({
+      message: "Product inserted successfully.",
+      images: uploadResults.map(r => r.secure_url)
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err });
+    res.status(500).json({ error: err.message });
   }
 };
+
 
 exports.filterProducts = async (req, res) => {
   try {
