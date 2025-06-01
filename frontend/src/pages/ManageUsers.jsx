@@ -83,7 +83,7 @@ const ManageUsers = () => {
           <div className="w-full flex justify-between items-center mb-8">
             <h2>All Users</h2>
             <button className="hover:bg-[#001a4d] bg-[#002366] text-white px-6 py-3 border-none rounded-[10px] cursor-pointer font-semibold text-base transition-colors duration-300 ease-in-out hover:bg-[#001a4d]" onClick={() => setAddAdmin(true)}>
-              Add Admin +
+              Add an account +
             </button>
           </div>
 
@@ -139,12 +139,20 @@ const ManageUsers = () => {
       )}
 
       {addAdmin && (
-        <div className="fixed top-[40px] left-0 w-full h-full  flex items-center justify-center z-[999]">
-          <div className="relative bg-white rounded-[16px] mt-[-90px] w-[95%] max-w-[1000px] max-h-[90vh] overflow-y-visible p-0 shadow-[0_6px_24px_rgba(0,0,0,0.15)]">
-            <button className="absolute top-[150px] right-[20px] bg-transparent border-0 text-2xl font-bold text-gray-800 cursor-pointer z-[1000]" onClick={() => setAddAdmin(false)}>✖</button>
-            <Signup flag={true} />
+          <div className="fixed top-[40px] left-0 w-full h-[] flex items-center justify-center z-[999]">
+          <div className="relative bg-white rounded-[16px] w-[95%] max-w-[1000px] max-h-[90vh] overflow-y-auto shadow-[0_6px_24px_rgba(0,0,0,0.15)]">
+            <button
+              className="absolute top-4 right-4 bg-transparent border-0 text-2xl font-bold text-gray-800 cursor-pointer z-[1000]"
+              onClick={() => setAddAdmin(false)}
+            >
+              ✖
+            </button>
+            <div className="p-6">
+              <Signup flag={true} />
+            </div>
           </div>
         </div>
+
       )}
 
     </div>

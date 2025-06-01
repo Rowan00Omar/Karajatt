@@ -88,7 +88,6 @@ const ProductDetail = () => {
       extra_image3,
       title
     } = product;
-  console.log(product)
   
   
   useEffect(() => {
@@ -128,7 +127,11 @@ const ProductDetail = () => {
   extra_image1,
   extra_image2,
   extra_image3,
-].filter(Boolean);
+].filter((url) => url && url.trim() !== "");
+
+if (allImages.length === 0) {
+  allImages.push("../assets/m2.jpg"); // Add a fallback image path
+}
 
 
   const nextImage = () => {

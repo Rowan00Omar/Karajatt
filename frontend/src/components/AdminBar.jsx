@@ -10,6 +10,7 @@ import {
   PanelRightOpen,
   PanelLeftOpen,
 } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 import {
   Sidebar,
@@ -24,24 +25,28 @@ import {
   SidebarSeparator,
   SidebarHeader,
 } from "./ui/sidebar";
+
 const items = [
   {
     title: "المبيعات و الطلبات",
-    url: "#",
+    path: "/admin/sales",
     icon: BadgeDollarSign,
   },
   {
     title: "المخزون والمنتجات",
-    url: "#",
+    path: "/admin/inventory",
     icon: Warehouse,
   },
   {
     title: "المستخدمون و السلوك",
-    url: "#",
+    path: "/admin/users",
     icon: User,
   },
 ];
+
 export function AdminBar({ isOpen }) {
+  const location = useLocation();
+
   return (
     <div className="flex" dir="rtl">
       <Sidebar side="right" collapsible="icon" variant="sidebar">
@@ -58,16 +63,19 @@ export function AdminBar({ isOpen }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Application</SidebarGroupLabel>
+            <SidebarGroupLabel>لوحة التحكم</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url}>
+                    <SidebarMenuButton
+                      asChild
+                      className={location.pathname === item.path ? "bg-muted" : ""}
+                    >
+                      <Link to={item.path}>
                         <span>{item.title}</span>
                         <item.icon />
-                      </a>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -85,4 +93,5 @@ export function AdminBar({ isOpen }) {
     </div>
   );
 }
+
 export default AdminBar;

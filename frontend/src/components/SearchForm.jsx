@@ -15,6 +15,7 @@ const SearchForm = () => {
   const [modelsByManufacturer, setModelsByManufacturer] = useState({});
   const [partsByCategory, setPartsByCategory] = useState({});
   const [yearsByModel, setYearsByModel] = useState({});
+  const [condition, setCondition] = useState({});
 
   const models = manufacturer ? modelsByManufacturer[manufacturer] || [] : [];
   const parts = category ? partsByCategory[category] || [] : [];
@@ -40,7 +41,6 @@ const SearchForm = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
 
         const data = await response.json();
-        console.log(data);
         setManufacturers(data.manufacturers);
         setCategories(data.categories);
         setModelsByManufacturer(data.modelsByManufacturer);
@@ -229,7 +229,7 @@ const SearchForm = () => {
         )}
 
         {/* Condition Select */}
-        <Select className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue">
+        <Select onValueChange={setCondition} value={condition} className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue">
           <SelectItem disabled value="">
             اختر الحالة
           </SelectItem>
@@ -255,144 +255,3 @@ const SearchForm = () => {
 };
 
 export default SearchForm;
-// useEffect(() => {
-//   const fetchData = async () => {
-//     try {
-//       const manufacturersRes = await fetch("/api/filtering/manufacturers");
-//       const manufacturersData = await manufacturersRes.json();
-//       setManufacturers(manufacturersData);
-
-//       const categoriesRes = await fetch("/api/filtering/categories");
-//       const categoriesData = await categoriesRes.json();
-//       setCategories(categoriesData);
-//     } catch (err) {
-//       console.error("Failed to fetch data:", err);
-//     }
-//   };
-
-//   fetchData();
-// }, []);
-// useEffect(() => {
-//   const fetchModels = async () => {
-//     if (!manufacturer) {
-//       setModels([]);
-//       return;
-//     }
-//     setLoading((prev) => ({ ...prev, models: true }));
-//     try {
-//       const res = await fetch(
-//         `/api/filtering/models?manufacturer=${encodeURIComponent(
-//           manufacturer
-//         )}`
-//       );
-//       if (!res.ok) {
-//         throw new Error(`HTTP error! status: ${res.status}`);
-//       }
-//       const data = await res.json();
-//       setModels(data);
-//       setModel("");
-//     } catch (err) {
-//       console.error("Failed to fetch models:", err);
-//       setModels([]);
-//     } finally {
-//       setLoading((prev) => ({ ...prev, models: false }));
-//     }
-//   };
-
-//   fetchModels();
-// }, [manufacturer]);
-// useEffect(() => {
-//   const fetchParts = async () => {
-//     if (!category) {
-//       setParts([]);
-//       setPart("");
-//       return;
-//     }
-//     setLoading((prev) => ({ ...prev, parts: true }));
-//     try {
-//       const res = await fetch(
-//         `/api/filtering/parts?category=${encodeURIComponent(category)}`
-//       );
-
-//       if (!res.ok) {
-//         throw new Error(`HTTP error! status: ${res.status}`);
-//       }
-
-//       const data = await res.json();
-//       setParts(data);
-//       setPart("");
-//     } catch (err) {
-//       console.error("Failed to fetch parts:", err);
-//       setParts([]);
-//     } finally {
-//       setLoading((prev) => ({ ...prev, parts: false }));
-//     }
-//   };
-
-//   fetchParts();
-// }, [category]);
-// useEffect(() => {
-//   const fetchYears = async () => {
-//     if (!manufacturer || !model) {
-//       setYearRange(null);
-//       setAvailableYears([]);
-//       setSelectedYear("");
-//       return;
-//     }
-
-//     setLoading((prev) => ({ ...prev, years: true }));
-
-//     try {
-//       const res = await fetch(
-//         `/api/filtering/years?manufacturer=${encodeURIComponent(
-//           manufacturer
-//         )}&model=${encodeURIComponent(model)}`
-//       );
-
-//       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-//       const data = await res.json();
-
-//       if (data.length > 0) {
-//         setYearRange(data[0]);
-
-//         const years = [];
-//         for (let i = data[0].start_year; i <= data[0].end_year; i++) {
-//           years.push(i);
-//         }
-//         setAvailableYears(years);
-//       } else {
-//         setYearRange(null);
-//         setAvailableYears([]);
-//       }
-//     } catch (err) {
-//       console.error("Failed to fetch years:", err);
-//       setYearRange(null);
-//       setAvailableYears([]);
-//     } finally {
-//       setLoading((prev) => ({ ...prev, years: false }));
-//     }
-//   };
-
-//   fetchYears();
-// }, [manufacturer, model]);
-//   const [manufacturer, setManufacturer] = useState("");
-// const [manufacturers, setManufacturers] = useState([]);
-// const [model, setModel] = useState("");
-// const [models, setModels] = useState([]);
-// const [yearRange, setYearRange] = useState(null);
-// const [selectedYear, setSelectedYear] = useState("");
-// const [availableYears, setAvailableYears] = useState([]);
-// const [yearsByModel, setYearsByModel] = useState([]);
-// const [category, setCategory] = useState("");
-// const [categories, setCategories] = useState([]);
-// const [parts, setParts] = useState("");
-// const [part, setPart] = useState("");
-// const [results, setResults] = useState([]);
-// const [loading, setLoading] = useState({
-//   parts: false,
-//   categories: false,
-//   category: false,
-//   models: false,
-//   years: false,
-// });

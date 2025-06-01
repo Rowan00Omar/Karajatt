@@ -98,12 +98,6 @@ const SellerProfile = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* <div className="w-14 h-14 bg-[#4a60e9] text-white flex items-center justify-center rounded-full text-xl font-bold">
-              {adminName
-                .split(" ")
-                .map((word) => word[0])
-                .join("")}
-            </div> */}
             <div className="flex-1 grid sm:grid-cols-2 gap-4 text-right">
               <div>
                 <p className="text-sm text-gray-500">الاسم بالكامل</p>

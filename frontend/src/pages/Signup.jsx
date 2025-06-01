@@ -59,7 +59,7 @@ const Signup = ({flag = false}) => {
 
   return (
     <div
-      className="flex justify-center items-center w-full pb-10 h-auto mt-48"
+      className="flex justify-center items-center w-full pb-30 h-auto mt-48"
       dir="rtl"
     >
       <form
