@@ -1,20 +1,27 @@
 import { Routes, Route } from "react-router-dom";
-import AdminLayout from "./app/admin/layout";
-import AdminPage from "./app/admin/page";
-import SalesPage from "./app/admin/sales/page";
-import InventoryPage from "./app/admin/inventory/page";
-import UsersPage from "./app/admin/users/page";
+import AdminLayout from "./pages/admin/layout";
+import AdminPage from "./pages/admin/page";
+import SalesPage from "./pages/admin/sales";
+import InventoryPage from "./pages/admin/inventory";
+import UsersPage from "./pages/admin/users";
+import LandingPage from "./pages/LandingPage";
+import { CartProvider } from "./context/CartContext";
+import ManageUsersPage from "./pages/admin/manage";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminPage />} />
-        <Route path="sales" element={<SalesPage />} />
-        <Route path="inventory" element={<InventoryPage />} />
-        <Route path="users" element={<UsersPage />} />
-      </Route>
-    </Routes>
+    <CartProvider>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminPage />} />
+          <Route path="sales" element={<SalesPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="manage" element={<ManageUsersPage />} />
+        </Route>
+      </Routes>
+    </CartProvider>
   );
 }
 
