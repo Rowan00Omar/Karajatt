@@ -34,9 +34,9 @@ exports.register = async (req, res) => {
     // res.status(500).json({ error: err.message });
   }
 };
-
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+  
   try {
     const [userRows] = await pool.query("SELECT * FROM users WHERE email = ?", [
       email.toLowerCase(),
@@ -83,7 +83,7 @@ exports.UserInfo = async (req, res) => {
     ]);
     if (rows.length > 0) {
       const user = rows[0];
-      res.json({ role: user.role, id: user.id });
+      res.json({ role: user.role, id: user.id , email : user.email , first_name : user.first_name, last_name: user.last_name});
     } else {
       res.status(404).json({ error: "User not found" });
     }
@@ -121,5 +121,56 @@ exports.deleteUser = async (req, res) => {
   } catch (err) {
     console.error("Error deleting user:", err);
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+exports.getOrderHistory = async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const [orderItems] = await pool.query(`
+  SELECT 
+    o.id AS orderId,
+    o.total_price AS totalPrice,
+    o.order_date AS orderDate,
+    oi.id AS id,
+    oi.price AS itemPrice,
+    oi.quantity AS quantity,
+    p.part_name AS partName,
+    u.first_name AS sellerFirstName,
+    u.last_name AS sellerLastName
+  FROM orders o
+  JOIN order_items oi ON o.id = oi.order_id
+  JOIN products p ON oi.product_id = p.product_id
+  JOIN users u ON p.seller_id = u.id
+  WHERE o.user_id = ?
+  ORDER BY o.order_date DESC
+`, [userId]);
+
+      const ordersMap = {};
+      console.log("ALOOOOOOO")
+
+    for (const row of orderItems) {
+      if (!ordersMap[row.orderId]) {
+        ordersMap[row.orderId] = {
+          id: row.orderId,
+          orderDate: row.orderDate,
+          totalPrice: row.totalPrice,
+          items: []
+        };
+      }
+
+      ordersMap[row.orderId].items.push({
+        partName: row.partName,
+        price: row.itemPrice,
+        quantity: row.quantity,
+        seller: row.sellerFirstName + " " + row.sellerLastName
+      });
+    }
+    const orders = Object.values(ordersMap);
+    console.log(orders)
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error('Order history error:', error); // <--- Add this
+    res.status(500).json({ error: error.message });
   }
 };

@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
-import React, { useEffect , useState } from 'react'
+import React, {useContext, useEffect , useState } from 'react'
 import { useParams } from 'react-router-dom';
-
+import {useCart} from '../context/CartContext'
 const SearchResults = ({ results }) => {
-
-
+  const {addToCart} = useCart();
+  const handleAddToCart = (product) =>{
+    addToCart(product);
+  }
   return (
     <div className="mt-6 px-4 w-full" dir="rtl">
       <h2 className="text-2xl font-semibold text-blue-800 mb-6 text-center">نتائج البحث</h2>
@@ -21,6 +23,7 @@ const SearchResults = ({ results }) => {
                 <p className="text-sm text-gray-600">البائع: {result.seller}</p>
                 {/* <p className="text-sm text-gray-600">تفاصيل اخرى: {result.additionaldetails}</p> */}
               </div>
+              <button onClick = {() =>handleAddToCart(result)}>add to cart</button>
             </div>
           </Link>
         ))}

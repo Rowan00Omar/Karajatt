@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   Home,
   Search,
@@ -36,9 +37,9 @@ const Navbar = () => {
           <div className="hover:text-lightGray text-white p-2">
             <CartButton />
           </div>
-          <a href="#" className="hover:text-lightGray text-white p-2">
+          <Link to="/profile" className="hover:text-lightGray text-white p-2">
             <User className="w-6 h-6" />
-          </a>
+          </Link>
           <button
             onClick={logout}
             className="hover:text-lightGray text-white p-2"

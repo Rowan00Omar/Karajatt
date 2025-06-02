@@ -8,4 +8,5 @@ router.post("/logout", authenticateToken, authController.logout);
 router.get("/userInfo", authenticateToken, authController.UserInfo);
 router.delete("/deleteUser/:id",authController.deleteUser);
 router.get("/getAllUsers",authController.getAllUsers);
+router.get('/orders/history/:userId', authController.getOrderHistory);
 module.exports = router;

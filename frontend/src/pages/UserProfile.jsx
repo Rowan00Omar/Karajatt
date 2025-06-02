@@ -4,41 +4,47 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
-import React, { useState, Fragment } from "react";
+import React, { useState, Fragment,useEffect } from "react";
+import axios from "axios";
 
 const UserProfile = () => {
-  const [username] = useState("محمد أحمد");
-  const [email] = useState("mohamed@example.com");
+  const [username,setUsername] = useState("");
+  const [email,setEmail] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [orderHistory,setOrderHistory] = useState([])
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const fetchUserInfo = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const response = await axios.get("/api/auth/userInfo", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = response.data;
+        console.log(data);
+        if (data) {
+          const fullName = data.first_name + " " + data.last_name;
+          setUsername(fullName);
+          setEmail(data.email);
+        }
+        const res = await axios.get(`/api/auth/orders/history/${data.id}`);
+        setOrderHistory(res.data)
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   const initials = username
     .split(" ")
     .map((n) => n[0])
     .join("");
 
-  const orderHistory = [
-    {
-      id: 1,
-      partName: "Brake Pads",
-      orderDate: "2024-04-10",
-      price: "$45.00",
-      seller: "AutoHub Store",
-    },
-    {
-      id: 2,
-      partName: "Engine Oil 5W-30",
-      orderDate: "2024-03-15",
-      price: "$30.00",
-      seller: "CarCare Depot",
-    },
-    {
-      id: 3,
-      partName: "Air Filter",
-      orderDate: "2024-02-22",
-      price: "$18.00",
-      seller: "FastParts Inc.",
-    },
-  ];
+
 
   const handleDelete = () => {
     setIsModalOpen(true);

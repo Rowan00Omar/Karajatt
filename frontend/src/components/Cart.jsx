@@ -1,10 +1,25 @@
 import { useCart } from "../context/CartContext";
 import { X } from "lucide-react";
 import Button from "./Button";
-
+import axios from "axios";
 const Cart = ({ onClose }) => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
+  const handleCheckout = async (cartItems) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
+    try {
+      const response = await axios.get("/api/auth/userInfo", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const userId = response.data.id;
+      const data = await axios.post('/api/payments/checkout',{cartItems,userId});
+    
+  }
+  catch(err){
+          console.error("Payment failed:", err);
+  }
+}
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end p-4 pointer-events-none">
       <div
@@ -94,7 +109,7 @@ const Cart = ({ onClose }) => {
                 {cartTotal.toLocaleString("ar-SA")} ر.س
               </span>
             </div>
-            <Button className="w-full py-2 text-sm">اتمام الشراء</Button>
+            <Button  onClick = {() => handleCheckout(cartItems)}className="w-full py-2 text-sm">اتمام الشراء</Button>
           </div>
         )}
       </div>

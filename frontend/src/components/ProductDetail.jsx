@@ -4,13 +4,16 @@ import { useSwipeable } from "react-swipeable";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
-
+import {useCart} from '../context/CartContext'
 import FeedbackSection from "./Feedback";
 import Navbar from "./Navbar";
 import SellerChat from "./SellerChat";
 
 const ProductDetail = () => {
-
+    const {addToCart} = useCart();
+    const handleAddToCart = (product) =>{
+      addToCart(product);
+    }
    const [product, setProduct] = useState({});
    
    const [loading, setLoading] = useState(true);
@@ -88,7 +91,26 @@ const ProductDetail = () => {
       extra_image3,
       title
     } = product;
-  
+  const formattedResults =({
+        id: product.product_id,
+        name: product.part_name,
+        price: `${product.price} ريال`,
+        image: product.image_url,
+        extraImages: [
+          product.extra_image1,
+          product.extra_image2,
+          product.extra_image3,
+        ].filter(Boolean), // Only include if they exist
+        condition: product.condition,
+        storageDuration: product.storage_duration,
+        compatibleModels: `${product.start_year} إلى ${
+          product.end_year || product.start_year
+        }`,
+        seller: "Seller Name", // You might need to join with sellers table
+        rating: product.rating,
+        reviews: product.review_count,
+        additionalDetails: product.description,
+      });
   
   useEffect(() => {
     const mockResults = [
@@ -97,11 +119,9 @@ const ProductDetail = () => {
         name: title,
         price: price,
         image:
-          "https://media.istockphoto.com/id/1388637739/photo/mercedez-benz-glc-300-coupe-4matic-2022-matte-grey-closeup-car.jpg?s=612x612&w=0&k=20&c=8Bn62wf33y3wUg2ivDBR1YYkKv9VFPo4ZZqqzvqOuio=",
+          image_url,
         extraImages: [
-          "https://cloudfront-us-east-1.images.arcpublishing.com/tgam/FSW2QKURPVHLBBJLGW2GBX2VSI",
-          "https://images.automatrix.com/1/99094/86R8oepdERG.JPG",
-          "https://media.admiddleeast.com/photos/6724cf6793e8a2a64575a73e/16:9/w_2560%2Cc_limit/DK-02991.jpg",
+          extra_image1,extra_image2,extra_image3
         ],
         condition: condition,
         storageDuration: storage_duration,
@@ -279,6 +299,12 @@ if (allImages.length === 0) {
               onClick={() => setIsChatOpen(true)}
             >
               ارسال طلب عرض للبائع
+            </button>
+            <button
+              className="w-full bg-babyJanaBlue text-white py-1 rounded-lg hover:bg-blue-900 transition"
+              onClick={() => handleAddToCart(formattedResults)}
+            >
+              add to cart
             </button>
           </div>
         </div>
