@@ -7,6 +7,12 @@ const {
   deleteReview,
 } = require("../controllers/productController");
 const {
+  getSellerReviews,
+  addSellerReview,
+  updateSellerReview,
+  deleteSellerReview,
+} = require("../controllers/sellerController");
+const {
   authenticateToken,
   checkReviewOwnership,
   checkRole,
@@ -16,6 +22,7 @@ const {
   reviewUpdateLimiter,
 } = require("../middleware/rateLimit");
 
+// Product Reviews
 // Get paginated reviews for a product (public access)
 router.get("/product/:id/reviews", getProductReviews);
 
@@ -28,7 +35,7 @@ router.post(
   addReview
 );
 
-// Update a review (requires review ownership)
+// Update a product review (requires review ownership)
 router.put(
   "/reviews/:review_id",
   authenticateToken,
@@ -38,13 +45,45 @@ router.put(
   updateReview
 );
 
-// Delete a review (requires review ownership)
+// Delete a product review (requires review ownership)
 router.delete(
   "/reviews/:review_id",
   authenticateToken,
   checkRole("user", "seller"),
   checkReviewOwnership,
   deleteReview
+);
+
+// Seller Reviews
+// Get paginated reviews for a seller (public access)
+router.get("/seller/:id/reviews", getSellerReviews);
+
+// Add a new seller review (requires authenticated user)
+router.post(
+  "/seller/:seller_id/reviews",
+  authenticateToken,
+  checkRole("user"),
+  reviewLimiter,
+  addSellerReview
+);
+
+// Update a seller review (requires review ownership)
+router.put(
+  "/seller/reviews/:review_id",
+  authenticateToken,
+  checkRole("user"),
+  checkReviewOwnership,
+  reviewUpdateLimiter,
+  updateSellerReview
+);
+
+// Delete a seller review (requires review ownership)
+router.delete(
+  "/seller/reviews/:review_id",
+  authenticateToken,
+  checkRole("user"),
+  checkReviewOwnership,
+  deleteSellerReview
 );
 
 module.exports = router;

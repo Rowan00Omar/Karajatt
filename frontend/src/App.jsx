@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Link } from "react-router-dom";
+import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import AdminLayout from "./pages/admin/layout";
 import AdminPage from "./pages/admin/page";
 import SalesPage from "./pages/admin/sales";
@@ -21,12 +21,20 @@ import ProductDetail from "./pages/ProductDetail";
 import SellerProfile from "./pages/SellerProfile";
 
 // Layout wrapper for pages that need footer
-const UserLayout = ({ children }) => (
-  <div className="min-h-screen flex flex-col">
-    <div className="flex-grow">{children}</div>
-    <Footer />
-  </div>
-);
+const UserLayout = ({ children, showNavbar = true }) => {
+  const currentRole = localStorage.getItem("userRole");
+  const shouldShowNavbar = showNavbar && currentRole !== "seller";
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-grow">
+        {shouldShowNavbar && <Navbar />}
+        {children}
+      </div>
+      <Footer />
+    </div>
+  );
+};
 
 function App() {
   const [role, setRole] = useState(null);
@@ -79,12 +87,36 @@ function App() {
     }
   };
 
-  const ProtectedRoute = ({ children }) => {
+  const ProtectedRoute = ({ children, allowedRole }) => {
     const currentRole = role || localStorage.getItem("userRole");
     if (!currentRole) {
       return <Navigate to="/login" replace />;
     }
+    if (allowedRole && currentRole !== allowedRole) {
+      return <Navigate to={`/${currentRole}`} replace />;
+    }
     return children;
+  };
+
+  const HomeRoute = () => {
+    const currentRole = role || localStorage.getItem("userRole");
+
+    if (currentRole) {
+      switch (currentRole) {
+        case "admin":
+          return <Navigate to="/admin" replace />;
+        case "seller":
+          return <Navigate to="/seller" replace />;
+        case "user":
+          return <Navigate to="/user" replace />;
+      }
+    }
+
+    return (
+      <UserLayout>
+        <SearchForm />
+      </UserLayout>
+    );
   };
 
   if (isLoading) {
@@ -103,7 +135,6 @@ function App() {
           path="/part/:id"
           element={
             <UserLayout>
-              <Navbar />
               <ProductDetail />
             </UserLayout>
           }
@@ -112,83 +143,65 @@ function App() {
           path="/seller-profile/:id"
           element={
             <UserLayout>
-              <Navbar />
               <SellerProfile />
             </UserLayout>
           }
         />
 
         {/* Admin routes */}
-        {role === "admin" && (
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<AdminPage />} />
-            <Route path="sales" element={<SalesPage />} />
-            <Route path="inventory" element={<InventoryPage />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="manage" element={<ManageUsersPage />} />
-            <Route path="pending" element={<PendingRequestsPage />} />
-          </Route>
-        )}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<AdminPage />} />
+          <Route path="sales" element={<SalesPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="manage" element={<ManageUsersPage />} />
+          <Route path="pending" element={<PendingRequestsPage />} />
+        </Route>
 
         {/* Seller routes */}
-        {role === "seller" && (
-          <Route
-            path="/seller"
-            element={
-              <ProtectedRoute>
-                <UserLayout>
-                  <SellerLayout />
-                </UserLayout>
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<SellerUpload />} />
-            <Route path="my-products" element={<div>My Products</div>} />
-            <Route path="orders" element={<div>Orders</div>} />
-            <Route path="settings" element={<div>Settings</div>} />
-          </Route>
-        )}
+        <Route
+          path="/seller"
+          element={
+            <ProtectedRoute allowedRole="seller">
+              <SellerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<SellerUpload />} />
+          <Route path="my-products" element={<div>My Products</div>} />
+          <Route path="orders" element={<div>Orders</div>} />
+          <Route path="settings" element={<div>Settings</div>} />
+        </Route>
 
         {/* User routes */}
-        {role === "user" && (
-          <Route
-            path="/user/*"
-            element={
-              <ProtectedRoute>
-                <UserLayout>
-                  <div className="min-h-screen bg-gray-50">
-                    <Navbar />
-                    <main className="pt-16 md:pt-20">
-                      <Routes>
-                        <Route index element={<SearchForm />} />
-                        <Route path="orders" element={<div>My Orders</div>} />
-                        <Route path="part/:id" element={<ProductDetail />} />
-                      </Routes>
-                    </main>
-                  </div>
-                </UserLayout>
-              </ProtectedRoute>
-            }
-          />
-        )}
-
-        {/* Home route */}
         <Route
-          path="/"
+          path="/user/*"
           element={
-            <UserLayout>
-              <Navbar />
-              <SearchForm />
-            </UserLayout>
+            <ProtectedRoute allowedRole="user">
+              <UserLayout>
+                <div className="min-h-screen bg-gray-50">
+                  <main className="pt-16 md:pt-20">
+                    <Routes>
+                      <Route index element={<SearchForm />} />
+                      <Route path="orders" element={<div>My Orders</div>} />
+                      <Route path="part/:id" element={<ProductDetail />} />
+                    </Routes>
+                  </main>
+                </div>
+              </UserLayout>
+            </ProtectedRoute>
           }
         />
+
+        {/* Home route */}
+        <Route path="/" element={<HomeRoute />} />
 
         {/* Catch all - redirect to appropriate home based on role or login */}
         <Route path="*" element={<RoleBasedRedirect />} />

@@ -5,6 +5,75 @@ const {
   cloudinaryUploadImage,
   cloudinaryUploadMultipleImages,
 } = require("../utils/cloudinary");
+const { handleDatabaseError } = require("../utils/errorHandlers");
+
+// Get seller profile with average rating
+exports.getSellerProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get seller info and calculate average rating from all their products' reviews
+    const [sellerData] = await pool.query(
+      `SELECT 
+        u.id,
+        u.first_name,
+        u.last_name,
+        u.email,
+        COUNT(DISTINCT p.product_id) as total_products,
+        COUNT(DISTINCT r.review_id) as total_reviews,
+        AVG(r.rating) as average_rating
+      FROM users u
+      LEFT JOIN products p ON u.id = p.seller_id
+      LEFT JOIN reviews r ON p.product_id = r.product_id
+      WHERE u.id = ? AND u.role = 'seller'
+      GROUP BY u.id`,
+      [id]
+    );
+
+    if (!sellerData[0]) {
+      return res.status(404).json({ message: "Seller not found" });
+    }
+
+    // Get seller's products with their individual ratings
+    const [products] = await pool.query(
+      `SELECT 
+        p.product_id,
+        p.part_name,
+        p.title,
+        p.price,
+        p.image_url,
+        COUNT(r.review_id) as review_count,
+        AVG(r.rating) as product_rating
+      FROM products p
+      LEFT JOIN reviews r ON p.product_id = r.product_id
+      WHERE p.seller_id = ? AND p.approval_status = 'approved'
+      GROUP BY p.product_id
+      ORDER BY p.created_at DESC`,
+      [id]
+    );
+
+    const formattedSeller = {
+      id: sellerData[0].id,
+      name: `${sellerData[0].first_name} ${sellerData[0].last_name}`,
+      email: sellerData[0].email,
+      total_products: sellerData[0].total_products,
+      total_reviews: sellerData[0].total_reviews,
+      average_rating: parseFloat(sellerData[0].average_rating || 0).toFixed(1),
+      products: products.map((product) => ({
+        ...product,
+        product_rating: parseFloat(product.product_rating || 0).toFixed(1),
+      })),
+    };
+
+    res.json(formattedSeller);
+  } catch (error) {
+    console.error("Error fetching seller profile:", error);
+    res.status(500).json({
+      message: "Error fetching seller profile",
+      error: error.message,
+    });
+  }
+};
 
 exports.sellerUpload = async (req, res) => {
   const {
@@ -60,7 +129,7 @@ exports.sellerUpload = async (req, res) => {
         company_name, car_name, start_year, end_year, category_id, part_name, status, parts_in_stock,
         title, image_url, extra_image1, extra_image2, extra_image3,
         description, storage_duration, price, \`condition\`, seller_id, approval_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         manufacturer.trim(),
         model.trim(),
@@ -173,124 +242,139 @@ exports.filterProducts = async (req, res) => {
   }
 };
 
-// Get seller profile with average rating
-exports.getSellerProfile = async (req, res) => {
+// Get all reviews for a seller
+exports.getSellerReviews = async (req, res) => {
+  const { id } = req.params;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = (page - 1) * limit;
+
   try {
-    const { id } = req.params;
+    // Get total count of reviews
+    const [countResult] = await pool.query(
+      "SELECT COUNT(*) as count FROM seller_reviews WHERE seller_id = ?",
+      [id]
+    );
+    const totalReviews = countResult[0].count;
 
-    // Get seller info and calculate average rating from all their products' reviews
-    const [sellerData] = await pool.query(
-      `SELECT 
-        u.id,
-        u.first_name,
-        u.last_name,
-        u.email,
-        COUNT(DISTINCT p.product_id) as total_products,
-        COUNT(DISTINCT r.review_id) as total_reviews,
-        AVG(r.rating) as average_rating
-      FROM users u
-      LEFT JOIN products p ON u.id = p.seller_id
-      LEFT JOIN reviews r ON p.product_id = r.product_id
-      WHERE u.id = ? AND u.role = 'seller'
-      GROUP BY u.id`,
+    // Get reviews with user info
+    const [reviews] = await pool.query(
+      `SELECT sr.*, CONCAT(u.first_name, ' ', u.last_name) as reviewer_name 
+       FROM seller_reviews sr 
+       JOIN users u ON sr.user_id = u.id 
+       WHERE sr.seller_id = ? 
+       ORDER BY sr.created_at DESC 
+       LIMIT ? OFFSET ?`,
+      [id, limit, offset]
+    );
+
+    // Get average rating
+    const [avgRating] = await pool.query(
+      "SELECT ROUND(AVG(rating), 1) as average_rating FROM seller_reviews WHERE seller_id = ?",
       [id]
     );
 
-    if (!sellerData[0]) {
-      return res.status(404).json({ message: "Seller not found" });
-    }
-
-    // Get seller's products with their individual ratings
-    const [products] = await pool.query(
-      `SELECT 
-        p.product_id,
-        p.part_name,
-        p.title,
-        p.price,
-        p.image_url,
-        COUNT(r.review_id) as review_count,
-        AVG(r.rating) as product_rating
-      FROM products p
-      LEFT JOIN reviews r ON p.product_id = r.product_id
-      WHERE p.seller_id = ? AND p.approval_status = 'approved'
-      GROUP BY p.product_id
-      ORDER BY p.created_at DESC`,
-      [id]
-    );
-
-    const formattedSeller = {
-      id: sellerData[0].id,
-      name: `${sellerData[0].first_name} ${sellerData[0].last_name}`,
-      email: sellerData[0].email,
-      total_products: sellerData[0].total_products,
-      total_reviews: sellerData[0].total_reviews,
-      average_rating: parseFloat(sellerData[0].average_rating || 0).toFixed(1),
-      products: products.map((product) => ({
-        ...product,
-        product_rating: parseFloat(product.product_rating || 0).toFixed(1),
-      })),
-    };
-
-    res.json(formattedSeller);
-  } catch (error) {
-    console.error("Error fetching seller profile:", error);
-    res.status(500).json({
-      message: "Error fetching seller profile",
-      error: error.message,
+    res.json({
+      reviews,
+      total: totalReviews,
+      pages: Math.ceil(totalReviews / limit),
+      current_page: page,
+      average_rating: avgRating[0].average_rating || 0,
     });
+  } catch (error) {
+    handleDatabaseError(error, res);
   }
 };
 
-// Get seller reviews
-exports.getSellerReviews = async (req, res) => {
+// Add a new seller review
+exports.addSellerReview = async (req, res) => {
+  const { seller_id } = req.params;
+  const { rating, comment } = req.body;
+  const user_id = req.user.id;
+
   try {
-    const { id } = req.params;
-
-    // Get all reviews for the seller's products with user information
-    const [reviews] = await pool.query(
-      `SELECT 
-        r.*,
-        u.first_name,
-        u.last_name,
-        CONCAT(u.first_name, ' ', u.last_name) as reviewer_name,
-        p.title as product_title
-      FROM reviews r
-      JOIN products p ON r.product_id = p.product_id
-      JOIN users u ON r.user_id = u.id
-      WHERE p.seller_id = ?
-      ORDER BY r.created_at DESC`,
-      [id]
+    // Check if user has already reviewed this seller
+    const [existingReview] = await pool.query(
+      "SELECT * FROM seller_reviews WHERE user_id = ? AND seller_id = ?",
+      [user_id, seller_id]
     );
 
-    // Calculate average rating
-    const [ratingStats] = await pool.query(
-      `SELECT AVG(r.rating) as average_rating
-       FROM reviews r
-       JOIN products p ON r.product_id = p.product_id
-       WHERE p.seller_id = ?`,
-      [id]
+    if (existingReview.length > 0) {
+      return res.status(400).json({
+        message: "You have already reviewed this seller",
+      });
+    }
+
+    // Add the review
+    const [result] = await pool.query(
+      `INSERT INTO seller_reviews (user_id, seller_id, rating, comment) 
+       VALUES (?, ?, ?, ?)`,
+      [user_id, seller_id, rating, comment]
     );
 
-    const formattedReviews = reviews.map((review) => ({
-      review_id: review.review_id,
-      rating: review.rating,
-      comment: review.comment,
-      reviewer_name: review.reviewer_name,
-      product_title: review.product_title,
-      created_at: review.created_at,
-      updated_at: review.updated_at,
-      user_id: review.user_id,
-    }));
+    // Get the inserted review with reviewer name
+    const [review] = await pool.query(
+      `SELECT sr.*, CONCAT(u.first_name, ' ', u.last_name) as reviewer_name 
+       FROM seller_reviews sr 
+       JOIN users u ON sr.user_id = u.id 
+       WHERE sr.review_id = ?`,
+      [result.insertId]
+    );
 
-    res.json({
-      reviews: formattedReviews,
-      average_rating: parseFloat(ratingStats[0].average_rating || 0).toFixed(1),
-    });
+    res.status(201).json(review[0]);
   } catch (error) {
-    console.error("Error fetching seller reviews:", error);
-    res.status(500).json({
-      message: "Error fetching seller reviews",
-      error: error.message,
-    });
+    handleDatabaseError(error, res);
+  }
+};
+
+// Update a seller review
+exports.updateSellerReview = async (req, res) => {
+  const { review_id } = req.params;
+  const { rating, comment } = req.body;
+
+  try {
+    const [result] = await pool.query(
+      `UPDATE seller_reviews 
+       SET rating = ?, comment = ? 
+       WHERE review_id = ?`,
+      [rating, comment, review_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    // Get the updated review with reviewer name
+    const [review] = await pool.query(
+      `SELECT sr.*, CONCAT(u.first_name, ' ', u.last_name) as reviewer_name 
+       FROM seller_reviews sr 
+       JOIN users u ON sr.user_id = u.id 
+       WHERE sr.review_id = ?`,
+      [review_id]
+    );
+
+    res.json(review[0]);
+  } catch (error) {
+    handleDatabaseError(error, res);
+  }
+};
+
+// Delete a seller review
+exports.deleteSellerReview = async (req, res) => {
+  const { review_id } = req.params;
+
+  try {
+    const [result] = await pool.query(
+      "DELETE FROM seller_reviews WHERE review_id = ?",
+      [review_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    res.json({ message: "Review deleted successfully" });
+  } catch (error) {
+    handleDatabaseError(error, res);
   }
 };

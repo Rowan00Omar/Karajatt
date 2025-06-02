@@ -80,8 +80,8 @@ const Reviews = ({ type, id }) => {
     return <div className="text-red-500 text-center py-4">{error}</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="bg-white rounded-xl border border-gray-200 p-6" dir="rtl">
+      <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-blue-900">
           التقييمات والمراجعات ({reviews.length})
         </h2>
@@ -103,7 +103,7 @@ const Reviews = ({ type, id }) => {
       </div>
 
       {/* Reviews List */}
-      <div className="space-y-4">
+      <div className="space-y-4 mb-6">
         {reviews.map((review) => (
           <div
             key={review.review_id}
@@ -129,11 +129,6 @@ const Reviews = ({ type, id }) => {
                 ))}
               </div>
             </div>
-            {type === "seller" && review.product_title && (
-              <p className="text-sm text-blue-600 mb-2">
-                تقييم على منتج: {review.product_title}
-              </p>
-            )}
             <p className="text-gray-700">{review.comment}</p>
             <p className="text-xs text-gray-500 mt-2">
               {new Date(review.created_at).toLocaleDateString("ar-SA")}
@@ -143,7 +138,7 @@ const Reviews = ({ type, id }) => {
       </div>
 
       {/* Add Review Form */}
-      {!userHasReviewed && type === "product" && (
+      {!userHasReviewed && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
