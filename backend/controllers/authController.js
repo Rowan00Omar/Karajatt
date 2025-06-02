@@ -24,19 +24,22 @@ exports.register = async (req, res) => {
         last_name.trim(),
         email.toLowerCase(),
         hashedPassword,
-        role.trim() ,
+        role.trim(),
       ]
     );
 
     console.log("ziad");
     res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
-    // res.status(500).json({ error: err.message });
+    console.error("Registration error:", err);
+    res
+      .status(500)
+      .json({ message: "Error during registration", error: err.message });
   }
 };
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  
+
   try {
     const [userRows] = await pool.query("SELECT * FROM users WHERE email = ?", [
       email.toLowerCase(),
@@ -56,7 +59,8 @@ exports.login = async (req, res) => {
     });
     res.json({ token });
   } catch (err) {
-    // res.status(500).json({ error: err.message });
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Error during login", error: err.message });
   }
 };
 exports.logout = async (req, res) => {
@@ -83,18 +87,26 @@ exports.UserInfo = async (req, res) => {
     ]);
     if (rows.length > 0) {
       const user = rows[0];
-      res.json({ role: user.role, id: user.id , email : user.email , first_name : user.first_name, last_name: user.last_name});
+      res.json({
+        role: user.role,
+        id: user.id,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      });
     } else {
-      res.status(404).json({ error: "User not found" });
+      res.status(404).json({ message: "User not found" });
     }
   } catch (err) {
-    console.error("Server error:", err);
-    // res.status(500).json({ error: "Server error" });
+    console.error("UserInfo error:", err);
+    res
+      .status(500)
+      .json({ message: "Error fetching user information", error: err.message });
   }
 };
 exports.getAllUsers = async (req, res) => {
   try {
-    const [users] = await pool.query("SELECT * from users")
+    const [users] = await pool.query("SELECT * from users");
     res.status(200).json({ users });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -103,18 +115,18 @@ exports.getAllUsers = async (req, res) => {
 };
 exports.deleteUser = async (req, res) => {
   try {
-    console.log("hit me")
-    const userId = req.params.id; 
+    console.log("hit me");
+    const userId = req.params.id;
     await pool.query("SET FOREIGN_KEY_CHECKS = 0");
 
-    
     const [user] = await pool.query("DELETE FROM users WHERE id = ?", [userId]);
 
-    
     await pool.query("SET FOREIGN_KEY_CHECKS = 1");
 
     if (!user) {
-      return res.status(404).json({ error: "User not found or already deleted" });
+      return res
+        .status(404)
+        .json({ error: "User not found or already deleted" });
     }
 
     res.json({ message: "User deleted successfully", deletedUser: user });
@@ -127,7 +139,8 @@ exports.deleteUser = async (req, res) => {
 exports.getOrderHistory = async (req, res) => {
   const { userId } = req.params;
   try {
-    const [orderItems] = await pool.query(`
+    const [orderItems] = await pool.query(
+      `
   SELECT 
     o.id AS orderId,
     o.total_price AS totalPrice,
@@ -144,10 +157,12 @@ exports.getOrderHistory = async (req, res) => {
   JOIN users u ON p.seller_id = u.id
   WHERE o.user_id = ?
   ORDER BY o.order_date DESC
-`, [userId]);
+`,
+      [userId]
+    );
 
-      const ordersMap = {};
-      console.log("ALOOOOOOO")
+    const ordersMap = {};
+    console.log("ALOOOOOOO");
 
     for (const row of orderItems) {
       if (!ordersMap[row.orderId]) {
@@ -155,7 +170,7 @@ exports.getOrderHistory = async (req, res) => {
           id: row.orderId,
           orderDate: row.orderDate,
           totalPrice: row.totalPrice,
-          items: []
+          items: [],
         };
       }
 
@@ -163,14 +178,14 @@ exports.getOrderHistory = async (req, res) => {
         partName: row.partName,
         price: row.itemPrice,
         quantity: row.quantity,
-        seller: row.sellerFirstName + " " + row.sellerLastName
+        seller: row.sellerFirstName + " " + row.sellerLastName,
       });
     }
     const orders = Object.values(ordersMap);
-    console.log(orders)
+    console.log(orders);
     res.status(200).json(orders);
   } catch (error) {
-    console.error('Order history error:', error); // <--- Add this
+    console.error("Order history error:", error); // <--- Add this
     res.status(500).json({ error: error.message });
   }
 };

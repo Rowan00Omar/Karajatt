@@ -13,6 +13,7 @@ import {
   X,
   Users,
   ClipboardCheck,
+  LogOut,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -53,6 +54,11 @@ export function AdminBar({ isOpen }) {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
+
   return (
     <>
       {/* Mobile Menu Button */}
@@ -69,23 +75,25 @@ export function AdminBar({ isOpen }) {
 
       {/* Mobile Navigation Overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 sm:hidden"
           onClick={toggleMobileMenu}
         />
       )}
 
       {/* Sidebar for both Mobile and Desktop */}
-      <div 
+      <div
         className={`fixed inset-y-0 right-0 z-40 w-[240px] bg-white transform transition-transform duration-300 ease-in-out ${
-          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full sm:translate-x-0'
+          isMobileMenuOpen
+            ? "translate-x-0"
+            : "translate-x-full sm:translate-x-0"
         }`}
       >
         <div className="flex flex-col h-full py-4" dir="rtl">
           <div className="px-4 mb-4">
             <h2 className="text-xl font-bold">لوحة التحكم</h2>
           </div>
-          
+
           <nav className="flex-1">
             <ul className="space-y-1 px-2">
               {items.map((item) => (
@@ -95,9 +103,9 @@ export function AdminBar({ isOpen }) {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                        isActive 
-                          ? 'bg-indigo-50 text-indigo-600' 
-                          : 'hover:bg-gray-100'
+                        isActive
+                          ? "bg-indigo-50 text-indigo-600"
+                          : "hover:bg-gray-100"
                       }`
                     }
                   >
@@ -110,9 +118,14 @@ export function AdminBar({ isOpen }) {
           </nav>
 
           <div className="px-4 mt-auto">
-            <div className="py-4 text-sm text-gray-500">
-              ِAhlan
-            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 text-right"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>تسجيل الخروج</span>
+            </button>
+            <div className="py-4 text-sm text-gray-500">ِAhlan</div>
           </div>
         </div>
       </div>

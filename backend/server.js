@@ -12,14 +12,15 @@ const cartRoutes = require("./routes/cartRoutes");
 const sellerRoutes = require("./routes/sellerRoutes");
 const productRoutes = require("./routes/productRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 //Middleware
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.json());
-
 //Routes
-app.use("/api/product" , productRoutes)
+app.use("/api", reviewRoutes);
+app.use("/api/product", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/filtering", filteringRoutes);
 app.use("/api/payments", paymentRoutes);

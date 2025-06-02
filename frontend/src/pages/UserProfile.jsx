@@ -4,18 +4,18 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
-import React, { useState, Fragment,useEffect } from "react";
+import React, { useState, Fragment, useEffect } from "react";
 import axios from "axios";
 
 const UserProfile = () => {
-  const [username,setUsername] = useState("");
-  const [email,setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [orderHistory,setOrderHistory] = useState([])
+  const [orderHistory, setOrderHistory] = useState([]);
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchUserInfo = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) return;
 
       try {
@@ -23,14 +23,13 @@ const UserProfile = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = response.data;
-        console.log(data);
         if (data) {
           const fullName = data.first_name + " " + data.last_name;
           setUsername(fullName);
           setEmail(data.email);
         }
         const res = await axios.get(`/api/auth/orders/history/${data.id}`);
-        setOrderHistory(res.data)
+        setOrderHistory(res.data);
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -44,14 +43,15 @@ const UserProfile = () => {
     .map((n) => n[0])
     .join("");
 
-
-
   const handleDelete = () => {
     setIsModalOpen(true);
   };
 
   return (
-    <div className="min-h-screen bg-white py-25 px-4 flex justify-center" dir="rtl">
+    <div
+      className="min-h-screen bg-white py-25 px-4 flex justify-center"
+      dir="rtl"
+    >
       <div className="w-full max-w-4xl flex flex-col gap-8 text-right">
         {/* User Info */}
         <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-6">
@@ -60,7 +60,9 @@ const UserProfile = () => {
               {initials}
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-[#4a60e9]">بيانات المستخدم</h2>
+              <h2 className="text-xl font-semibold text-[#4a60e9]">
+                بيانات المستخدم
+              </h2>
             </div>
           </div>
 
@@ -78,7 +80,7 @@ const UserProfile = () => {
             onClick={handleDelete}
             className="w-fit mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition flex items-center gap-1"
           >
-          <TrashIcon className="w-5 h-5" /> حذف الحساب
+            <TrashIcon className="w-5 h-5" /> حذف الحساب
           </button>
         </div>
 
@@ -86,7 +88,9 @@ const UserProfile = () => {
         <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-6 overflow-x-auto">
           <div className="flex items-center gap-2 mb-4">
             <ReceiptRefundIcon className="w-6 h-6 text-[#4a60e9]" />
-            <h2 className="text-xl font-semibold text-[#4a60e9]">الطلبات السابقة</h2>
+            <h2 className="text-xl font-semibold text-[#4a60e9]">
+              الطلبات السابقة
+            </h2>
           </div>
           <table className="min-w-full text-sm text-right">
             <thead className="text-gray-500 border-b">
@@ -112,7 +116,11 @@ const UserProfile = () => {
 
         {/* Confirmation Modal */}
         <Transition appear show={isModalOpen} as={Fragment}>
-          <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
+          <Dialog
+            as="div"
+            className="relative z-10"
+            onClose={() => setIsModalOpen(false)}
+          >
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
