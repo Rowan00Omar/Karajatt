@@ -1,4 +1,14 @@
 import { Routes, Route } from "react-router-dom";
+import AdminLayout from "./pages/admin/layout";
+import AdminPage from "./pages/admin/page";
+import SalesPage from "./pages/admin/sales";
+import InventoryPage from "./pages/admin/inventory";
+import UsersPage from "./pages/admin/users";
+import LandingPage from "./pages/LandingPage";
+import { CartProvider } from "./context/CartContext";
+import ManageUsersPage from "./pages/admin/manage";
+import PendingRequestsPage from "./pages/admin/pending";
+import Login from "./pages/Login";
 import AdminLayout from "./app/admin/layout";
 import AdminPage from "./app/admin/page";
 import SalesPage from "./app/admin/sales/page";
@@ -43,33 +53,20 @@ function App() {
   const ProtectedAdminHome = withAuthProtection(AdminDash, ["admin"]);
   const ProtectedSellerHome = withAuthProtection(SellerUpload, ["seller"]);
   return (
-    <>
-    <main>
     <CartProvider>
-    <Navbar />
-    <Routes>
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminPage />} />
-        <Route path="sales" element={<SalesPage />} />
-        <Route path="inventory" element={<InventoryPage />} />
-        <Route path="users" element={<UsersPage />} />
-      </Route>
-      <Route path="/sellerHome" element={<ProtectedSellerHome />} />
-      <Route path="*" element={<Login />} />
-      <Route path = "/profile" element={<UserProfile/>}/>
-      <Route path = "/manageUsers" element={<ManageUsers/>}/>
-      <Route path="/ProductDetail" element={<ProductDetail />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/home" element={<ProtectedSearchForm />} />
-      <Route path="/part/:id" element={<ProductDetail/>   } />
-    </Routes>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminPage />} />
+          <Route path="sales" element={<SalesPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route path="manage" element={<ManageUsersPage />} />
+          <Route path="pending" element={<PendingRequestsPage />} />
+        </Route>
+        <Route path="login" element={<Login />} />
+      </Routes>
     </CartProvider>
-    </main>
-            {/* <div className="absolute bottom-0 w-full">
-        <Footer />
-        </div> */}
-        </>
   );
 }
 

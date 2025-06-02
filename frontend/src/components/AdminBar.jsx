@@ -9,22 +9,13 @@ import {
   User,
   PanelRightOpen,
   PanelLeftOpen,
+  Menu,
+  X,
+  Users,
+  ClipboardCheck,
 } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarFooter,
-  SidebarSeparator,
-  SidebarHeader,
-} from "./ui/sidebar";
+import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
 
 const items = [
   {
@@ -42,55 +33,90 @@ const items = [
     path: "/admin/users",
     icon: User,
   },
+  {
+    title: "إدارة المستخدمين",
+    path: "/admin/manage",
+    icon: Users,
+  },
+  {
+    title: "الطلبات المعلقة",
+    path: "/admin/pending",
+    icon: ClipboardCheck,
+  },
 ];
 
 export function AdminBar({ isOpen }) {
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   return (
-    <div className="flex" dir="rtl">
-      <Sidebar side="right" collapsible="icon" variant="sidebar">
-        <SidebarHeader>
-          {isOpen ? (
-            <SidebarMenuButton>
-              <PanelLeftOpen />
-            </SidebarMenuButton>
-          ) : (
-            <SidebarMenuButton>
-              <PanelRightOpen />
-            </SidebarMenuButton>
-          )}
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>لوحة التحكم</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      className={location.pathname === item.path ? "bg-muted" : ""}
-                    >
-                      <Link to={item.path}>
-                        <span>{item.title}</span>
-                        <item.icon />
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarSeparator />
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>ِAhlan</SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-    </div>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={toggleMobileMenu}
+        className="fixed top-4 right-4 z-50 p-2 rounded-lg bg-white shadow-md sm:hidden hover:bg-gray-100 transition-colors"
+      >
+        {isMobileMenuOpen ? (
+          <X className="h-6 w-6 text-gray-600" />
+        ) : (
+          <Menu className="h-6 w-6 text-gray-600" />
+        )}
+      </button>
+
+      {/* Mobile Navigation Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 sm:hidden"
+          onClick={toggleMobileMenu}
+        />
+      )}
+
+      {/* Sidebar for both Mobile and Desktop */}
+      <div 
+        className={`fixed inset-y-0 right-0 z-40 w-[240px] bg-white transform transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full sm:translate-x-0'
+        }`}
+      >
+        <div className="flex flex-col h-full py-4" dir="rtl">
+          <div className="px-4 mb-4">
+            <h2 className="text-xl font-bold">لوحة التحكم</h2>
+          </div>
+          
+          <nav className="flex-1">
+            <ul className="space-y-1 px-2">
+              {items.map((item) => (
+                <li key={item.title}>
+                  <NavLink
+                    to={item.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        isActive 
+                          ? 'bg-indigo-50 text-indigo-600' 
+                          : 'hover:bg-gray-100'
+                      }`
+                    }
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.title}</span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="px-4 mt-auto">
+            <div className="py-4 text-sm text-gray-500">
+              ِAhlan
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 

@@ -4,7 +4,7 @@ import { AdminSectionCard } from "@/components/AdminSectionCard";
 
 export default function SalesPage() {
   return (
-    <section className="w-full">
+    <section className="w-full animate-fadeIn">
       <h2 className="mb-4 text-2xl font-bold text-right">المبيعات والطلبات</h2>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* إجمالي المبيعات */}
