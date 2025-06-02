@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from "axios";
-import { UserPlus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { UserPlus, Trash2 } from "lucide-react";
 import Signup from "@/pages/Signup";
 
 export default function ManageUsersPage() {
@@ -10,8 +10,6 @@ export default function ManageUsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddingUser, setIsAddingUser] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [expandedUserId, setExpandedUserId] = useState(null);
   const usersPerPage = 8;
 
   useEffect(() => {
@@ -57,38 +55,15 @@ export default function ManageUsersPage() {
   };
 
   const handleDelete = async (userIdToDelete) => {
-    if (!confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
-      return;
-    }
-
     try {
       const token = localStorage.getItem('token');
       await axios.delete(`/api/auth/deleteUser/${userIdToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUsers(users.filter(user => user.id !== userIdToDelete));
+      setUsers(users.filter(user => user._id !== userIdToDelete));
     } catch (err) {
       console.error("Delete failed:", err);
       alert(err.response?.data?.message || "Failed to delete user");
-    }
-  };
-
-  const toggleUserExpansion = async (userId) => {
-    if (expandedUserId === userId) {
-      setExpandedUserId(null);
-      setEvents([]);
-    } else {
-      setExpandedUserId(userId);
-      try {
-        // You'll need to implement this API endpoint
-        const response = await axios.get(`/api/users/${userId}/events`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        setEvents(response.data.events || []);
-      } catch (error) {
-        console.error("Error fetching user events:", error);
-        setEvents([]);
-      }
     }
   };
 
@@ -147,7 +122,7 @@ export default function ManageUsersPage() {
         {currentUsers.map((user) => (
           user.role === "master" ? null : (
             <div
-              key={user.id}
+              key={user._id}
               className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
             >
               <div className="flex items-center justify-between">
@@ -160,16 +135,6 @@ export default function ManageUsersPage() {
                 <div className="flex items-center gap-4">
                   <span className="px-3 py-1 rounded-full text-sm bg-gray-100">{user.role}</span>
                   <button
-                    onClick={() => toggleUserExpansion(user.id)}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    {expandedUserId === user.id ? (
-                      <ChevronUp className="h-5 w-5" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5" />
-                    )}
-                  </button>
-                  <button
                     onClick={() => handleDelete(user.id)}
                     className="text-red-500 hover:text-red-600 transition-colors"
                   >
@@ -177,24 +142,6 @@ export default function ManageUsersPage() {
                   </button>
                 </div>
               </div>
-
-              {/* Expanded User Details */}
-              {expandedUserId === user.id && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-semibold mb-2">نشاط المستخدم:</h4>
-                  {events.length > 0 ? (
-                    <ul className="space-y-2">
-                      {events.map((event) => (
-                        <li key={event.id} className="text-sm text-gray-600">
-                          {event.description} - {new Date(event.timestamp).toLocaleDateString('ar-SA')}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-sm text-gray-500">لا يوجد نشاط حالياً</p>
-                  )}
-                </div>
-              )}
             </div>
           )
         ))}

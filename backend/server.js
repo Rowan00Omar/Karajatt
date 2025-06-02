@@ -11,6 +11,7 @@ const paymentRoutes = require("./routes/paymentRoute");
 const cartRoutes = require("./routes/cartRoutes");
 const sellerRoutes = require("./routes/sellerRoutes");
 const productRoutes = require("./routes/productRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 //Middleware
 app.use(bodyParser.json());
@@ -24,6 +25,7 @@ app.use("/api/filtering", filteringRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/seller", sellerRoutes);
+app.use("/api/admin", adminRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

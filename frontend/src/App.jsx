@@ -7,7 +7,8 @@ import UsersPage from "./pages/admin/users";
 import LandingPage from "./pages/LandingPage";
 import { CartProvider } from "./context/CartContext";
 import ManageUsersPage from "./pages/admin/manage";
-
+import PendingRequestsPage from "./pages/admin/pending";
+import Login from "./pages/Login";
 function App() {
   return (
     <CartProvider>
@@ -19,7 +20,9 @@ function App() {
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="manage" element={<ManageUsersPage />} />
+          <Route path="pending" element={<PendingRequestsPage />} />
         </Route>
+        <Route path="login" element={< Login/>} />
       </Routes>
     </CartProvider>
   );

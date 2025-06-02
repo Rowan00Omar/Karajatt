@@ -1,9 +1,7 @@
-
-
 const fs = require('fs');
 const path = require('path');
 const pool = require("../db");
-const { cloudinaryUploadImage , cloudinaryUploadMultipleImages } = require("../utils/cloudinary");
+const { cloudinaryUploadImage, cloudinaryUploadMultipleImages } = require("../utils/cloudinary");
 
 exports.sellerUpload = async (req, res) => {
   console.log("hittt")
@@ -23,24 +21,22 @@ exports.sellerUpload = async (req, res) => {
     condition,
     id,
   } = req.body;
-   console.log(req.body)
+  console.log(req.body)
 
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No images uploaded" });
     }
-   console.log(req.files)
+    console.log(req.files)
     const filePaths = req.files.map(file =>
       path.join(__dirname, "../images", file.filename)
     );
 
     const uploadResults = await cloudinaryUploadMultipleImages(filePaths);
 
-
     filePaths.forEach(filePath => fs.unlinkSync(filePath));
 
     const [image_url, extra_image1_url = null, extra_image2_url = null, extra_image3_url = null] = uploadResults.map(r => r.secure_url);
-
 
     const [categoryRows] = await pool.query(
       "SELECT id FROM categories WHERE category_name = ?",
@@ -53,13 +49,13 @@ exports.sellerUpload = async (req, res) => {
 
     const category_id = categoryRows[0].id;
 
-    // إدخال المنتج مع الصور الأربعة
+    // Insert product with initial approval_status as 'pending'
     await pool.query(
       `INSERT INTO products (
         company_name, car_name, start_year, end_year, category_id, part_name, status, parts_in_stock,
         title, image_url, extra_image1, extra_image2, extra_image3,
-        description, storage_duration, price, \`condition\`, seller_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        description, storage_duration, price, \`condition\`, seller_id, approval_status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         manufacturer.trim(),
         model.trim(),
@@ -83,7 +79,7 @@ exports.sellerUpload = async (req, res) => {
     );
 
     res.status(201).json({
-      message: "Product inserted successfully.",
+      message: "Product uploaded successfully and pending approval.",
       images: uploadResults.map(r => r.secure_url)
     });
   } catch (err) {
@@ -91,7 +87,6 @@ exports.sellerUpload = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 exports.filterProducts = async (req, res) => {
   try {
@@ -131,7 +126,7 @@ exports.filterProducts = async (req, res) => {
         c.category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE 1=1
+      WHERE p.approval_status = 'approved'
     `;
 
     const params = [];

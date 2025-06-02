@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Users,
+  ClipboardCheck,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -36,6 +37,11 @@ const items = [
     title: "إدارة المستخدمين",
     path: "/admin/manage",
     icon: Users,
+  },
+  {
+    title: "الطلبات المعلقة",
+    path: "/admin/pending",
+    icon: ClipboardCheck,
   },
 ];
 
