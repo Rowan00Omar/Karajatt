@@ -174,3 +174,183 @@ exports.filterProducts = async (req, res) => {
     });
   }
 };
+
+exports.getBestSelling = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    const [products] = await pool.query(`
+      SELECT 
+        p.*,
+        COALESCE(SUM(o.quantity), 0) as total_sales,
+        COALESCE(SUM(o.quantity * p.price), 0) as revenue
+      FROM products p
+      LEFT JOIN order_items o ON p.product_id = o.product_id
+      WHERE p.seller_id = ?
+      GROUP BY p.product_id
+      ORDER BY total_sales DESC
+      LIMIT 6
+    `, [sellerId]);
+
+    res.json({ products });
+  } catch (err) {
+    console.error('Error fetching best sellers:', err);
+    res.status(500).json({ error: 'Failed to fetch best-selling parts' });
+  }
+};
+
+exports.getSalesReport = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    const year = parseInt(req.params.year);
+
+    // Validate year
+    if (isNaN(year) || year < 2000 || year > 2100) {
+      return res.status(400).json({ error: 'Invalid year' });
+    }
+
+    const [sales] = await pool.query(`
+      SELECT 
+        MONTH(o.created_at) as month,
+        COUNT(oi.order_item_id) as total_sales,
+        SUM(oi.quantity * p.price) as revenue
+      FROM orders o
+      JOIN order_items oi ON o.order_id = oi.order_id
+      JOIN products p ON oi.product_id = p.product_id
+      WHERE p.seller_id = ? 
+      AND YEAR(o.created_at) = ?
+      GROUP BY MONTH(o.created_at)
+      ORDER BY month
+    `, [sellerId, year]);
+
+    // Fill in missing months with zero values
+    const fullYearData = Array.from({ length: 12 }, (_, i) => {
+      const existingData = sales.find(s => s.month === i + 1);
+      return existingData || {
+        month: i + 1,
+        total_sales: 0,
+        revenue: 0
+      };
+    });
+
+    res.json({ sales: fullYearData });
+  } catch (err) {
+    console.error('Error fetching sales report:', err);
+    res.status(500).json({ error: 'Failed to fetch sales report' });
+  }
+};
+
+exports.getPaymentInfo = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    const [rows] = await pool.query(
+      'SELECT bank_name, account_holder, account_number, iban FROM seller_payment_info WHERE seller_id = ?',
+      [sellerId]
+    );
+
+    res.json({ payment_info: rows[0] || {} });
+  } catch (err) {
+    console.error('Error fetching payment info:', err);
+    res.status(500).json({ error: 'Failed to fetch payment information' });
+  }
+};
+
+exports.updatePaymentInfo = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    const { bank_name, account_holder, account_number, iban } = req.body;
+
+    // Validate required fields
+    if (!bank_name || !account_holder || !account_number || !iban) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Check if payment info exists
+    const [existing] = await pool.query(
+      'SELECT seller_id FROM seller_payment_info WHERE seller_id = ?',
+      [sellerId]
+    );
+
+    if (existing.length > 0) {
+      // Update existing record
+      await pool.query(
+        `UPDATE seller_payment_info 
+         SET bank_name = ?, account_holder = ?, account_number = ?, iban = ?
+         WHERE seller_id = ?`,
+        [bank_name, account_holder, account_number, iban, sellerId]
+      );
+    } else {
+      // Insert new record
+      await pool.query(
+        `INSERT INTO seller_payment_info 
+         (seller_id, bank_name, account_holder, account_number, iban)
+         VALUES (?, ?, ?, ?, ?)`,
+        [sellerId, bank_name, account_holder, account_number, iban]
+      );
+    }
+
+    res.json({ message: 'Payment information updated successfully' });
+  } catch (err) {
+    console.error('Error updating payment info:', err);
+    res.status(500).json({ error: 'Failed to update payment information' });
+  }
+};
+
+exports.getInventory = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    const { sort = 'created_at', order = 'desc' } = req.query;
+
+    // Validate sort field
+    const allowedSortFields = ['created_at', 'stock', 'price'];
+    const sortField = allowedSortFields.includes(sort) ? sort : 'created_at';
+    
+    // Validate order direction
+    const orderDirection = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+    const [products] = await pool.query(`
+      SELECT *
+      FROM products
+      WHERE seller_id = ?
+      ORDER BY ${sortField} ${orderDirection}
+    `, [sellerId]);
+
+    res.json({ products });
+  } catch (err) {
+    console.error('Error fetching inventory:', err);
+    res.status(500).json({ error: 'Failed to fetch inventory' });
+  }
+};
+
+exports.updateStock = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    const productId = req.params.id;
+    const { stock } = req.body;
+
+    // Validate stock value
+    if (typeof stock !== 'number' || stock < 0) {
+      return res.status(400).json({ error: 'Invalid stock value' });
+    }
+
+    // Verify product belongs to seller
+    const [product] = await pool.query(
+      'SELECT product_id FROM products WHERE product_id = ? AND seller_id = ?',
+      [productId, sellerId]
+    );
+
+    if (product.length === 0) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Update stock
+    await pool.query(
+      'UPDATE products SET stock = ? WHERE product_id = ?',
+      [stock, productId]
+    );
+
+    res.json({ message: 'Stock updated successfully' });
+  } catch (err) {
+    console.error('Error updating stock:', err);
+    res.status(500).json({ error: 'Failed to update stock' });
+  }
+};
