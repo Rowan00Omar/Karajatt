@@ -9,6 +9,12 @@ import { CartProvider } from "./context/CartContext";
 import ManageUsersPage from "./pages/admin/manage";
 import PendingRequestsPage from "./pages/admin/pending";
 import Login from "./pages/Login";
+import SellerLayout from "./pages/seller/layout";
+import BestSellingPage from "./pages/seller/best-selling";
+import SalesReportPage from "./pages/seller/sales-report";
+import PaymentInfoPage from "./pages/seller/payment-info";
+import SellerInventoryPage from "./pages/seller/inventory";
+
 function App() {
   return (
     <CartProvider>
@@ -22,7 +28,13 @@ function App() {
           <Route path="manage" element={<ManageUsersPage />} />
           <Route path="pending" element={<PendingRequestsPage />} />
         </Route>
-        <Route path="login" element={< Login/>} />
+        <Route path="/seller" element={<SellerLayout />}>
+          <Route path="best-selling" element={<BestSellingPage />} />
+          <Route path="sales-report" element={<SalesReportPage />} />
+          <Route path="payment-info" element={<PaymentInfoPage />} />
+          <Route path="inventory" element={<SellerInventoryPage />} />
+        </Route>
+        <Route path="login" element={<Login/>} />
       </Routes>
     </CartProvider>
   );
