@@ -19,8 +19,12 @@ import "./App.css";
 import axios from "axios";
 import ProductDetail from "./pages/ProductDetail";
 import SellerProfile from "./pages/SellerProfile";
+import SellerLayout from "./pages/seller/layout";
+import BestSellingPage from "./pages/seller/best-selling";
+import SalesReportPage from "./pages/seller/sales-report";
+import PaymentInfoPage from "./pages/seller/payment-info";
+import SellerInventoryPage from "./pages/seller/inventory";
 
-// Layout wrapper for pages that need footer
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
   const shouldShowNavbar = showNavbar && currentRole !== "seller";
@@ -126,11 +130,9 @@ function App() {
   return (
     <CartProvider>
       <Routes>
-        {/* Auth routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* Public routes that should be accessible without redirection */}
         <Route
           path="/part/:id"
           element={
@@ -148,7 +150,6 @@ function App() {
           }
         />
 
-        {/* Admin routes */}
         <Route
           path="/admin"
           element={
@@ -165,22 +166,13 @@ function App() {
           <Route path="pending" element={<PendingRequestsPage />} />
         </Route>
 
-        {/* Seller routes */}
-        <Route
-          path="/seller"
-          element={
-            <ProtectedRoute allowedRole="seller">
-              <SellerLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<SellerUpload />} />
-          <Route path="my-products" element={<div>My Products</div>} />
-          <Route path="orders" element={<div>Orders</div>} />
-          <Route path="settings" element={<div>Settings</div>} />
+          <Route path="/seller" element={<SellerLayout />}>
+          <Route path="best-selling" element={<BestSellingPage />} />
+          <Route path="sales-report" element={<SalesReportPage />} />
+          <Route path="payment-info" element={<PaymentInfoPage />} />
+          <Route path="inventory" element={<SellerInventoryPage />} />
         </Route>
 
-        {/* User routes */}
         <Route
           path="/user/*"
           element={
@@ -200,10 +192,9 @@ function App() {
           }
         />
 
-        {/* Home route */}
         <Route path="/" element={<HomeRoute />} />
 
-        {/* Catch all - redirect to appropriate home based on role or login */}
+
         <Route path="*" element={<RoleBasedRedirect />} />
       </Routes>
     </CartProvider>
