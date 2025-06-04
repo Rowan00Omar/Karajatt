@@ -8,17 +8,24 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { LogOut } from "lucide-react";
+
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  window.location.href = "/login";
+};
+
 
 const items = [
-  {
-    title: "الأكثر مبيعاً",
-    path: "/seller/best-selling",
-    icon: BarChart3,
-  },
   {
     title: "تقرير المبيعات الشهري",
     path: "/seller/sales-report",
     icon: LineChart,
+  },
+  {
+    title: "رفع منتج جديد",
+    path: "/seller/upload",
+    icon: BarChart3,
   },
   {
     title: "معلومات البنك/الدفع",
@@ -95,11 +102,14 @@ export function SellerBar() {
               ))}
             </ul>
           </nav>
-
           <div className="px-4 mt-auto">
-            <div className="py-4 text-sm text-gray-500">
-              لوحة تحكم البائع
-            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 text-right"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>تسجيل الخروج</span>
+            </button>
           </div>
         </div>
       </div>

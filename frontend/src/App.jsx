@@ -19,8 +19,6 @@ import "./App.css";
 import axios from "axios";
 import ProductDetail from "./pages/ProductDetail";
 import SellerProfile from "./pages/SellerProfile";
-import SellerLayout from "./pages/seller/layout";
-import BestSellingPage from "./pages/seller/best-selling";
 import SalesReportPage from "./pages/seller/sales-report";
 import PaymentInfoPage from "./pages/seller/payment-info";
 import SellerInventoryPage from "./pages/seller/inventory";
@@ -166,8 +164,15 @@ function App() {
           <Route path="pending" element={<PendingRequestsPage />} />
         </Route>
 
-          <Route path="/seller" element={<SellerLayout />}>
-          <Route path="best-selling" element={<BestSellingPage />} />
+        <Route
+          path="/seller"
+          element={
+            <ProtectedRoute allowedRole="seller">
+              <SellerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="upload" element={<SellerUpload />} />
           <Route path="sales-report" element={<SalesReportPage />} />
           <Route path="payment-info" element={<PaymentInfoPage />} />
           <Route path="inventory" element={<SellerInventoryPage />} />

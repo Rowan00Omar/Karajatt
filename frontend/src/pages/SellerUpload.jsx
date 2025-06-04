@@ -3,7 +3,6 @@ import Button from "../components/Button";
 import { Card, CardContent } from "../components/Card";
 import { Select, SelectItem } from "../components/Select";
 import Input from "../components/Input";
-import Navbar from "../components/Navbar";
 import axios from "axios";
 
 const partStatus = ["مقبولة", "جيدة", "جيدة جدا", "ممتازة"];
@@ -24,7 +23,6 @@ const SellerUpload = () => {
   const [part, setPart] = useState("");
   const [images, setImages] = useState([]);
   const [status, setStatus] = useState("");
-  const [numberOfParts, setNumberOfParts] = useState("");
   const [title, setTitle] = useState("");
   const [extraDetails, setExtraDetails] = useState("");
   const [timeInStock, setTimeInStock] = useState("");
@@ -87,7 +85,6 @@ const SellerUpload = () => {
     formData.append("category", category);
     formData.append("part", part);
     formData.append("status", status);
-    formData.append("numberOfParts", numberOfParts);
     formData.append("title", title);
     formData.append("extraDetails", extraDetails);
     formData.append("timeInStock", timeInStock);
@@ -155,7 +152,6 @@ const SellerUpload = () => {
     setPart("");
     setImages([]);
     setStatus("");
-    setNumberOfParts("");
     setTitle("");
     setExtraDetails("");
     setTimeInStock("");
@@ -164,161 +160,231 @@ const SellerUpload = () => {
   };
 
   return (
-    <>
-      <Navbar />
-      <Card className="max-w-xl mx-auto mt-24 mb-16">
-        <CardContent className="space-y-4 p-6">
-          <h2 className="text-xl font-bold">ارفع قطعة جديدة</h2>
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4 flex flex-col text-babyJanaBlue"
-          >
-            <Select onValueChange={setManufacturer} value={manufacturer}>
-              <SelectItem disabled value="">
-                اختر الماركة
-              </SelectItem>
-              {filterData.manufacturers.map((m) => (
-                <SelectItem key={m} value={m}>
-                  {m}
-                </SelectItem>
-              ))}
-            </Select>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="max-w-2xl mx-auto shadow-xl rounded-lg overflow-hidden">
+        <CardContent className="space-y-6 p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">رفع قطعة جديدة</h2>
+            <p className="text-gray-600">قم بملء التفاصيل التالية لرفع قطعة جديدة</p>
+          </div>
 
-            {manufacturer && (
-              <Select onValueChange={setModel} value={model}>
-                <SelectItem disabled value="">
-                  اختر نوع السيارة
-                </SelectItem>
-                {getModels().map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </Select>
-            )}
+          {message && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+              {message}
+            </div>
+          )}
 
-            <Input
-              type="text"
-              placeholder="ادخل عنوان الاعلان"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <Input
-              type="number"
-              placeholder="ادخل السعر"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-            />
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+              {error}
+            </div>
+          )}
 
-            <div className="flex gap-4">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Basic Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">المعلومات الأساسية</h3>
               <Input
-                type="number"
-                placeholder="ادخل سنة البداية"
-                value={startYear}
-                onChange={handleStartYearChange}
+                type="text"
+                placeholder="ادخل عنوان الاعلان"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full transition-all duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-400"
               />
-              <Input
-                type="number"
-                placeholder="ادخل سنة النهاية"
-                value={endYear}
-                onChange={handleEndYearChange}
-              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  type="number"
+                  placeholder="ادخل السعر"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="w-full transition-all duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-400"
+                />
+                <Input
+                  type="number"
+                  placeholder="مدة التخزين"
+                  value={timeInStock}
+                  onChange={(e) => setTimeInStock(e.target.value)}
+                  className="w-full transition-all duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
             </div>
 
-            <Select onValueChange={setCategory} value={category}>
-              <SelectItem disabled value="">
-                اختر النوع
-              </SelectItem>
-              {filterData.categories.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </Select>
+            {/* Vehicle Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">معلومات السيارة</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Select 
+                    onValueChange={setManufacturer} 
+                    value={manufacturer}
+                    className="w-full transition-all duration-200 hover:border-blue-400"
+                  >
+                    <SelectItem disabled value="">اختر الماركة</SelectItem>
+                    {filterData.manufacturers.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </Select>
 
-            <Select onValueChange={setCondition} value={condition}>
-              <SelectItem disabled value="">
-                حالة الاستخدام
-              </SelectItem>
-              <SelectItem>مجددة</SelectItem>
-              <SelectItem>مستعملة</SelectItem>
-            </Select>
-
-            {category && (
-              <Select onValueChange={setPart} value={part}>
-                <SelectItem disabled value="">
-                  اختر القطعة
-                </SelectItem>
-                {getParts().map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
-                  </SelectItem>
-                ))}
-              </Select>
-            )}
-
-            <Input
-              type="number"
-              placeholder="ادخل عدد القطع"
-              value={numberOfParts}
-              onChange={(e) => setNumberOfParts(e.target.value)}
-            />
-            <Select onValueChange={setStatus} value={status}>
-              <SelectItem disabled value="">
-                اختر الحالة
-              </SelectItem>
-              {partStatus.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </Select>
-
-            <Input
-              type="number"
-              placeholder="ادخل مدة التخزين"
-              value={timeInStock}
-              onChange={(e) => setTimeInStock(e.target.value)}
-            />
-            <Input
-              type="text"
-              placeholder="تفاصيل إضافية"
-              value={extraDetails}
-              onChange={(e) => setExtraDetails(e.target.value)}
-            />
-
-            <div className="flex flex-col">
-              <label className="text-sm mb-1">اختر حتى ٤ صور</label>
-              <input
-                id="imageUpload"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-                className="border p-2 rounded-md"
-              />
-              {images.length > 0 && (
-                <div className="mt-2 flex gap-2 flex-wrap">
-                  {images.map((img, idx) => (
-                    <div key={idx} className="w-24 h-24 overflow-hidden border">
-                      <img
-                        src={URL.createObjectURL(img)}
-                        alt={`img-${idx}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ))}
+                  {manufacturer ? (
+                    <Select 
+                      onValueChange={setModel} 
+                      value={model}
+                      className="w-full transition-all duration-200 hover:border-blue-400"
+                    >
+                      <SelectItem disabled value="">اختر نوع السيارة</SelectItem>
+                      {getModels().map((m) => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </Select>
+                  ) : (
+                    <div className="w-full h-[40px] border border-gray-200 rounded-md bg-gray-50 opacity-50" />
+                  )}
                 </div>
-              )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    type="number"
+                    placeholder="سنة البداية"
+                    value={startYear}
+                    onChange={handleStartYearChange}
+                    className="w-full transition-all duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-400"
+                  />
+                  <Input
+                    type="number"
+                    placeholder="سنة النهاية"
+                    value={endYear}
+                    onChange={handleEndYearChange}
+                    className="w-full transition-all duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+              </div>
             </div>
 
-            <Button type="submit" disabled={loading}>
-              {loading ? "جارٍ الرفع..." : "رفع القطعة"}
-            </Button>
+            {/* Part Information Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">معلومات القطعة</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <Select 
+                    onValueChange={setCategory} 
+                    value={category}
+                    className="w-full transition-all duration-200 hover:border-blue-400"
+                  >
+                    <SelectItem disabled value="">اختر النوع</SelectItem>
+                    {filterData.categories.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </Select>
+
+                  {category && (
+                    <Select 
+                      onValueChange={setPart} 
+                      value={part}
+                      className="w-full transition-all duration-200 hover:border-blue-400"
+                    >
+                      <SelectItem disabled value="">اختر القطعة</SelectItem>
+                      {getParts().map((p) => (
+                        <SelectItem key={p} value={p}>{p}</SelectItem>
+                      ))}
+                    </Select>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <Select 
+                    onValueChange={setCondition} 
+                    value={condition}
+                    className="w-full transition-all duration-200 hover:border-blue-400"
+                  >
+                    <SelectItem disabled value="">حالة الاستخدام</SelectItem>
+                    <SelectItem value="مجددة">مجددة</SelectItem>
+                    <SelectItem value="مستعملة">مستعملة</SelectItem>
+                  </Select>
+
+                  <Select 
+                    onValueChange={setStatus} 
+                    value={status}
+                    className="w-full transition-all duration-200 hover:border-blue-400"
+                  >
+                    <SelectItem disabled value="">اختر الحالة</SelectItem>
+                    {partStatus.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+
+              <textarea
+                placeholder="تفاصيل إضافية"
+                value={extraDetails}
+                onChange={(e) => setExtraDetails(e.target.value)}
+                className="w-full p-3 border rounded-md transition-all duration-200 hover:border-blue-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 min-h-[100px]"
+              />
+            </div>
+
+            {/* Images Section */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">الصور</h3>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">اختر حتى ٤ صور</label>
+                <div className="flex items-center justify-center w-full">
+                  <label className="w-full flex flex-col items-center px-4 py-6 bg-white text-blue rounded-lg shadow-lg tracking-wide uppercase border border-blue cursor-pointer hover:bg-blue-50 transition-all duration-200">
+                    <svg className="w-8 h-8 text-blue-500" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                      <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
+                    </svg>
+                    <span className="mt-2 text-base leading-normal">اختر الصور</span>
+                    <input
+                      id="imageUpload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                {images.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {images.map((img, idx) => (
+                      <div key={idx} className="relative group">
+                        <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-lg bg-gray-200">
+                          <img
+                            src={URL.createObjectURL(img)}
+                            alt={`img-${idx}`}
+                            className="object-cover w-full h-full"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-center pt-6">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full sm:w-auto px-8 py-3 text-lg font-medium transition-all duration-200 transform hover:scale-105"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    جارٍ الرفع...
+                  </div>
+                ) : (
+                  "رفع القطعة"
+                )}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 };
 
