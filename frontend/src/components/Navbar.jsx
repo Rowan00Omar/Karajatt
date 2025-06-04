@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   Home,
   Search,
@@ -15,7 +16,7 @@ const Navbar = () => {
   return (
     <>
       {/* Desktop Nav */}
-      <nav className="hidden md:flex fixed justify-between bg-indigo-500 items-center top-0 left-0 w-full p-4 z-50">
+      <nav className="hidden md:flex fixed justify-between bg-indigo-500 items-center top-0 left-0 right-0 w-full p-4 z-50 shadow-md">
         <div className="flex flex-row space-x-10">
           <a
             href="#"
@@ -31,14 +32,12 @@ const Navbar = () => {
           </a>
         </div>
         <div className="flex items-center space-x-6">
-
-
           <div className="hover:text-lightGray text-white p-2">
             <CartButton />
           </div>
-          <a href="#" className="hover:text-lightGray text-white p-2">
+          <Link to="/profile" className="hover:text-lightGray text-white p-2">
             <User className="w-6 h-6" />
-          </a>
+          </Link>
           <button
             onClick={logout}
             className="hover:text-lightGray text-white p-2"
@@ -50,7 +49,7 @@ const Navbar = () => {
       </nav>
 
       {/* Mobile Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 w-full shadow-sm border-t border-gray-600 z-50 bg-white">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full shadow-lg border-t border-gray-200 z-50 bg-white">
         <div className="flex justify-around items-center h-16">
           <a
             href="#"

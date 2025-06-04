@@ -14,7 +14,7 @@ const SellerUpload = () => {
     modelsByManufacturer: {},
     categories: [],
     partsByCategory: {},
-    yearsByModel: {}
+    yearsByModel: {},
   });
   const [manufacturer, setManufacturer] = useState("");
   const [model, setModel] = useState("");
@@ -32,6 +32,8 @@ const SellerUpload = () => {
   const [condition, setCondition] = useState("");
   const [id, setId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -93,40 +95,23 @@ const SellerUpload = () => {
     formData.append("condition", condition);
     formData.append("id", id);
     for (let i = 0; i < images.length; i++) {
-    formData.append("images", images[i]);
+      formData.append("images", images[i]);
     }
     try {
+      const token = localStorage.getItem("token");
       const res = await axios.post("/api/seller/upload", formData, {
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
-      if (images.length === 0) {
-  alert("يجب رفع صورة واحدة على الأقل.");
-  return;
-}
-      alert("تم رفع القطعة بنجاح!");
-      console.log(res);
 
-      // Reset form
-      setManufacturer("");
-      setModel("");
-      setStartYear("");
-      setEndYear("");
-      setCategory("");
-      setPart("");
-      setImages([]);
-if (res.data.images && res.data.images.length > 0) {
-  alert(`تم رفع ${res.data.images.length} صورة بنجاح!`);
-  console.log("روابط الصور:", res.data.images);
-}
-      setStatus("");
-      setNumberOfParts("");
-      setTitle("");
-      setExtraDetails("");
-      setTimeInStock("");
-      setPrice("");
-      setCondition("");
+      if (res.status === 201) {
+        setImages(res.data.images);
+        setMessage("تم رفع المنتج بنجاح!");
+        setError("");
+        resetForm();
+      }
     } catch (err) {
       console.error("Upload failed:", err);
       alert("حدث خطأ أثناء رفع القطعة");
@@ -142,17 +127,40 @@ if (res.data.images && res.data.images.length > 0) {
 
   const handleEndYearChange = (e) => {
     const value = e.target.value;
-    if (value === "" || Number(value) >= Number(startYear) || startYear === "") {
+    if (
+      value === "" ||
+      Number(value) >= Number(startYear) ||
+      startYear === ""
+    ) {
       setEndYear(value);
     }
   };
 
   const getModels = () => {
-    return manufacturer ? filterData.modelsByManufacturer[manufacturer] || [] : [];
+    return manufacturer
+      ? filterData.modelsByManufacturer[manufacturer] || []
+      : [];
   };
 
   const getParts = () => {
     return category ? filterData.partsByCategory[category] || [] : [];
+  };
+
+  const resetForm = () => {
+    setManufacturer("");
+    setModel("");
+    setStartYear("");
+    setEndYear("");
+    setCategory("");
+    setPart("");
+    setImages([]);
+    setStatus("");
+    setNumberOfParts("");
+    setTitle("");
+    setExtraDetails("");
+    setTimeInStock("");
+    setPrice("");
+    setCondition("");
   };
 
   return (
@@ -189,12 +197,32 @@ if (res.data.images && res.data.images.length > 0) {
               </Select>
             )}
 
-            <Input type="text" placeholder="ادخل عنوان الاعلان" value={title} onChange={(e) => setTitle(e.target.value)} />
-            <Input type="number" placeholder="ادخل السعر" value={price} onChange={(e) => setPrice(e.target.value)} />
+            <Input
+              type="text"
+              placeholder="ادخل عنوان الاعلان"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <Input
+              type="number"
+              placeholder="ادخل السعر"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
 
             <div className="flex gap-4">
-              <Input type="number" placeholder="ادخل سنة البداية" value={startYear} onChange={handleStartYearChange} />
-              <Input type="number" placeholder="ادخل سنة النهاية" value={endYear} onChange={handleEndYearChange} />
+              <Input
+                type="number"
+                placeholder="ادخل سنة البداية"
+                value={startYear}
+                onChange={handleStartYearChange}
+              />
+              <Input
+                type="number"
+                placeholder="ادخل سنة النهاية"
+                value={endYear}
+                onChange={handleEndYearChange}
+              />
             </div>
 
             <Select onValueChange={setCategory} value={category}>
@@ -229,7 +257,12 @@ if (res.data.images && res.data.images.length > 0) {
               </Select>
             )}
 
-            <Input type="number" placeholder="ادخل عدد القطع" value={numberOfParts} onChange={(e) => setNumberOfParts(e.target.value)} />
+            <Input
+              type="number"
+              placeholder="ادخل عدد القطع"
+              value={numberOfParts}
+              onChange={(e) => setNumberOfParts(e.target.value)}
+            />
             <Select onValueChange={setStatus} value={status}>
               <SelectItem disabled value="">
                 اختر الحالة
@@ -241,8 +274,18 @@ if (res.data.images && res.data.images.length > 0) {
               ))}
             </Select>
 
-            <Input type="number" placeholder="ادخل مدة التخزين" value={timeInStock} onChange={(e) => setTimeInStock(e.target.value)} />
-            <Input type="text" placeholder="تفاصيل إضافية" value={extraDetails} onChange={(e) => setExtraDetails(e.target.value)} />
+            <Input
+              type="number"
+              placeholder="ادخل مدة التخزين"
+              value={timeInStock}
+              onChange={(e) => setTimeInStock(e.target.value)}
+            />
+            <Input
+              type="text"
+              placeholder="تفاصيل إضافية"
+              value={extraDetails}
+              onChange={(e) => setExtraDetails(e.target.value)}
+            />
 
             <div className="flex flex-col">
               <label className="text-sm mb-1">اختر حتى ٤ صور</label>
@@ -258,7 +301,11 @@ if (res.data.images && res.data.images.length > 0) {
                 <div className="mt-2 flex gap-2 flex-wrap">
                   {images.map((img, idx) => (
                     <div key={idx} className="w-24 h-24 overflow-hidden border">
-                      <img src={URL.createObjectURL(img)} alt={`img-${idx}`} className="w-full h-full object-cover" />
+                      <img
+                        src={URL.createObjectURL(img)}
+                        alt={`img-${idx}`}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   ))}
                 </div>

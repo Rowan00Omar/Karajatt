@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import SearchResults from "./SearchResults";
 import { Select, SelectItem } from "./Select";
 import Button from "./Button";
+import axios from "axios";
 
 const SearchForm = () => {
   const [manufacturer, setManufacturer] = useState("");
@@ -9,14 +10,13 @@ const SearchForm = () => {
   const [selectedYear, setSelectedYear] = useState("");
   const [category, setCategory] = useState("");
   const [part, setPart] = useState("");
+  const [condition, setCondition] = useState("");
 
   const [manufacturers, setManufacturers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [modelsByManufacturer, setModelsByManufacturer] = useState({});
   const [partsByCategory, setPartsByCategory] = useState({});
   const [yearsByModel, setYearsByModel] = useState({});
-  const [condition, setCondition] = useState({});
-
   const models = manufacturer ? modelsByManufacturer[manufacturer] || [] : [];
   const parts = category ? partsByCategory[category] || [] : [];
   const yearRange =
@@ -26,15 +26,14 @@ const SearchForm = () => {
   const availableYears = yearRange ? generateYearRange(yearRange) : [];
 
   const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState({
-    initialLoad: true,
-    search: false,
-  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalResults, setTotalResults] = useState(0);
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        setLoading((prev) => ({ ...prev, initialLoad: true }));
+        setLoading(true);
 
         const response = await fetch("/api/filtering/unified-data");
         if (!response.ok)
@@ -49,7 +48,7 @@ const SearchForm = () => {
       } catch (err) {
         console.error("Failed to fetch data:", err);
       } finally {
-        setLoading((prev) => ({ ...prev, initialLoad: false }));
+        setLoading(false);
       }
     };
 
@@ -78,178 +77,259 @@ const SearchForm = () => {
     return years;
   }
 
+  const buildSearchUrl = () => {
+    const params = new URLSearchParams();
+
+    if (manufacturer) params.append("manufacturer", manufacturer);
+    if (model) params.append("model", model);
+    if (selectedYear) params.append("year", selectedYear);
+    if (category) params.append("category", category);
+    if (part) params.append("part", part);
+    if (condition) params.append("condition", condition);
+
+    return `/api/seller/filtered-part?${params.toString()}`;
+  };
+
   const handleSearch = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading((prev) => ({ ...prev, search: true }));
-      setResults([]); // Clear previous results
+      const url = buildSearchUrl();
+      const response = await axios.get(url);
+      const products = response.data;
 
-      // Build query parameters
-      const params = new URLSearchParams();
-      if (manufacturer) params.append("manufacturer", manufacturer);
-      if (model) params.append("model", model);
-      if (selectedYear) params.append("year", selectedYear);
-      if (category) params.append("category", category);
-      if (part) params.append("part", part);
-
-      const response = await fetch(
-        `/api/seller/filtered-part?${params.toString()}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!products || products.length === 0) {
+        setResults([]);
+        setTotalResults(0);
+        return;
       }
 
-      const products = await response.json();
-
-      // Transform the API response to match your expected format if needed
       const formattedResults = products.map((product) => ({
         id: product.product_id,
-        name: product.part_name,
-        price: `${product.price} ريال`,
-        image: product.image_url,
-        extraImages: [
-          product.extra_image1,
-          product.extra_image2,
-          product.extra_image3,
-        ].filter(Boolean), // Only include if they exist
+        title: product.title || product.part_name,
+        price: product.price,
         condition: product.condition,
-        storageDuration: product.storage_duration,
-        compatibleModels: `${product.start_year} إلى ${
-          product.end_year || product.start_year
-        }`,
-        seller: "Seller Name", // You might need to join with sellers table
-        rating: product.rating,
-        reviews: product.review_count,
-        additionalDetails: product.description,
+        images: product.image_url ? [product.image_url] : [],
+        manufacturer: product.manufacturer,
+        model: product.model,
+        year_from: product.start_year,
+        year_to: product.end_year,
       }));
 
       setResults(formattedResults);
+      setTotalResults(formattedResults.length);
     } catch (err) {
-      console.error("Search failed:", err);
-      // Optionally show error to user
+      setError(err.response?.data?.message || "حدث خطأ في البحث");
       setResults([]);
+      setTotalResults(0);
     } finally {
-      setLoading((prev) => ({ ...prev, search: false }));
+      setLoading(false);
     }
   };
 
+  const handleSearchClick = () => {
+    handleSearch();
+  };
+
   return (
-    <div dir="rtl" className="w-full pt-24 space-y-6 bg-white">
-      <h1 className="text-3xl font-bold text-center text-blue-800">
-        البحث عن قطع غيار مستخدمة
-      </h1>
+    <div
+      dir="rtl"
+      className="w-full pt-16 pb-12 space-y-8 bg-gradient-to-b from-white to-blue-50"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="text-4xl font-bold text-center text-blue-800 mb-8">
+          البحث عن قطع غيار مستخدمة
+        </h1>
 
-      <div className="flex flex-row gap-4 justify-center">
-        {/* Manufacturer Select */}
-        <Select
-          onValueChange={setManufacturer}
-          value={manufacturer}
-          disabled={loading.initialLoad}
-          className="p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50"
-        >
-          <SelectItem disabled value="">
-            اختر نوع السيارة
-          </SelectItem>
-          {manufacturers.map((m) => (
-            <SelectItem key={m} value={m}>
-              {m}
-            </SelectItem>
-          ))}
-        </Select>
+        <div className="bg-white p-6 rounded-2xl shadow-lg">
+          <div className="flex flex-wrap gap-4 justify-center">
+            {/* Manufacturer Select */}
+            <div className="w-48">
+              <Select
+                onValueChange={setManufacturer}
+                value={manufacturer}
+                disabled={loading}
+                className="w-full p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50 focus:ring-2 focus:ring-blue-200"
+              >
+                <SelectItem disabled value="">
+                  اختر نوع السيارة
+                </SelectItem>
+                {manufacturers.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {m}
+                  </SelectItem>
+                ))}
+              </Select>
+            </div>
 
-        {/* Model Select (only shows if manufacturer selected) */}
-        {manufacturer && (
-          <Select
-            onValueChange={setModel}
-            value={model}
-            className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
-          >
-            <SelectItem disabled value="">
-              اختر الموديل
-            </SelectItem>
-            {models.map((m) => (
-              <SelectItem key={m} value={m}>
-                {m}
-              </SelectItem>
-            ))}
-          </Select>
-        )}
+            {/* Model Select (only shows if manufacturer selected) */}
+            {manufacturer && (
+              <div className="w-48">
+                <Select
+                  onValueChange={setModel}
+                  value={model}
+                  className="w-full p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50 focus:ring-2 focus:ring-blue-200"
+                >
+                  <SelectItem disabled value="">
+                    اختر الموديل
+                  </SelectItem>
+                  {models.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+            )}
 
-        {/* Year Select (only shows if model selected) */}
-        {model && availableYears.length > 0 && (
-          <Select
-            onValueChange={setSelectedYear}
-            value={selectedYear}
-            className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
-          >
-            <SelectItem disabled value="">
-              اختر السنة
-            </SelectItem>
-            {availableYears.map((year) => (
-              <SelectItem key={year} value={year}>
-                {year}
-              </SelectItem>
-            ))}
-          </Select>
-        )}
+            {/* Year Select (only shows if model selected) */}
+            {model && availableYears.length > 0 && (
+              <div className="w-48">
+                <Select
+                  onValueChange={setSelectedYear}
+                  value={selectedYear}
+                  className="w-full p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50 focus:ring-2 focus:ring-blue-200"
+                >
+                  <SelectItem disabled value="">
+                    اختر السنة
+                  </SelectItem>
+                  {availableYears.map((year) => (
+                    <SelectItem key={year} value={year}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+            )}
 
-        {/* Category Select */}
-        <Select
-          onValueChange={setCategory}
-          value={category}
-          disabled={loading.initialLoad}
-          className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
-        >
-          <SelectItem disabled value="">
-            اختر النوع
-          </SelectItem>
-          {categories.map((c) => (
-            <SelectItem key={c} value={c}>
-              {c}
-            </SelectItem>
-          ))}
-        </Select>
+            {/* Category Select */}
+            <div className="w-48">
+              <Select
+                onValueChange={setCategory}
+                value={category}
+                disabled={loading}
+                className="w-full p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50 focus:ring-2 focus:ring-blue-200"
+              >
+                <SelectItem disabled value="">
+                  اختر النوع
+                </SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </Select>
+            </div>
 
-        {/* Part Select (only shows if category selected) */}
-        {category && (
-          <Select
-            onValueChange={setPart}
-            value={part}
-            className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue"
-          >
-            <SelectItem disabled value="">
-              اختر القطعة
-            </SelectItem>
-            {parts.map((p) => (
-              <SelectItem key={p} value={p}>
-                {p}
-              </SelectItem>
-            ))}
-          </Select>
-        )}
+            {/* Part Select (only shows if category selected) */}
+            {category && (
+              <div className="w-48">
+                <Select
+                  onValueChange={setPart}
+                  value={part}
+                  className="w-full p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50 focus:ring-2 focus:ring-blue-200"
+                >
+                  <SelectItem disabled value="">
+                    اختر القطعة
+                  </SelectItem>
+                  {parts.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </div>
+            )}
 
-        {/* Condition Select */}
-        <Select onValueChange={setCondition} value={condition} className="text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue">
-          <SelectItem disabled value="">
-            اختر الحالة
-          </SelectItem>
-          <SelectItem value="refurbished">مجددة</SelectItem>
-          <SelectItem value="used">مستعملة</SelectItem>
-        </Select>
+            {/* Condition Select */}
+            <div className="w-48">
+              <Select
+                onValueChange={setCondition}
+                value={condition}
+                className="w-full p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50 focus:ring-2 focus:ring-blue-200"
+              >
+                <SelectItem disabled value="">
+                  حالة الاستخدام
+                </SelectItem>
+                <SelectItem value="مجددة">مجددة</SelectItem>
+                <SelectItem value="مستعملة">مستعملة</SelectItem>
+              </Select>
+            </div>
 
-        {/* Search Button */}
-        <Button
-          type="submit"
-          onClick={handleSearch}
-          disabled={loading.search}
-          className="self-center"
-        >
-          {loading.search ? "جاري البحث..." : "بحث"}
-        </Button>
+            {/* Search Button */}
+            <div className="w-48 flex items-center">
+              <Button
+                type="button"
+                onClick={handleSearchClick}
+                disabled={loading}
+                className="w-full py-2 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    جاري البحث...
+                  </span>
+                ) : (
+                  "بحث"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Results */}
-      {results.length > 0 && <SearchResults results={results} />}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {results.length > 0 ? (
+          <SearchResults results={results} />
+        ) : (
+          !loading &&
+          results !== null && (
+            <div className="text-center bg-white p-12 rounded-2xl shadow-lg">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p className="mt-4 text-xl font-semibold text-gray-900">
+                لم يتم العثور على أي منتجات
+              </p>
+              <p className="mt-2 text-sm text-gray-600">
+                يرجى تعديل معايير البحث والمحاولة مرة أخرى
+              </p>
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 };

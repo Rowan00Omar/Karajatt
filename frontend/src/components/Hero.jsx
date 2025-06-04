@@ -1,5 +1,6 @@
 import React from "react";
 import HeroImage from "../assets/Hero1.jpg";
+import { Link } from "react-router-dom";
 const Hero = () => {
   return (
     <section id="Hero">
@@ -22,9 +23,12 @@ const Hero = () => {
             اسهل من اي وقت مضى
           </p>
           <div className="flex justify-center md:justify-start">
-            <a className="p-3 px-6 pt-2 text-white bg-babyJanaBlue rounded-full baseline hover:bg-babyJanaBlue">
+            <Link
+              to="/login"
+              className="p-3 px-6 pt-2 text-white bg-babyJanaBlue rounded-full baseline hover:bg-babyJanaBlue"
+            >
               ابدأ الآن
-            </a>
+            </Link>
           </div>
         </div>
       </div>

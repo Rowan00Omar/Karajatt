@@ -1,59 +1,204 @@
 const pool = require("../db");
 
+// Get all pending product requests
 exports.getPendingRequests = async (req, res) => {
   try {
-    // Get all products with status 'pending' and join with users table to get seller info
-    const [requests] = await pool.query(`
-      SELECT p.*, u.first_name, u.last_name
+    const [requests] = await pool.query(
+      `SELECT 
+        p.*,
+        CONCAT(u.first_name, ' ', u.last_name) as seller_name
       FROM products p
       JOIN users u ON p.seller_id = u.id
       WHERE p.approval_status = 'pending'
-      ORDER BY p.created_at DESC
-    `);
+      ORDER BY p.created_at DESC`
+    );
 
-    // Format the response
-    const formattedRequests = requests.map(request => ({
-      ...request,
-      seller_name: `${request.first_name} ${request.last_name}`,
-    }));
-
-    res.json({ requests: formattedRequests });
-  } catch (err) {
-    console.error("Error fetching pending requests:", err);
-    res.status(500).json({ error: "Failed to fetch pending requests" });
+    res.json({ requests });
+  } catch (error) {
+    console.error("Error fetching pending requests:", error);
+    res.status(500).json({ message: "Failed to fetch pending requests" });
   }
 };
 
+// Approve a product request
 exports.approveRequest = async (req, res) => {
   const { id } = req.params;
-  console.log(id);
+
   try {
-    // Update the product status to 'approved'
-    await pool.query(
+    const [result] = await pool.query(
       "UPDATE products SET approval_status = 'approved' WHERE product_id = ?",
       [id]
     );
 
-    res.json({ message: "Request approved successfully" });
-  } catch (err) {
-    console.error("Error approving request:", err);
-    res.status(500).json({ error: "Failed to approve request" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json({ message: "Product approved successfully" });
+  } catch (error) {
+    console.error("Error approving request:", error);
+    res.status(500).json({ message: "Failed to approve request" });
   }
 };
 
+// Reject a product request
 exports.rejectRequest = async (req, res) => {
   const { id } = req.params;
 
   try {
-    // Update the product status to 'rejected'
-    await pool.query(
+    const [result] = await pool.query(
       "UPDATE products SET approval_status = 'rejected' WHERE product_id = ?",
       [id]
     );
 
-    res.json({ message: "Request rejected successfully" });
-  } catch (err) {
-    console.error("Error rejecting request:", err);
-    res.status(500).json({ error: "Failed to reject request" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json({ message: "Product rejected successfully" });
+  } catch (error) {
+    console.error("Error rejecting request:", error);
+    res.status(500).json({ message: "Failed to reject request" });
   }
-}; 
+};
+
+// Get all users (excluding master admin)
+exports.getAllUsers = async (req, res) => {
+  try {
+    const [users] = await pool.query(
+      "SELECT id, first_name, last_name, email, role FROM users WHERE role != 'master'"
+    );
+    res.json({ users });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ message: "Failed to fetch users" });
+  }
+};
+
+// Delete a user
+exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // First check if the user exists and is not a master admin
+    const [user] = await pool.query("SELECT role FROM users WHERE id = ?", [
+      id,
+    ]);
+
+    if (user.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user[0].role === "master") {
+      return res.status(403).json({ message: "Cannot delete master admin" });
+    }
+
+    // Temporarily disable foreign key checks
+    await pool.query("SET FOREIGN_KEY_CHECKS = 0");
+
+    // Delete the user
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [id]);
+
+    // Re-enable foreign key checks
+    await pool.query("SET FOREIGN_KEY_CHECKS = 1");
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: "Failed to delete user" });
+  }
+};
+
+// Get order history
+exports.getOrderHistory = async (req, res) => {
+  try {
+    const [orders] = await pool.query(
+      `SELECT 
+        o.*,
+        u.first_name as buyer_first_name,
+        u.last_name as buyer_last_name,
+        p.title as product_title,
+        p.part_name,
+        s.first_name as seller_first_name,
+        s.last_name as seller_last_name
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      JOIN products p ON o.product_id = p.product_id
+      JOIN users s ON p.seller_id = s.id
+      ORDER BY o.created_at DESC`
+    );
+
+    res.json({ orders });
+  } catch (error) {
+    console.error("Error fetching order history:", error);
+    res.status(500).json({ message: "Failed to fetch order history" });
+  }
+};
+
+// Get product statistics
+exports.getProductStats = async (req, res) => {
+  try {
+    // Get total products count
+    const [totalProducts] = await pool.query(
+      "SELECT COUNT(*) as count FROM products"
+    );
+
+    // Get products count by status
+    const [statusCounts] = await pool.query(
+      `SELECT 
+        approval_status,
+        COUNT(*) as count
+      FROM products
+      GROUP BY approval_status`
+    );
+
+    // Get products count by category
+    const [categoryCounts] = await pool.query(
+      `SELECT 
+        c.category_name,
+        COUNT(p.product_id) as count
+      FROM categories c
+      LEFT JOIN products p ON c.id = p.category_id
+      GROUP BY c.id, c.category_name`
+    );
+
+    res.json({
+      total: totalProducts[0].count,
+      byStatus: statusCounts,
+      byCategory: categoryCounts,
+    });
+  } catch (error) {
+    console.error("Error fetching product stats:", error);
+    res.status(500).json({ message: "Failed to fetch product statistics" });
+  }
+};
+
+// Update product status
+exports.updateProductStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!["pending", "approved", "rejected"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status" });
+  }
+
+  try {
+    const [result] = await pool.query(
+      "UPDATE products SET approval_status = ? WHERE product_id = ?",
+      [status, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json({ message: "Product status updated successfully" });
+  } catch (error) {
+    console.error("Error updating product status:", error);
+    res.status(500).json({ message: "Failed to update product status" });
+  }
+};

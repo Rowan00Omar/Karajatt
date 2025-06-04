@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { UserPlus, Trash2 } from "lucide-react";
 import Signup from "@/pages/Signup";
@@ -13,39 +13,27 @@ export default function ManageUsersPage() {
   const usersPerPage = 8;
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setError("No authentication token found. Please log in.");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await axios.get("/api/auth/userInfo", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.data?.id) {
-          setUserId(response.data.id);
-          fetchUsers(response.data.id, token);
-        }
-      } catch (error) {
-        console.error("Error fetching user info:", error);
-        setError(error.response?.data?.message || "Failed to fetch user information");
-        setLoading(false);
-      }
-    };
-
-    fetchUserInfo();
+    fetchUsers();
   }, []);
 
-  const fetchUsers = async (currentUserId, token) => {
+  const fetchUsers = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("No authentication token found. Please log in.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await axios.get("/api/auth/getAllUsers", {
+      const response = await axios.get("/api/auth/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUsers(res.data.users || []);
+
+      if (response.data?.users) {
+        setUsers(response.data.users);
+      } else {
+        setError("No users data received");
+      }
     } catch (err) {
       console.error("Error fetching users:", err);
       setError(err.response?.data?.message || "Failed to fetch users list");
@@ -56,11 +44,13 @@ export default function ManageUsersPage() {
 
   const handleDelete = async (userIdToDelete) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`/api/auth/deleteUser/${userIdToDelete}`, {
+      const token = localStorage.getItem("token");
+      await axios.delete(`/api/auth/users/${userIdToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUsers(users.filter(user => user._id !== userIdToDelete));
+
+      // Refresh the users list after deletion
+      fetchUsers();
     } catch (err) {
       console.error("Delete failed:", err);
       alert(err.response?.data?.message || "Failed to delete user");
@@ -119,10 +109,10 @@ export default function ManageUsersPage() {
       </div>
 
       <div className="grid gap-4">
-        {currentUsers.map((user) => (
+        {currentUsers.map((user) =>
           user.role === "master" ? null : (
             <div
-              key={user._id}
+              key={user.id}
               className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
             >
               <div className="flex items-center justify-between">
@@ -130,10 +120,14 @@ export default function ManageUsersPage() {
                   <h3 className="font-semibold text-lg">
                     {user.first_name || "مستخدم بدون اسم"} {user.last_name}
                   </h3>
-                  <p className="text-gray-600 text-sm mt-1">{user.email || "لا يوجد بريد إلكتروني"}</p>
+                  <p className="text-gray-600 text-sm mt-1">
+                    {user.email || "لا يوجد بريد إلكتروني"}
+                  </p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="px-3 py-1 rounded-full text-sm bg-gray-100">{user.role}</span>
+                  <span className="px-3 py-1 rounded-full text-sm bg-gray-100">
+                    {user.role}
+                  </span>
                   <button
                     onClick={() => handleDelete(user.id)}
                     className="text-red-500 hover:text-red-600 transition-colors"
@@ -144,7 +138,7 @@ export default function ManageUsersPage() {
               </div>
             </div>
           )
-        ))}
+        )}
       </div>
 
       {totalPages > 1 && (
@@ -155,8 +149,8 @@ export default function ManageUsersPage() {
               onClick={() => setCurrentPage(i + 1)}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 currentPage === i + 1
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 hover:bg-gray-200'
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-100 hover:bg-gray-200"
               }`}
             >
               {i + 1}
@@ -177,10 +171,16 @@ export default function ManageUsersPage() {
                 ✕
               </button>
             </div>
-            <Signup flag={true} />
+            <Signup
+              flag={true}
+              onSuccess={() => {
+                setIsAddingUser(false);
+                fetchUsers();
+              }}
+            />
           </div>
         </div>
       )}
     </section>
   );
-} 
+}

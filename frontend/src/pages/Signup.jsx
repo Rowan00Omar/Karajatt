@@ -6,7 +6,7 @@ import Input from "../components/Input";
 import Button from "../components/Button";
 import { Select, SelectItem } from "@/components/Select";
 
-const Signup = ({flag = false}) => {
+const Signup = ({ flag = false }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,14 +26,14 @@ const Signup = ({flag = false}) => {
       email === "" ||
       password === "" ||
       confirmPassword === "" ||
-      role ===""
+      role === ""
     ) {
-      setError("All fields are required!");
+      setError("يجب ملأ جميع البيانات!");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match!");
+      setError("كلمة المرور غير متطابقة!");
       return;
     }
 
@@ -43,98 +43,121 @@ const Signup = ({flag = false}) => {
         last_name: lastName,
         email,
         password,
-        role
+        role,
       });
-      console.log("ali");
+
       if (response.status === 201) {
-        alert("Account created successfully!");
+        alert("تم إنشاء الحساب بنجاح!");
         navigate("/login");
       }
     } catch (err) {
       setError(
-        err.response?.data?.message || "Signup failed! Please try again."
+        err.response?.data?.message ||
+          "فشل إنشاء الحساب! الرجاء المحاولة مرة أخرى."
       );
     }
   };
 
   return (
-    <div
-      className="flex justify-center items-center w-full pb-30 h-auto mt-48"
-      dir="rtl"
-    >
-      <form
-        className="p-16 rounded-lg shadow-lg text-center flex flex-col w-1/3"
-        onSubmit={handleSubmit}
-      >
-        <div className="flex flex-row space-x-3 justify-center items-center">
-          <LogIn className="text-babyJanaBlue self-center my-2" size={32} />
-          <h2 className="text-3xl">انشاء حساب</h2>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+        <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
+          <form className="space-y-6" onSubmit={handleSubmit} dir="rtl">
+            {/* Header */}
+            <div className="flex flex-col items-center space-y-4">
+              <div className="bg-indigo-100 p-3 rounded-full">
+                <LogIn className="text-indigo-600" size={32} />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900">انشاء حساب</h2>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                {error}
+              </div>
+            )}
+
+            {/* Form Fields */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                  type="text"
+                  placeholder="الاسم الاول"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+                <Input
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                  type="text"
+                  placeholder="اسم العائلة"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+
+              <Input
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                type="email"
+                placeholder="البريد الألكتروني"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+
+              <Input
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                type="password"
+                placeholder="كلمة المرور"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+
+              <Input
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                type="password"
+                placeholder="تأكيد كلمة المرور"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+
+              <Select
+                value={role}
+                onValueChange={setRole}
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors text-right"
+              >
+                <SelectItem disabled value="">
+                  نوع الحساب
+                </SelectItem>
+                <SelectItem value="user">مشتري</SelectItem>
+                <SelectItem value="seller">بائع</SelectItem>
+                {flag && <SelectItem value="admin">مدير</SelectItem>}
+              </Select>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              type="submit"
+            >
+              انشاء حساب
+            </Button>
+
+            {/* Login Link */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                لديك حساب؟{" "}
+                <Link
+                  className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+                  to="/login"
+                >
+                  تسجيل الدخول
+                </Link>
+              </p>
+            </div>
+          </form>
         </div>
-        {error && <p className="error-message text-red-500">{error}</p>}
-
-        <Input
-          className="rounded-md my-2"
-          type="text"
-          placeholder="الاسم الاول"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-        />
-        <Input
-          className="rounded-md my-2"
-          type="text"
-          placeholder="اسم العائلة"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-        />
-        <Input
-          className="rounded-md my-2"
-          type="email"
-          placeholder="البريد الألكتروني"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <Input
-          className="rounded-md my-2"
-          type="password"
-          placeholder="كلمة المرور"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <Input
-          className="rounded-md my-2"
-          type="password"
-          placeholder="تأكيد كلمة المرور"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-
-        <Select value={role} onValueChange={setRole} 
-          className="p-2 px-4 rounded-lg border text-babyJanaBlue border-babyJanaBlue ring-babyJanaBlue transition-all hover:bg-blue-50">
-          <SelectItem disabled value="">نوع الحساب</SelectItem>
-          <SelectItem value="user">مشتري</SelectItem>
-          <SelectItem value="seller">بائع</SelectItem>
-          {flag && <SelectItem value="admin">مدير</SelectItem>}
-        </Select>
-
-        <Button
-          className="bg-babyJanaBlue text-white text-xl cursor-pointer my-2"
-          type="submit"
-        >
-          انشاء حساب
-        </Button>
-
-        <p className="mt-2.5 text-babyJanaBlue">
-          لديك حساب؟
-          <Link
-            className="text-darkerJanaBlue font-bold hover:underline"
-            to="/login"
-          >
-            تسجيل الدخول
-          </Link>
-        </p>
-      </form>
+      </div>
     </div>
   );
 };

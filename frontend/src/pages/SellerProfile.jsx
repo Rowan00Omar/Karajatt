@@ -1,200 +1,179 @@
-import {
-  UserIcon,
-  StarIcon,
-  ChatBubbleLeftRightIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import { Star, User, MessageSquare, Trash } from "lucide-react";
+import Reviews from "../components/Reviews";
 
 const SellerProfile = () => {
-  const [adminName] = useState("أحمد المدير");
-  const [adminEmail] = useState("seller@example.com");
-  const [reviewCount] = useState(3);
-  const [rating] = useState(4.6);
+  const { id } = useParams();
+  const [seller, setSeller] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const reviews = [
-    {
-      id: 1,
-      reviewer: "خالد عبد الله",
-      content: "الردود سريعة والمعاملة ممتازة.",
-      date: "2025-05-20",
-    },
-    {
-      id: 2,
-      reviewer: "نورا علي",
-      content: "مدير متعاون جدًا وخدمة رائعة.",
-      date: "2025-05-18",
-    },
-    {
-      id: 3,
-      reviewer: "سامي الحربي",
-      content: "تجربة إيجابية بشكل عام.",
-      date: "2025-05-15",
-    },
-    {
-      id: 3,
-      reviewer: "سامي الحربي",
-      content: "تجربة إيجابية بشكل عام.",
-      date: "2025-05-15",
-    },
-      {
-      id: 3,
-      reviewer: "سامي الحربي",
-      content: "تجربة إيجابية بشكل عام.",
-      date: "2025-05-15",
-    },
-      {
-      id: 3,
-      reviewer: "سامي الحربي",
-      content: "تجربة إيجابية بشكل عام.",
-      date: "2025-05-15",
-    },
-      {
-      id: 3,
-      reviewer: "سامي الحربي",
-      content: "تجربة إيجابية بشكل عام.",
-      date: "2025-05-15",
-    },
-      {
-      id: 3,
-      reviewer: "سامي الحربي",
-      content: "تجربة إيجابية بشكل عام.",
-      date: "2025-05-15",
-    },
-  ];
+  useEffect(() => {
+    const fetchSellerInfo = async () => {
+      try {
+        const response = await axios.get(`/api/seller/profile/${id}`);
+        setSeller(response.data);
+      } catch (err) {
+        setError(
+          err.response?.data?.message || "Failed to fetch seller information"
+        );
+        console.error("Error fetching seller info:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const renderStars = () => {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 >= 0.5;
-    const stars = [];
+    fetchSellerInfo();
+  }, [id]);
 
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<StarIcon key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />);
+  const handleDeleteAccount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(`/api/sellers/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Redirect to home or show success message
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      alert(err.response?.data?.message || "Failed to delete account");
     }
-
-    if (halfStar) {
-      stars.push(
-        <StarIcon key="half" className="w-5 h-5 text-yellow-400 fill-yellow-200" />
-      );
-    }
-
-    while (stars.length < 5) {
-      stars.push(<StarIcon key={stars.length} className="w-5 h-5 text-gray-300" />);
-    }
-
-    return stars;
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-25 px-4 flex justify-center" dir="rtl">
-      <div className="w-full max-w-4xl flex flex-col gap-8">
-        {/* Seller Info */}
-        <div className="bg-white shadow-md rounded-2xl p-6 flex flex-col gap-4 border">
-          <div className="flex items-center gap-2">
-            <UserIcon className="w-6 h-6 text-[#4a60e9]" />
-            <h2 className="text-xl font-semibold text-[#4a60e9]">بيانات البائع</h2>
-          </div>
+  if (loading) return <div className="text-center py-8">جاري التحميل...</div>;
+  if (error)
+    return <div className="text-red-500 text-center py-8">{error}</div>;
+  if (!seller)
+    return <div className="text-center py-8">لم يتم العثور على البائع</div>;
 
-          <div className="flex items-center gap-4">
-            <div className="flex-1 grid sm:grid-cols-2 gap-4 text-right">
-              <div>
-                <p className="text-sm text-gray-500">الاسم بالكامل</p>
-                <p className="text-lg font-medium text-gray-800">{adminName}</p>
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" dir="rtl">
+      {/* Seller Info Card */}
+      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl">
+            {seller.name.charAt(0)}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{seller.name}</h1>
+            <p className="text-gray-600">{seller.email}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <p className="text-gray-600">التقييم العام</p>
+            <div className="flex items-center gap-2">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-5 h-5 ${
+                      i < Math.round(seller.average_rating)
+                        ? "text-yellow-400 fill-yellow-400"
+                        : "text-gray-300"
+                    }`}
+                  />
+                ))}
               </div>
-              <div>
-                <p className="text-sm text-gray-500">البريد الإلكتروني</p>
-                <p className="text-lg font-medium text-gray-800">{adminEmail}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">عدد المراجعات</p>
-                <p className="text-lg font-medium text-gray-800">
-                  {reviewCount} مراجعة
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">التقييم العام</p>
-                <div className="flex items-center gap-1 mt-1">
-                  {renderStars()}
-                  <span className="text-sm text-gray-700">({rating} من 5)</span>
+              <span className="text-lg font-semibold">
+                {seller.average_rating} من 5
+              </span>
+            </div>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4">
+            <p className="text-gray-600">عدد المنتجات</p>
+            <p className="text-2xl font-semibold">{seller.total_products}</p>
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4">
+            <p className="text-gray-600">عدد التقييمات</p>
+            <p className="text-2xl font-semibold">{seller.total_reviews}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Products Grid */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">منتجات البائع</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {seller.products.map((product) => (
+            <div
+              key={product.product_id}
+              className="bg-white rounded-lg shadow-md overflow-hidden"
+            >
+              <img
+                src={product.image_url || "/placeholder.jpg"}
+                alt={product.title}
+                className="w-full h-48 object-cover"
+              />
+              <div className="p-4">
+                <h3 className="font-semibold text-lg mb-2">
+                  {product.title || product.part_name}
+                </h3>
+                <div className="flex justify-between items-center">
+                  <p className="text-green-600 font-semibold">
+                    {product.price} ريال
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <Star
+                      className={`w-4 h-4 ${
+                        product.product_rating > 0
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                    <span className="text-sm text-gray-600">
+                      {product.product_rating}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <button
-            onClick={() => setShowConfirm(true)}
-            className="w-fit mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition flex items-center gap-1"
-          >
-            <TrashIcon className="w-5 h-5" />
-            حذف الحساب
-          </button>
+          ))}
         </div>
-
-        {/* Reviews Section */}
-        <div className="bg-white shadow-md rounded-2xl p-6 border">
-          <div className="flex items-center gap-2 mb-4">
-            <ChatBubbleLeftRightIcon className="w-6 h-6 text-[#4a60e9]" />
-            <h2 className="text-xl font-semibold text-[#4a60e9]">المراجعات</h2>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {reviews.map((review) => (
-              <div
-                key={review.id}
-                className="border border-gray-200 rounded-lg p-4 bg-gray-50 shadow-sm"
-              >
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-[#4a60e9] text-white flex items-center justify-center rounded-full text-sm font-bold">
-                    {review.reviewer
-                      .split(" ")
-                      .map((w) => w[0])
-                      .join("")}
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-800">{review.reviewer}</p>
-                    <p className="text-xs text-gray-500">{review.date}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-700">{review.content}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Confirm Delete Modal */}
-        <Dialog open={showConfirm} onClose={() => setShowConfirm(false)} className="relative z-50">
-          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 text-center">
-              <Dialog.Title className="text-lg font-semibold mb-4">
-                هل أنت متأكد من حذف الحساب؟
-              </Dialog.Title>
-              <p className="text-sm text-gray-600 mb-6">
-                لا يمكن التراجع عن هذه العملية بعد تنفيذها.
-              </p>
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-md"
-                >
-                  إلغاء
-                </button>
-                <button
-                  onClick={() => {
-                    setShowConfirm(false);
-                    alert("تم حذف الحساب.");
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
-                >
-                  نعم، احذف
-                </button>
-              </div>
-            </Dialog.Panel>
-          </div>
-        </Dialog>
       </div>
+
+      {/* Reviews Section */}
+      <Reviews type="seller" id={id} />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        className="relative z-50"
+      >
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="mx-auto max-w-sm rounded-lg bg-white p-6">
+            <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
+              تأكيد حذف الحساب
+            </Dialog.Title>
+            <Dialog.Description className="text-sm text-gray-500 mb-6">
+              هل أنت متأكد من رغبتك في حذف حسابك؟ هذا الإجراء لا يمكن التراجع
+              عنه.
+            </Dialog.Description>
+
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+              >
+                حذف الحساب
+              </button>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
     </div>
   );
 };

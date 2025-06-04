@@ -1,5 +1,5 @@
 import React from "react";
-
+import { Link } from "react-router-dom";
 const Cta = () => {
   return (
     <div>
@@ -11,11 +11,12 @@ const Cta = () => {
             احصل على كل ما تريد الآن
           </h2>
           {/* Button */}
-          <div>
-            <a className="p-3 px-6 pt-2 text-babyJanaBlue bg-white rounded-full shadow-2xl baseline hover:bg-gray-500">
-              ابدأ الآن
-            </a>
-          </div>
+          <Link
+            to="/login"
+            className="p-3 px-6 pt-2 text-babyJanaBlue bg-white rounded-full shadow-2xl baseline hover:bg-gray-500"
+          >
+            <button>ابدأ الآن</button>
+          </Link>
         </div>
       </section>
     </div>
