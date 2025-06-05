@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
+import useLogout from "@/hooks/useLogout";
 
 const items = [
   {
@@ -47,16 +48,12 @@ const items = [
 ];
 
 export function AdminBar({ isOpen }) {
+  const logout = useLogout();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
   };
 
   return (
@@ -119,13 +116,12 @@ export function AdminBar({ isOpen }) {
 
           <div className="px-4 mt-auto">
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 text-right"
             >
               <LogOut className="h-5 w-5" />
               <span>تسجيل الخروج</span>
             </button>
-            <div className="py-4 text-sm text-gray-500">ِAhlan</div>
           </div>
         </div>
       </div>

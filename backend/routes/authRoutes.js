@@ -14,13 +14,11 @@ const {
   checkRole,
 } = require("../middleware/authMiddleware");
 
-// Auth routes
 router.post("/register", register);
 router.post("/login", login);
 router.post("/logout", authenticateToken, logout);
 router.get("/userInfo", authenticateToken, UserInfo);
 
-// Admin routes
 router.get("/users", authenticateToken, checkRole("admin"), getAllUsers);
 router.delete("/users/:id", authenticateToken, checkRole("admin"), deleteUser);
 

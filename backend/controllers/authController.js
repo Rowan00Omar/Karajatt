@@ -185,7 +185,6 @@ exports.getOrderHistory = async (req, res) => {
     console.log(orders);
     res.status(200).json(orders);
   } catch (error) {
-    console.error("Order history error:", error); // <--- Add this
     res.status(500).json({ error: error.message });
   }
 };
