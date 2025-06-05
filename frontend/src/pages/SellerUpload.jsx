@@ -24,7 +24,6 @@ const SellerUpload = () => {
   const [part, setPart] = useState("");
   const [images, setImages] = useState([]);
   const [status, setStatus] = useState("");
-  const [numberOfParts, setNumberOfParts] = useState("");
   const [title, setTitle] = useState("");
   const [extraDetails, setExtraDetails] = useState("");
   const [timeInStock, setTimeInStock] = useState("");
@@ -87,7 +86,6 @@ const SellerUpload = () => {
     formData.append("category", category);
     formData.append("part", part);
     formData.append("status", status);
-    formData.append("numberOfParts", numberOfParts);
     formData.append("title", title);
     formData.append("extraDetails", extraDetails);
     formData.append("timeInStock", timeInStock);
@@ -155,7 +153,6 @@ const SellerUpload = () => {
     setPart("");
     setImages([]);
     setStatus("");
-    setNumberOfParts("");
     setTitle("");
     setExtraDetails("");
     setTimeInStock("");
@@ -257,12 +254,6 @@ const SellerUpload = () => {
               </Select>
             )}
 
-            <Input
-              type="number"
-              placeholder="ادخل عدد القطع"
-              value={numberOfParts}
-              onChange={(e) => setNumberOfParts(e.target.value)}
-            />
             <Select onValueChange={setStatus} value={status}>
               <SelectItem disabled value="">
                 اختر الحالة
