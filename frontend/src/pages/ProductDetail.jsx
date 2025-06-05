@@ -179,12 +179,6 @@ const ProductDetail = () => {
             >
               إضافة إلى السلة
             </button>
-            <button
-              onClick={() => setIsChatOpen(true)}
-              className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              تواصل مع البائع
-            </button>
           </div>
         </div>
       </div>

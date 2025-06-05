@@ -1,5 +1,5 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Home,
   Search,
@@ -11,8 +11,29 @@ import {
 } from "lucide-react";
 import CartButton from "./CartButton";
 import useLogout from "@/hooks/useLogout";
+
 const Navbar = () => {
   const logout = useLogout();
+  const navigate = useNavigate();
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    setUserRole(role);
+  }, []);
+
+  const handleProfileClick = (e) => {
+    e.preventDefault();
+    const role = localStorage.getItem("userRole");
+    if (!role) {
+      navigate("/login");
+      return;
+    }
+
+    navigate("/user/profile");
+    return;
+  };
+
   return (
     <>
       {/* Desktop Nav */}
@@ -35,14 +56,16 @@ const Navbar = () => {
           <div className="hover:text-lightGray text-white p-2">
             <CartButton />
           </div>
-          <Link to="/profile" className="hover:text-lightGray text-white p-2">
+          <button
+            onClick={handleProfileClick}
+            className="hover:text-lightGray text-white p-2"
+          >
             <User className="w-6 h-6" />
-          </Link>
+          </button>
           <button
             onClick={logout}
             className="hover:text-lightGray text-white p-2"
           >
-            {" "}
             <LogOut className="w-6 h-6" />
           </button>
         </div>
@@ -66,12 +89,12 @@ const Navbar = () => {
           <div className="flex flex-col items-center text-gray-600 hover:text-lightGray p-2">
             <CartButton />
           </div>
-          <a
-            href="#"
+          <button
+            onClick={handleProfileClick}
             className="flex flex-col items-center text-gray-600 hover:text-lightGray p-2"
           >
             <User className="w-6 h-6" />
-          </a>
+          </button>
         </div>
       </nav>
     </>

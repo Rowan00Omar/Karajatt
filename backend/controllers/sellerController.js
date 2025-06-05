@@ -84,7 +84,6 @@ exports.sellerUpload = async (req, res) => {
     category,
     part,
     status,
-    numberOfParts,
     title,
     extraDetails,
     timeInStock,
@@ -126,10 +125,10 @@ exports.sellerUpload = async (req, res) => {
     // Insert product with initial approval_status as 'pending'
     await pool.query(
       `INSERT INTO products (
-        company_name, car_name, start_year, end_year, category_id, part_name, status, parts_in_stock,
+        company_name, car_name, start_year, end_year, category_id, part_name, status, 
         title, image_url, extra_image1, extra_image2, extra_image3,
         description, storage_duration, price, \`condition\`, seller_id, approval_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         manufacturer.trim(),
         model.trim(),
@@ -138,7 +137,6 @@ exports.sellerUpload = async (req, res) => {
         category_id,
         part.trim(),
         status.trim(),
-        numberOfParts,
         title.trim(),
         image_url || null,
         extra_image1_url || null,
@@ -250,27 +248,43 @@ exports.getSellerReviews = async (req, res) => {
   const offset = (page - 1) * limit;
 
   try {
-    // Get total count of reviews
+    // Get total count of reviews for seller's products
     const [countResult] = await pool.query(
-      "SELECT COUNT(*) as count FROM seller_reviews WHERE seller_id = ?",
+      `SELECT COUNT(DISTINCT r.review_id) as count 
+       FROM reviews r
+       JOIN products p ON r.product_id = p.product_id
+       WHERE p.seller_id = ?`,
       [id]
     );
     const totalReviews = countResult[0].count;
 
-    // Get reviews with user info
+    // Get reviews with user info for seller's products
     const [reviews] = await pool.query(
-      `SELECT sr.*, CONCAT(u.first_name, ' ', u.last_name) as reviewer_name 
-       FROM seller_reviews sr 
-       JOIN users u ON sr.user_id = u.id 
-       WHERE sr.seller_id = ? 
-       ORDER BY sr.created_at DESC 
+      `SELECT 
+         r.review_id,
+         r.rating,
+         r.comment,
+         r.created_at,
+         r.updated_at,
+         u.id as user_id,
+         CONCAT(u.first_name, ' ', u.last_name) as reviewer_name,
+         p.product_id,
+         p.title as product_title
+       FROM reviews r
+       JOIN products p ON r.product_id = p.product_id
+       JOIN users u ON r.user_id = u.id
+       WHERE p.seller_id = ?
+       ORDER BY r.created_at DESC
        LIMIT ? OFFSET ?`,
       [id, limit, offset]
     );
 
     // Get average rating
     const [avgRating] = await pool.query(
-      "SELECT ROUND(AVG(rating), 1) as average_rating FROM seller_reviews WHERE seller_id = ?",
+      `SELECT ROUND(AVG(r.rating), 1) as average_rating
+       FROM reviews r
+       JOIN products p ON r.product_id = p.product_id
+       WHERE p.seller_id = ?`,
       [id]
     );
 
@@ -289,35 +303,47 @@ exports.getSellerReviews = async (req, res) => {
 // Add a new seller review
 exports.addSellerReview = async (req, res) => {
   const { seller_id } = req.params;
-  const { rating, comment } = req.body;
+  const { rating, comment, product_id } = req.body;
   const user_id = req.user.id;
 
   try {
-    // Check if user has already reviewed this seller
+    // Verify the product belongs to the seller
+    const [product] = await pool.query(
+      "SELECT product_id FROM products WHERE product_id = ? AND seller_id = ?",
+      [product_id, seller_id]
+    );
+
+    if (product.length === 0) {
+      return res.status(404).json({
+        message: "Product not found or does not belong to this seller",
+      });
+    }
+
+    // Check if user has already reviewed this product
     const [existingReview] = await pool.query(
-      "SELECT * FROM seller_reviews WHERE user_id = ? AND seller_id = ?",
-      [user_id, seller_id]
+      "SELECT * FROM reviews WHERE user_id = ? AND product_id = ?",
+      [user_id, product_id]
     );
 
     if (existingReview.length > 0) {
       return res.status(400).json({
-        message: "You have already reviewed this seller",
+        message: "You have already reviewed this product",
       });
     }
 
     // Add the review
     const [result] = await pool.query(
-      `INSERT INTO seller_reviews (user_id, seller_id, rating, comment) 
-       VALUES (?, ?, ?, ?)`,
-      [user_id, seller_id, rating, comment]
+      `INSERT INTO reviews (user_id, product_id, rating, comment, created_at, updated_at) 
+       VALUES (?, ?, ?, ?, NOW(), NOW())`,
+      [user_id, product_id, rating, comment]
     );
 
     // Get the inserted review with reviewer name
     const [review] = await pool.query(
-      `SELECT sr.*, CONCAT(u.first_name, ' ', u.last_name) as reviewer_name 
-       FROM seller_reviews sr 
-       JOIN users u ON sr.user_id = u.id 
-       WHERE sr.review_id = ?`,
+      `SELECT r.*, CONCAT(u.first_name, ' ', u.last_name) as reviewer_name 
+       FROM reviews r 
+       JOIN users u ON r.user_id = u.id 
+       WHERE r.review_id = ?`,
       [result.insertId]
     );
 
@@ -382,7 +408,8 @@ exports.deleteSellerReview = async (req, res) => {
 exports.getBestSelling = async (req, res) => {
   try {
     const sellerId = req.user.id;
-    const [products] = await pool.query(`
+    const [products] = await pool.query(
+      `
       SELECT 
         p.*,
         COALESCE(SUM(o.quantity), 0) as total_sales,
@@ -393,12 +420,14 @@ exports.getBestSelling = async (req, res) => {
       GROUP BY p.product_id
       ORDER BY total_sales DESC
       LIMIT 6
-    `, [sellerId]);
+    `,
+      [sellerId]
+    );
 
     res.json({ products });
   } catch (err) {
-    console.error('Error fetching best sellers:', err);
-    res.status(500).json({ error: 'Failed to fetch best-selling parts' });
+    console.error("Error fetching best sellers:", err);
+    res.status(500).json({ error: "Failed to fetch best-selling parts" });
   }
 };
 
@@ -409,10 +438,11 @@ exports.getSalesReport = async (req, res) => {
 
     // Validate year
     if (isNaN(year) || year < 2000 || year > 2100) {
-      return res.status(400).json({ error: 'Invalid year' });
+      return res.status(400).json({ error: "Invalid year" });
     }
 
-    const [sales] = await pool.query(`
+    const [sales] = await pool.query(
+      `
       SELECT 
         MONTH(o.created_at) as month,
         COUNT(oi.order_item_id) as total_sales,
@@ -424,22 +454,26 @@ exports.getSalesReport = async (req, res) => {
       AND YEAR(o.created_at) = ?
       GROUP BY MONTH(o.created_at)
       ORDER BY month
-    `, [sellerId, year]);
+    `,
+      [sellerId, year]
+    );
 
     // Fill in missing months with zero values
     const fullYearData = Array.from({ length: 12 }, (_, i) => {
-      const existingData = sales.find(s => s.month === i + 1);
-      return existingData || {
-        month: i + 1,
-        total_sales: 0,
-        revenue: 0
-      };
+      const existingData = sales.find((s) => s.month === i + 1);
+      return (
+        existingData || {
+          month: i + 1,
+          total_sales: 0,
+          revenue: 0,
+        }
+      );
     });
 
     res.json({ sales: fullYearData });
   } catch (err) {
-    console.error('Error fetching sales report:', err);
-    res.status(500).json({ error: 'Failed to fetch sales report' });
+    console.error("Error fetching sales report:", err);
+    res.status(500).json({ error: "Failed to fetch sales report" });
   }
 };
 
@@ -447,14 +481,14 @@ exports.getPaymentInfo = async (req, res) => {
   try {
     const sellerId = req.user.id;
     const [rows] = await pool.query(
-      'SELECT bank_name, account_holder, account_number, iban FROM seller_payment_info WHERE seller_id = ?',
+      "SELECT bank_name, account_holder, account_number, iban FROM seller_payment_info WHERE seller_id = ?",
       [sellerId]
     );
 
     res.json({ payment_info: rows[0] || {} });
   } catch (err) {
-    console.error('Error fetching payment info:', err);
-    res.status(500).json({ error: 'Failed to fetch payment information' });
+    console.error("Error fetching payment info:", err);
+    res.status(500).json({ error: "Failed to fetch payment information" });
   }
 };
 
@@ -465,12 +499,12 @@ exports.updatePaymentInfo = async (req, res) => {
 
     // Validate required fields
     if (!bank_name || !account_holder || !account_number || !iban) {
-      return res.status(400).json({ error: 'All fields are required' });
+      return res.status(400).json({ error: "All fields are required" });
     }
 
     // Check if payment info exists
     const [existing] = await pool.query(
-      'SELECT seller_id FROM seller_payment_info WHERE seller_id = ?',
+      "SELECT seller_id FROM seller_payment_info WHERE seller_id = ?",
       [sellerId]
     );
 
@@ -492,36 +526,39 @@ exports.updatePaymentInfo = async (req, res) => {
       );
     }
 
-    res.json({ message: 'Payment information updated successfully' });
+    res.json({ message: "Payment information updated successfully" });
   } catch (err) {
-    console.error('Error updating payment info:', err);
-    res.status(500).json({ error: 'Failed to update payment information' });
+    console.error("Error updating payment info:", err);
+    res.status(500).json({ error: "Failed to update payment information" });
   }
 };
 
 exports.getInventory = async (req, res) => {
   try {
     const sellerId = req.user.id;
-    const { sort = 'created_at', order = 'desc' } = req.query;
+    const { sort = "created_at", order = "desc" } = req.query;
 
     // Validate sort field
-    const allowedSortFields = ['created_at', 'stock', 'price'];
-    const sortField = allowedSortFields.includes(sort) ? sort : 'created_at';
-    
-    // Validate order direction
-    const orderDirection = order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    const allowedSortFields = ["created_at", "stock", "price"];
+    const sortField = allowedSortFields.includes(sort) ? sort : "created_at";
 
-    const [products] = await pool.query(`
+    // Validate order direction
+    const orderDirection = order.toLowerCase() === "asc" ? "ASC" : "DESC";
+
+    const [products] = await pool.query(
+      `
       SELECT *
       FROM products
       WHERE seller_id = ?
       ORDER BY ${sortField} ${orderDirection}
-    `, [sellerId]);
+    `,
+      [sellerId]
+    );
 
     res.json({ products });
   } catch (err) {
-    console.error('Error fetching inventory:', err);
-    res.status(500).json({ error: 'Failed to fetch inventory' });
+    console.error("Error fetching inventory:", err);
+    res.status(500).json({ error: "Failed to fetch inventory" });
   }
 };
 
@@ -532,29 +569,29 @@ exports.updateStock = async (req, res) => {
     const { stock } = req.body;
 
     // Validate stock value
-    if (typeof stock !== 'number' || stock < 0) {
-      return res.status(400).json({ error: 'Invalid stock value' });
+    if (typeof stock !== "number" || stock < 0) {
+      return res.status(400).json({ error: "Invalid stock value" });
     }
 
     // Verify product belongs to seller
     const [product] = await pool.query(
-      'SELECT product_id FROM products WHERE product_id = ? AND seller_id = ?',
+      "SELECT product_id FROM products WHERE product_id = ? AND seller_id = ?",
       [productId, sellerId]
     );
 
     if (product.length === 0) {
-      return res.status(404).json({ error: 'Product not found' });
+      return res.status(404).json({ error: "Product not found" });
     }
 
     // Update stock
-    await pool.query(
-      'UPDATE products SET stock = ? WHERE product_id = ?',
-      [stock, productId]
-    );
+    await pool.query("UPDATE products SET stock = ? WHERE product_id = ?", [
+      stock,
+      productId,
+    ]);
 
-    res.json({ message: 'Stock updated successfully' });
+    res.json({ message: "Stock updated successfully" });
   } catch (err) {
-    console.error('Error updating stock:', err);
-    res.status(500).json({ error: 'Failed to update stock' });
+    console.error("Error updating stock:", err);
+    res.status(500).json({ error: "Failed to update stock" });
   }
 };

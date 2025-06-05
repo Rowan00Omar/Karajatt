@@ -77,6 +77,35 @@ const SellerUpload = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate required fields
+    const requiredFields = {
+      manufacturer,
+      model,
+      startYear,
+      endYear,
+      category,
+      part,
+      status,
+      title,
+      price,
+      condition,
+      id,
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      setError(`الحقول التالية مطلوبة: ${missingFields.join(", ")}`);
+      return;
+    }
+
+    if (images.length === 0) {
+      setError("يرجى اختيار صورة واحدة على الأقل");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("manufacturer", manufacturer);
     formData.append("model", model);
@@ -91,11 +120,35 @@ const SellerUpload = () => {
     formData.append("price", price);
     formData.append("condition", condition);
     formData.append("id", id);
+
     for (let i = 0; i < images.length; i++) {
       formData.append("images", images[i]);
     }
+
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        setError("يرجى تسجيل الدخول أولاً");
+        return;
+      }
+
+      console.log("Sending data:", {
+        manufacturer,
+        model,
+        startYear,
+        endYear,
+        category,
+        part,
+        status,
+        title,
+        extraDetails,
+        timeInStock,
+        price,
+        condition,
+        id,
+        imageCount: images.length,
+      });
+
       const res = await axios.post("/api/seller/upload", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -111,7 +164,16 @@ const SellerUpload = () => {
       }
     } catch (err) {
       console.error("Upload failed:", err);
-      alert("حدث خطأ أثناء رفع القطعة");
+      if (err.response) {
+        console.error("Server error details:", err.response.data);
+        setError(
+          `خطأ في الخادم: ${
+            err.response.data.message || "حدث خطأ أثناء رفع القطعة"
+          }`
+        );
+      } else {
+        setError("حدث خطأ أثناء رفع القطعة");
+      }
     }
   };
 

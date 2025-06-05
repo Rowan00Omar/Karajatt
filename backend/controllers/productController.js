@@ -3,7 +3,6 @@ const db = require("../db");
 const getSingleProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("Fetching product with ID:", id);
 
     // Fetch product details with seller info
     const [product] = await db.query(
@@ -58,7 +57,6 @@ const getSingleProduct = async (req, res) => {
     delete productData.first_name;
     delete productData.last_name;
 
-    console.log("Product data:", productData);
     res.json(productData);
   } catch (error) {
     console.error("Database error:", error);

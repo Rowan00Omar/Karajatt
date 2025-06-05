@@ -4,16 +4,49 @@ import axios from "axios";
 
 const Reviews = ({ type, id }) => {
   const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
+  const [newReview, setNewReview] = useState({
+    rating: 5,
+    comment: "",
+    product_id: null,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userHasReviewed, setUserHasReviewed] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [sellerProducts, setSellerProducts] = useState([]);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     fetchReviews();
+    if (type === "seller") {
+      fetchSellerProducts();
+    }
+    checkUserRole();
   }, [type, id]);
+
+  const checkUserRole = async () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const response = await axios.get("/api/auth/userInfo", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUserRole(response.data.role);
+      } catch (err) {
+        console.error("Error fetching user role:", err);
+      }
+    }
+  };
+
+  const fetchSellerProducts = async () => {
+    try {
+      const response = await axios.get(`/api/seller/profile/${id}`);
+      setSellerProducts(response.data.products || []);
+    } catch (err) {
+      console.error("Error fetching seller products:", err);
+    }
+  };
 
   const fetchReviews = async () => {
     try {
@@ -57,6 +90,16 @@ const Reviews = ({ type, id }) => {
         return;
       }
 
+      if (userRole !== "user") {
+        setError("فقط المستخدمين يمكنهم إضافة تقييمات");
+        return;
+      }
+
+      if (type === "seller" && !newReview.product_id) {
+        setError("يرجى اختيار المنتج للتقييم");
+        return;
+      }
+
       const endpoint =
         type === "product"
           ? `/api/product/${id}/reviews`
@@ -68,7 +111,7 @@ const Reviews = ({ type, id }) => {
 
       // Refresh reviews after submission
       fetchReviews();
-      setNewReview({ rating: 5, comment: "" });
+      setNewReview({ rating: 5, comment: "", product_id: null });
     } catch (err) {
       setError(err.response?.data?.message || "فشل في إرسال التقييم");
       console.error("Error submitting review:", err);
@@ -114,7 +157,16 @@ const Reviews = ({ type, id }) => {
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm">
                   {review.reviewer_name?.charAt(0)}
                 </div>
-                <span className="font-medium">{review.reviewer_name}</span>
+                <div>
+                  <span className="font-medium block">
+                    {review.reviewer_name}
+                  </span>
+                  {review.product_title && (
+                    <span className="text-sm text-gray-500">
+                      منتج: {review.product_title}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
@@ -137,9 +189,31 @@ const Reviews = ({ type, id }) => {
         ))}
       </div>
 
-      {/* Add Review Form */}
-      {!userHasReviewed && (
+      {/* Add Review Form - Only show for users */}
+      {!userHasReviewed && userRole === "user" && (
         <form onSubmit={handleSubmit} className="space-y-4">
+          {type === "seller" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                اختر المنتج
+              </label>
+              <select
+                value={newReview.product_id || ""}
+                onChange={(e) =>
+                  setNewReview({ ...newReview, product_id: e.target.value })
+                }
+                className="w-full p-2 border rounded-md"
+                required
+              >
+                <option value="">اختر المنتج</option>
+                {sellerProducts.map((product) => (
+                  <option key={product.product_id} value={product.product_id}>
+                    {product.title || product.part_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               التقييم

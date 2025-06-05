@@ -19,6 +19,9 @@ import "./App.css";
 import axios from "axios";
 import ProductDetail from "./pages/ProductDetail";
 import SellerProfile from "./pages/SellerProfile";
+import SalesReportPage from "./pages/seller/sales-report";
+import Profile from "./pages/seller/Profile";
+import UserProfile from "./pages/UserProfile";
 
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
@@ -108,6 +111,8 @@ function App() {
           return <Navigate to="/seller" replace />;
         case "user":
           return <Navigate to="/user" replace />;
+        default:
+          return <Navigate to="/login" replace />;
       }
     }
 
@@ -137,13 +142,22 @@ function App() {
           }
         />
         <Route
-          path="/seller-profile/:id"
+          path="/seller"
           element={
-            <UserLayout>
-              <SellerProfile />
-            </UserLayout>
+            <ProtectedRoute allowedRole="seller">
+              <SellerLayout />
+            </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="profile" />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="upload" element={<SellerUpload />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="sales-report" element={<SalesReportPage />} />
+          <Route path="my-products" element={<div>My Products</div>} />
+          <Route path="orders" element={<div>Orders</div>} />
+          <Route path="settings" element={<div>Settings</div>} />
+        </Route>
 
         <Route
           path="/admin"
@@ -162,20 +176,6 @@ function App() {
         </Route>
 
         <Route
-          path="/seller"
-          element={
-            <ProtectedRoute allowedRole="seller">
-              <SellerLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<SellerUpload />} />
-          <Route path="my-products" element={<div>My Products</div>} />
-          <Route path="orders" element={<div>Orders</div>} />
-          <Route path="settings" element={<div>Settings</div>} />
-        </Route>
-
-        <Route
           path="/user/*"
           element={
             <ProtectedRoute allowedRole="user">
@@ -186,6 +186,7 @@ function App() {
                       <Route index element={<SearchForm />} />
                       <Route path="orders" element={<div>My Orders</div>} />
                       <Route path="part/:id" element={<ProductDetail />} />
+                      <Route path="profile" element={<UserProfile />} />
                     </Routes>
                   </main>
                 </div>
@@ -195,6 +196,16 @@ function App() {
         />
 
         <Route path="/" element={<HomeRoute />} />
+
+        {/* Public seller profile route */}
+        <Route
+          path="/seller/:id"
+          element={
+            <UserLayout>
+              <SellerProfile />
+            </UserLayout>
+          }
+        />
 
         <Route path="*" element={<RoleBasedRedirect />} />
       </Routes>
