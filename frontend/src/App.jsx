@@ -20,8 +20,8 @@ import axios from "axios";
 import ProductDetail from "./pages/ProductDetail";
 import SellerProfile from "./pages/SellerProfile";
 import SalesReportPage from "./pages/seller/sales-report";
-import PaymentInfoPage from "./pages/seller/payment-info";
 import SellerInventoryPage from "./pages/seller/inventory";
+import Profile from "./pages/seller/Profile";
 
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
@@ -174,8 +174,8 @@ function App() {
         >
           <Route path="upload" element={<SellerUpload />} />
           <Route path="sales-report" element={<SalesReportPage />} />
-          <Route path="payment-info" element={<PaymentInfoPage />} />
           <Route path="inventory" element={<SellerInventoryPage />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         <Route

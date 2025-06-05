@@ -5,6 +5,9 @@ import {
   LineChart,
   Menu,
   X,
+  User,
+  Upload,
+  Settings,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -15,27 +18,26 @@ const handleLogout = () => {
   window.location.href = "/login";
 };
 
-
 const items = [
   {
-    title: "تقرير المبيعات الشهري",
-    path: "/seller/sales-report",
-    icon: LineChart,
+    title: "الملف الشخصي",
+    path: "/seller/profile",
+    icon: User,
   },
   {
     title: "رفع منتج جديد",
     path: "/seller/upload",
-    icon: BarChart3,
-  },
-  {
-    title: "معلومات البنك/الدفع",
-    path: "/seller/payment-info",
-    icon: Wallet,
+    icon: Upload,
   },
   {
     title: "المخزون",
     path: "/seller/inventory",
     icon: Package,
+  },
+  {
+    title: "تقرير المبيعات",
+    path: "/seller/sales-report",
+    icon: LineChart,
   },
 ];
 
@@ -73,15 +75,15 @@ export function SellerBar() {
       <div 
         className={`fixed inset-y-0 right-0 z-40 w-[240px] bg-white transform transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full sm:translate-x-0'
-        }`}
+        } shadow-lg`}
       >
         <div className="flex flex-col h-full py-4" dir="rtl">
-          <div className="px-4 mb-4">
-            <h2 className="text-xl font-bold">لوحة التحكم</h2>
+          <div className="px-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900">لوحة التحكم</h2>
           </div>
           
           <nav className="flex-1">
-            <ul className="space-y-1 px-2">
+            <ul className="space-y-1 px-3">
               {items.map((item) => (
                 <li key={item.title}>
                   <NavLink
@@ -90,8 +92,8 @@ export function SellerBar() {
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                         isActive 
-                          ? 'bg-indigo-50 text-indigo-600' 
-                          : 'hover:bg-gray-100'
+                          ? 'bg-blue-50 text-blue-600 font-medium' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`
                     }
                   >
@@ -102,10 +104,11 @@ export function SellerBar() {
               ))}
             </ul>
           </nav>
-          <div className="px-4 mt-auto">
+
+          <div className="px-3 mt-auto border-t pt-4">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 text-right"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-red-600 hover:bg-red-50 text-right"
             >
               <LogOut className="h-5 w-5" />
               <span>تسجيل الخروج</span>
