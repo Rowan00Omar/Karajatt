@@ -14,6 +14,7 @@ import {
   Users,
   ClipboardCheck,
   LogOut,
+  Ticket,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -44,6 +45,11 @@ const items = [
     title: "الطلبات المعلقة",
     path: "/admin/pending",
     icon: ClipboardCheck,
+  },
+  {
+    title: "إدارة الكوبونات",
+    path: "/admin/coupons",
+    icon: Ticket,
   },
 ];
 
