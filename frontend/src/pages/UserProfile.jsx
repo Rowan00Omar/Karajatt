@@ -2,6 +2,9 @@ import {
   UserIcon,
   ReceiptRefundIcon,
   TrashIcon,
+  DocumentTextIcon,
+  PhoneIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { Dialog, Transition } from "@headlessui/react";
 import React, { useState, Fragment, useEffect } from "react";
@@ -12,6 +15,7 @@ const UserProfile = () => {
   const [email, setEmail] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderHistory, setOrderHistory] = useState([]);
+  const [showInspectionOnly, setShowInspectionOnly] = useState(false);
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchUserInfo = async () => {
@@ -46,6 +50,10 @@ const UserProfile = () => {
   const handleDelete = () => {
     setIsModalOpen(true);
   };
+
+  const filteredOrders = showInspectionOnly
+    ? orderHistory.filter(order => order.status !== 'pending')
+    : orderHistory;
 
   return (
     <div
@@ -86,11 +94,20 @@ const UserProfile = () => {
 
         {/* Order History */}
         <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-6 overflow-x-auto">
-          <div className="flex items-center gap-2 mb-4">
-            <ReceiptRefundIcon className="w-6 h-6 text-[#4a60e9]" />
-            <h2 className="text-xl font-semibold text-[#4a60e9]">
-              الطلبات السابقة
-            </h2>
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setShowInspectionOnly(!showInspectionOnly)}
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              <MagnifyingGlassIcon className="h-4 w-4 ml-2" />
+              {showInspectionOnly ? 'عرض جميع الطلبات' : 'عرض طلبات الفحص فقط'}
+            </button>
+            <div className="flex items-center gap-2">
+              <ReceiptRefundIcon className="w-6 h-6 text-[#4a60e9]" />
+              <h2 className="text-xl font-semibold text-[#4a60e9]">
+                الطلبات السابقة
+              </h2>
+            </div>
           </div>
           <table className="min-w-full text-sm text-right">
             <thead className="text-gray-500 border-b">
@@ -98,16 +115,57 @@ const UserProfile = () => {
                 <th className="py-2 pr-4">اسم القطعة</th>
                 <th className="py-2 pr-4">تاريخ الطلب</th>
                 <th className="py-2 pr-4">السعر</th>
+                <th className="py-2 pr-4">حالة الفحص</th>
                 <th className="py-2">اسم البائع</th>
+                <th className="py-2">الإجراءات</th>
               </tr>
             </thead>
             <tbody className="text-gray-800">
-              {orderHistory.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="border-b hover:bg-gray-50">
                   <td className="py-3 pr-4">{order.partName}</td>
                   <td className="py-3 pr-4">{order.orderDate}</td>
                   <td className="py-3 pr-4">{order.price}</td>
+                  <td className="py-3 pr-4">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        order.status === 'passed'
+                          ? 'bg-green-100 text-green-800'
+                          : order.status === 'failed'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
+                      {order.status === 'passed'
+                        ? 'تم الفحص - القطعة سليمة'
+                        : order.status === 'failed'
+                        ? 'تم الفحص - القطعة غير صالحة'
+                        : 'بانتظار الفحص'}
+                    </span>
+                  </td>
                   <td className="py-3">{order.seller}</td>
+                  <td className="py-3">
+                    {(order.status === 'passed' || order.status === 'failed') && (
+                      <a
+                        href={`/api/admin/inspection/orders/${order.id}/report`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      >
+                        <DocumentTextIcon className="h-4 w-4 ml-1" />
+                        تحميل تقرير الفحص
+                      </a>
+                    )}
+                    {order.status === 'failed' && order.inspectorPhone && (
+                      <a
+                        href={`tel:${order.inspectorPhone}`}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                      >
+                        <PhoneIcon className="h-4 w-4 ml-1" />
+                        اتصال بالفاحص
+                      </a>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

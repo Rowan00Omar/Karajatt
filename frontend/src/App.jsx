@@ -7,6 +7,7 @@ import {InventoryPage as SellerInventory} from "./pages/seller/inventory";
 import UsersPage from "./pages/admin/users";
 import ManageUsersPage from "./pages/admin/manage";
 import PendingRequestsPage from "./pages/admin/pending";
+import InspectionManagement from "./pages/admin/InspectionManagement";
 import SellerLayout from "./pages/seller/layout";
 import SellerUpload from "./pages/SellerUpload";
 import SearchForm from "./components/SearchForm";
@@ -155,7 +156,7 @@ function App() {
           <Route path="upload" element={<SellerUpload />} />
           <Route path="inventory" element={<SellerInventory />} />
           <Route path="sales-report" element={<SalesReportPage />} />
-          </Route>
+        </Route>
 
         <Route
           path="/admin"
@@ -172,6 +173,7 @@ function App() {
           <Route path="manage" element={<ManageUsersPage />} />
           <Route path="pending" element={<PendingRequestsPage />} />
           <Route path="coupons" element={<CouponsPage />} />
+          <Route path="inspection" element={<InspectionManagement />} />
         </Route>
 
         <Route

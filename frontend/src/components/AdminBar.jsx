@@ -51,6 +51,11 @@ const items = [
     path: "/admin/coupons",
     icon: Ticket,
   },
+  {
+    title: "فحص الطلبات",
+    path: "/admin/inspection",
+    icon: Search,
+  },
 ];
 
 export function AdminBar({ isOpen }) {
