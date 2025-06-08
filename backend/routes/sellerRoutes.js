@@ -7,20 +7,16 @@ const {
   checkRole,
 } = require("../middleware/authMiddleware");
 
-// Get seller profile with ratings
 router.get("/profile/:id", sellerController.getSellerProfile);
 
-// Upload product
 router.post(
   "/upload",
   photoupload.array("images", 4),
   sellerController.sellerUpload
 );
 
-// Get filtered products
 router.get("/filtered-part", sellerController.filterProducts);
 
-// Review routes
 router.get("/reviews/:id", sellerController.getSellerReviews);
 router.post(
   "/reviews/:seller_id",
