@@ -441,38 +441,50 @@ exports.getSalesReport = async (req, res) => {
       return res.status(400).json({ error: "Invalid year" });
     }
 
-    const [sales] = await pool.query(
-      `
-      SELECT 
-        MONTH(o.created_at) as month,
-        COUNT(oi.order_item_id) as total_sales,
-        SUM(oi.quantity * p.price) as revenue
-      FROM orders o
-      JOIN order_items oi ON o.order_id = oi.order_id
-      JOIN products p ON oi.product_id = p.product_id
-      WHERE p.seller_id = ? 
-      AND YEAR(o.created_at) = ?
-      GROUP BY MONTH(o.created_at)
-      ORDER BY month
-    `,
-      [sellerId, year]
-    );
+    // Create an array of all months with zero values
+    const fullYearData = Array.from({ length: 12 }, (_, i) => ({
+      month: i + 1,
+      total_sales: 0,
+      revenue: 0,
+    }));
 
-    // Fill in missing months with zero values
-    const fullYearData = Array.from({ length: 12 }, (_, i) => {
-      const existingData = sales.find((s) => s.month === i + 1);
-      return (
-        existingData || {
-          month: i + 1,
-          total_sales: 0,
-          revenue: 0,
-        }
+    // Try to get sales data if it exists
+    try {
+      const [sales] = await pool.query(
+        `
+        SELECT 
+          MONTH(o.created_at) as month,
+          COUNT(oi.order_item_id) as total_sales,
+          COALESCE(SUM(oi.quantity * p.price), 0) as revenue
+        FROM orders o
+        JOIN order_items oi ON o.order_id = oi.order_id
+        JOIN products p ON oi.product_id = p.product_id
+        WHERE p.seller_id = ? 
+        AND YEAR(o.created_at) = ?
+        GROUP BY MONTH(o.created_at)
+        ORDER BY month
+        `,
+        [sellerId, year]
       );
-    });
+
+      // Update the fullYearData with actual sales data where it exists
+      sales.forEach(sale => {
+        if (sale.month >= 1 && sale.month <= 12) {
+          fullYearData[sale.month - 1] = {
+            month: sale.month,
+            total_sales: parseInt(sale.total_sales),
+            revenue: parseFloat(sale.revenue)
+          };
+        }
+      });
+    } catch (err) {
+      console.error("Error fetching sales data:", err);
+      // Continue with zero values if there's an error
+    }
 
     res.json({ sales: fullYearData });
   } catch (err) {
-    console.error("Error fetching sales report:", err);
+    console.error("Error in sales report:", err);
     res.status(500).json({ error: "Failed to fetch sales report" });
   }
 };
@@ -593,5 +605,30 @@ exports.updateStock = async (req, res) => {
   } catch (err) {
     console.error("Error updating stock:", err);
     res.status(500).json({ error: "Failed to update stock" });
+  }
+};
+
+exports.deleteProduct = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    const productId = req.params.id;
+
+    // Verify product belongs to seller
+    const [product] = await pool.query(
+      "SELECT product_id FROM products WHERE product_id = ? AND seller_id = ?",
+      [productId, sellerId]
+    );
+
+    if (product.length === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Delete the product
+    await pool.query("DELETE FROM products WHERE product_id = ?", [productId]);
+
+    res.json({ message: "Product deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting product:", err);
+    res.status(500).json({ error: "Failed to delete product" });
   }
 };

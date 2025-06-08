@@ -3,9 +3,11 @@ import AdminLayout from "./pages/admin/layout";
 import AdminPage from "./pages/admin/page";
 import SalesPage from "./pages/admin/sales";
 import InventoryPage from "./pages/admin/inventory";
+import {InventoryPage as SellerInventory} from "./pages/seller/inventory";
 import UsersPage from "./pages/admin/users";
 import ManageUsersPage from "./pages/admin/manage";
 import PendingRequestsPage from "./pages/admin/pending";
+import InspectionManagement from "./pages/admin/InspectionManagement";
 import SellerLayout from "./pages/seller/layout";
 import SellerUpload from "./pages/SellerUpload";
 import SearchForm from "./components/SearchForm";
@@ -22,6 +24,7 @@ import SellerProfile from "./pages/SellerProfile";
 import SalesReportPage from "./pages/seller/sales-report";
 import Profile from "./pages/seller/Profile";
 import UserProfile from "./pages/UserProfile";
+import CouponsPage from "./pages/admin/coupons";
 
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
@@ -132,7 +135,6 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-
         <Route
           path="/part/:id"
           element={
@@ -152,11 +154,8 @@ function App() {
           <Route index element={<Navigate to="profile" />} />
           <Route path="profile" element={<Profile />} />
           <Route path="upload" element={<SellerUpload />} />
-          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="inventory" element={<SellerInventory />} />
           <Route path="sales-report" element={<SalesReportPage />} />
-          <Route path="my-products" element={<div>My Products</div>} />
-          <Route path="orders" element={<div>Orders</div>} />
-          <Route path="settings" element={<div>Settings</div>} />
         </Route>
 
         <Route
@@ -173,6 +172,8 @@ function App() {
           <Route path="users" element={<UsersPage />} />
           <Route path="manage" element={<ManageUsersPage />} />
           <Route path="pending" element={<PendingRequestsPage />} />
+          <Route path="coupons" element={<CouponsPage />} />
+          <Route path="inspection" element={<InspectionManagement />} />
         </Route>
 
         <Route

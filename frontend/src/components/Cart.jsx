@@ -2,8 +2,24 @@ import { useCart } from "../context/CartContext";
 import { X } from "lucide-react";
 import Button from "./Button";
 import axios from "axios";
+import { useState } from "react";
+
 const Cart = ({ onClose }) => {
-  const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
+  const { 
+    cartItems, 
+    removeFromCart, 
+    updateQuantity, 
+    subtotal,
+    cartTotal,
+    discount,
+    appliedCoupon,
+    applyCoupon,
+    removeCoupon
+  } = useCart();
+
+  const [couponCode, setCouponCode] = useState("");
+  const [couponError, setCouponError] = useState("");
+
   const handleCheckout = async (cartItems) => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -13,13 +29,31 @@ const Cart = ({ onClose }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userId = response.data.id;
-      const data = await axios.post('/api/payments/checkout',{cartItems,userId});
-    
-  }
-  catch(err){
-          console.error("Payment failed:", err);
-  }
-}
+      const data = await axios.post('/api/payments/checkout', {
+        cartItems,
+        userId,
+        appliedCoupon
+      });
+    } catch(err) {
+      console.error("Payment failed:", err);
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    const result = await applyCoupon(couponCode);
+    if (!result.success) {
+      setCouponError(result.error);
+    } else {
+      setCouponError("");
+      setCouponCode("");
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end p-4 pointer-events-none">
       <div
@@ -46,8 +80,6 @@ const Cart = ({ onClose }) => {
             </div>
           ) : (
             <div className="px-4 pb-20">
-              {" "}
-              {/* Added padding-bottom for footer */}
               {cartItems.map((item) => (
                 <div key={item.id} className="py-2 flex gap-3 items-center">
                   <div className="w-12 h-12 flex-shrink-0">
@@ -101,15 +133,62 @@ const Cart = ({ onClose }) => {
         {/* Checkout Footer - Only visible when items exist */}
         {cartItems.length > 0 && (
           <div className="sticky bottom-0 border-t bg-white p-4">
-            <div className="flex justify-between mb-4">
-              <span className="font-medium text-sm text-gray-500">
-                المجموع:
-              </span>
-              <span className="font-bold text-babyJanaBlue">
-                {cartTotal.toLocaleString("ar-SA")} ر.س
-              </span>
+            {/* Coupon Section */}
+            <div className="mb-4">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="أدخل رمز الكوبون"
+                  className="flex-1 border rounded p-2 text-sm"
+                />
+                <button
+                  onClick={handleApplyCoupon}
+                  className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
+                >
+                  تطبيق
+                </button>
+              </div>
+              {couponError && (
+                <p className="text-red-500 text-xs mt-1">{couponError}</p>
+              )}
+              {appliedCoupon && (
+                <div className="flex justify-between items-center mt-2 text-sm">
+                  <span className="text-green-600">
+                    تم تطبيق الكوبون: {appliedCoupon.code}
+                  </span>
+                  <button
+                    onClick={removeCoupon}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    إزالة
+                  </button>
+                </div>
+              )}
             </div>
-            <Button  onClick = {() => handleCheckout(cartItems)}className="w-full py-2 text-sm">اتمام الشراء</Button>
+
+            {/* Price Summary */}
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>المجموع الفرعي:</span>
+                <span>{subtotal.toLocaleString("ar-SA")} ر.س</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>الخصم:</span>
+                  <span>- {discount.toLocaleString("ar-SA")} ر.س</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-babyJanaBlue">
+                <span>المجموع:</span>
+                <span>{cartTotal.toLocaleString("ar-SA")} ر.س</span>
+              </div>
+            </div>
+
+            <Button onClick={() => handleCheckout(cartItems)} className="w-full py-2 text-sm">
+              اتمام الشراء
+            </Button>
           </div>
         )}
       </div>

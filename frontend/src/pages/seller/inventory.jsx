@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Trash2 } from 'lucide-react';
 
-export default function InventoryPage() {
+const InventoryPage = () => {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     fetchInventory();
@@ -29,23 +30,25 @@ export default function InventoryPage() {
     }
   };
 
-  const handleUpdateStock = async (productId, newStock) => {
+  const handleDelete = async (productId) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+      return;
+    }
+
     try {
+      setDeletingId(productId);
       const token = localStorage.getItem('token');
-      await axios.patch(`/api/seller/inventory/${productId}`, 
-        { stock: newStock },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.delete(`/api/seller/inventory/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       
-      // Update local state
-      setInventory(inventory.map(item => 
-        item.product_id === productId 
-          ? { ...item, stock: newStock }
-          : item
-      ));
+      // Remove the deleted product from the state
+      setInventory(inventory.filter(item => item.product_id !== productId));
     } catch (err) {
-      console.error('Error updating stock:', err);
-      alert(err.response?.data?.message || 'Failed to update stock');
+      console.error('Error deleting product:', err);
+      alert(err.response?.data?.message || 'Failed to delete product');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -63,85 +66,85 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="animate-fadeIn">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">المخزون</h2>
+    <div className="animate-fadeIn p-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">المخزون</h2>
+          <p className="mt-1 text-sm text-gray-500">عرض المنتجات المتوفرة</p>
+        </div>
         <a
           href="/seller/upload"
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+          className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2 text-sm font-medium"
         >
           <Plus className="h-5 w-5" />
           إضافة قطعة جديدة
         </a>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="flex-1 relative">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="البحث في المخزون..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border rounded-lg"
-            />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="البحث في المخزون..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all duration-200"
+              />
+            </div>
+            <div className="flex gap-4">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all duration-200 bg-white"
+              >
+                <option value="created_at">تاريخ الإضافة</option>
+                <option value="price">السعر</option>
+              </select>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all duration-200 bg-white"
+              >
+                <option value="desc">تنازلي</option>
+                <option value="asc">تصاعدي</option>
+              </select>
+            </div>
           </div>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="p-2 border rounded-lg"
-          >
-            <option value="created_at">تاريخ الإضافة</option>
-            <option value="stock">المخزون</option>
-            <option value="price">السعر</option>
-          </select>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-            className="p-2 border rounded-lg"
-          >
-            <option value="desc">تنازلي</option>
-            <option value="asc">تصاعدي</option>
-          </select>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50">
-                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">القطعة</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">السيارة</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">السعر</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">المخزون</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">الحالة</th>
-                <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">تحديث المخزون</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">القطعة</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">السيارة</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">السعر</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">الحالة</th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">حذف المنتج</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-100">
               {filteredInventory.map((item) => (
-                <tr key={item.product_id}>
-                  <td className="px-6 py-4">
+                <tr key={item.product_id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <td className="px-6 py-4 text-right">
                     <div>
-                      <p className="font-medium">{item.title}</p>
+                      <p className="font-medium text-gray-900">{item.title}</p>
                       <p className="text-sm text-gray-500">{item.part_name}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-right">
                     <div>
-                      <p>{item.company_name}</p>
+                      <p className="text-gray-900">{item.company_name}</p>
                       <p className="text-sm text-gray-500">{item.car_name}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4">{item.price} ر.س</td>
-                  <td className="px-6 py-4">
-                    <span className={`${
-                      item.stock < 5 ? 'text-red-600' : 'text-gray-900'
-                    }`}>
-                      {item.stock}
-                    </span>
+                  <td className="px-6 py-4 text-right">
+                    <span className="font-medium text-gray-900">{item.price} ر.س</span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-right">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       item.approval_status === 'approved'
                         ? 'bg-green-100 text-green-800'
@@ -153,27 +156,32 @@ export default function InventoryPage() {
                        item.approval_status === 'pending' ? 'قيد المراجعة' : 'مرفوض'}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <input
-                      type="number"
-                      min="0"
-                      value={item.stock}
-                      onChange={(e) => handleUpdateStock(item.product_id, parseInt(e.target.value))}
-                      className="w-20 p-1 border rounded"
-                    />
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={() => handleDelete(item.product_id)}
+                      disabled={deletingId === item.product_id}
+                      className={`text-red-600 hover:text-red-800 transition-colors p-2 rounded-full hover:bg-red-50 ${
+                        deletingId === item.product_id ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      title="حذف المنتج"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
         {filteredInventory.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
-            لا توجد نتائج
+          <div className="text-center text-gray-500 py-12">
+            <Plus className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-lg font-medium">لا توجد منتجات</p>
+            <p className="text-sm">قم بإضافة منتجات جديدة لعرضها هنا</p>
           </div>
         )}
       </div>
     </div>
   );
-} 
+}
+export  {InventoryPage};

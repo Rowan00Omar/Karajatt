@@ -17,6 +17,41 @@ router.post(
 
 router.get("/filtered-part", sellerController.filterProducts);
 
+// Inventory routes
+router.get(
+  "/inventory",
+  authenticateToken,
+  checkRole("seller"),
+  sellerController.getInventory
+);
+router.patch(
+  "/inventory/:id",
+  authenticateToken,
+  checkRole("seller"),
+  sellerController.updateStock
+);
+router.delete(
+  "/inventory/:id",
+  authenticateToken,
+  checkRole("seller"),
+  sellerController.deleteProduct
+);
+
+// Sales report routes
+router.get(
+  "/sales-report/:year",
+  authenticateToken,
+  checkRole("seller"),
+  sellerController.getSalesReport
+);
+router.get(
+  "/best-selling",
+  authenticateToken,
+  checkRole("seller"),
+  sellerController.getBestSelling
+);
+
+// Review routes
 router.get("/reviews/:id", sellerController.getSellerReviews);
 router.post(
   "/reviews/:seller_id",

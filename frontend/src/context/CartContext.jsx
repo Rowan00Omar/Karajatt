@@ -1,9 +1,11 @@
 import { createContext, useContext, useState } from "react";
+import axios from "axios";
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
 
   const addToCart = (product) => {
     setCartItems((prevItems) => {
@@ -40,10 +42,40 @@ export function CartProvider({ children }) {
     );
   };
 
-  const cartTotal = cartItems.reduce(
+  const subtotal = cartItems.reduce(
     (total, item) => total + item.priceValue * item.quantity,
     0
   );
+
+  const applyCoupon = async (code) => {
+    try {
+      const response = await axios.post("/api/coupons/validate", { code });
+      if (response.data.valid) {
+        setAppliedCoupon({
+          code,
+          discount_percentage: response.data.discount_percentage
+        });
+        return { success: true };
+      }
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      setAppliedCoupon(null);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Invalid coupon code" 
+      };
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+  };
+
+  const discount = appliedCoupon 
+    ? (subtotal * appliedCoupon.discount_percentage) / 100
+    : 0;
+
+  const cartTotal = subtotal - discount;
 
   return (
     <CartContext.Provider
@@ -52,7 +84,12 @@ export function CartProvider({ children }) {
         addToCart,
         removeFromCart,
         updateQuantity,
+        subtotal,
         cartTotal,
+        discount,
+        appliedCoupon,
+        applyCoupon,
+        removeCoupon
       }}
     >
       {children}
