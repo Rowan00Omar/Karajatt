@@ -11,18 +11,38 @@ export function CartProvider({ children }) {
     setCartItems((prevItems) => {
       const existingItem = prevItems.find((item) => item.id === product.id);
       if (existingItem) {
-        return prevItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+        return prevItems;
       }
+
+      let price = 0;
+      if (typeof product.price === "string") {
+        price = parseFloat(product.price.replace(/[^\d.]/g, ""));
+      } else if (typeof product.price === "number") {
+        price = product.price;
+      } else if (product.priceValue) {
+        price = parseFloat(product.priceValue);
+      }
+
+      if (isNaN(price)) price = 0;
+
+      let image_url = product.image_url;
+      if (!image_url && product.images?.[0]) {
+        image_url = product.images[0];
+      }
+      if (!image_url && product.extra_image1) {
+        image_url = product.extra_image1;
+      }
+      if (!image_url) {
+        image_url = "/placeholder.jpg";
+      }
+
       return [
         ...prevItems,
         {
           ...product,
           quantity: 1,
-          priceValue: product.priceValue,
+          price: price,
+          image_url: image_url,
         },
       ];
     });
@@ -42,10 +62,10 @@ export function CartProvider({ children }) {
     );
   };
 
-  const subtotal = cartItems.reduce(
-    (total, item) => total + item.priceValue * item.quantity,
-    0
-  );
+  const subtotal = cartItems.reduce((total, item) => {
+    const itemPrice = parseFloat(item.price) || 0;
+    return total + itemPrice;
+  }, 0);
 
   const applyCoupon = async (code) => {
     try {
@@ -53,16 +73,16 @@ export function CartProvider({ children }) {
       if (response.data.valid) {
         setAppliedCoupon({
           code,
-          discount_percentage: response.data.discount_percentage
+          discount_percentage: response.data.discount_percentage,
         });
         return { success: true };
       }
     } catch (error) {
       console.error("Error applying coupon:", error);
       setAppliedCoupon(null);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || "Invalid coupon code" 
+      return {
+        success: false,
+        error: error.response?.data?.message || "Invalid coupon code",
       };
     }
   };
@@ -71,7 +91,7 @@ export function CartProvider({ children }) {
     setAppliedCoupon(null);
   };
 
-  const discount = appliedCoupon 
+  const discount = appliedCoupon
     ? (subtotal * appliedCoupon.discount_percentage) / 100
     : 0;
 
@@ -89,7 +109,7 @@ export function CartProvider({ children }) {
         discount,
         appliedCoupon,
         applyCoupon,
-        removeCoupon
+        removeCoupon,
       }}
     >
       {children}

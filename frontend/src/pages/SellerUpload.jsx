@@ -7,6 +7,20 @@ import axios from "axios";
 
 const partStatus = ["مقبولة", "جيدة", "جيدة جدا", "ممتازة"];
 
+const fieldNamesArabic = {
+  manufacturer: "الماركة",
+  model: "نوع السيارة",
+  startYear: "سنة البداية",
+  endYear: "سنة النهاية",
+  category: "النوع",
+  part: "القطعة",
+  status: "الحالة",
+  title: "عنوان الاعلان",
+  price: "السعر",
+  condition: "حالة الاستخدام",
+  id: "المعرف",
+};
+
 const SellerUpload = () => {
   const [filterData, setFilterData] = useState({
     manufacturers: [],
@@ -94,10 +108,16 @@ const SellerUpload = () => {
 
     const missingFields = Object.entries(requiredFields)
       .filter(([_, value]) => !value)
-      .map(([key]) => key);
+      .map(([key]) => fieldNamesArabic[key]);
 
     if (missingFields.length > 0) {
-      setError(`الحقول التالية مطلوبة: ${missingFields.join(", ")}`);
+      setError(`الحقول التالية مطلوبة: ${missingFields.join("، ")}`);
+      return;
+    }
+
+    // Validate year range
+    if (Number(startYear) > Number(endYear)) {
+      setError("سنة البداية يجب أن تكون أقل من أو تساوي سنة النهاية");
       return;
     }
 
@@ -132,23 +152,6 @@ const SellerUpload = () => {
         return;
       }
 
-      console.log("Sending data:", {
-        manufacturer,
-        model,
-        startYear,
-        endYear,
-        category,
-        part,
-        status,
-        title,
-        extraDetails,
-        timeInStock,
-        price,
-        condition,
-        id,
-        imageCount: images.length,
-      });
-
       const res = await axios.post("/api/seller/upload", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -179,20 +182,12 @@ const SellerUpload = () => {
 
   const handleStartYearChange = (e) => {
     const value = e.target.value;
-    if (value === "" || Number(value) <= Number(endYear) || endYear === "") {
-      setStartYear(value);
-    }
+    setStartYear(value);
   };
 
   const handleEndYearChange = (e) => {
     const value = e.target.value;
-    if (
-      value === "" ||
-      Number(value) >= Number(startYear) ||
-      startYear === ""
-    ) {
-      setEndYear(value);
-    }
+    setEndYear(value);
   };
 
   const getModels = () => {

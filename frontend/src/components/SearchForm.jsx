@@ -46,7 +46,6 @@ const SearchForm = () => {
       try {
         setLoading(true);
 
-        // Fetch filter options data
         const response = await fetch("/api/filtering/unified-data");
         if (!response.ok)
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -58,7 +57,6 @@ const SearchForm = () => {
         setPartsByCategory(data.partsByCategory);
         setYearsByModel(data.yearsByModel);
 
-        // Fetch all products initially
         await fetchAllProducts();
       } catch (err) {
         console.error("Failed to fetch data:", err);
@@ -190,6 +188,48 @@ const SearchForm = () => {
     fetchAllProducts();
   };
 
+  const handleManufacturerChange = (value) => {
+    setManufacturer(value || "");
+    if (value) {
+      handleSearch();
+    }
+  };
+
+  const handleModelChange = (value) => {
+    setModel(value || "");
+    if (value) {
+      handleSearch();
+    }
+  };
+
+  const handleYearChange = (value) => {
+    setSelectedYear(value || "");
+    if (value) {
+      handleSearch();
+    }
+  };
+
+  const handleCategoryChange = (value) => {
+    setCategory(value || "");
+    if (value) {
+      handleSearch();
+    }
+  };
+
+  const handlePartChange = (value) => {
+    setPart(value || "");
+    if (value) {
+      handleSearch();
+    }
+  };
+
+  const handleConditionChange = (value) => {
+    setCondition(value || "");
+    if (value) {
+      handleSearch();
+    }
+  };
+
   return (
     <div
       dir="rtl"
@@ -274,12 +314,12 @@ const SearchForm = () => {
                   نوع السيارة
                 </label>
                 <Select
-                  onValueChange={setManufacturer}
+                  onValueChange={handleManufacturerChange}
                   value={manufacturer}
                   disabled={loading}
                   className="w-full p-3 rounded-xl border-2 text-gray-700 border-gray-200 ring-blue-500 transition-all hover:border-blue-400 focus:ring-2 shadow-sm"
                 >
-                  <SelectItem disabled value="">
+                  <SelectItem disabled value="" className="text-gray-500">
                     اختر نوع السيارة
                   </SelectItem>
                   {manufacturers.map((m) => (
@@ -300,12 +340,12 @@ const SearchForm = () => {
                   الموديل
                 </label>
                 <Select
-                  onValueChange={setModel}
+                  onValueChange={handleModelChange}
                   value={model}
                   disabled={!manufacturer}
                   className="w-full p-3 rounded-xl border-2 text-gray-700 border-gray-200 ring-blue-500 transition-all hover:border-blue-400 focus:ring-2 shadow-sm"
                 >
-                  <SelectItem disabled value="">
+                  <SelectItem disabled value="" className="text-gray-500">
                     اختر الموديل
                   </SelectItem>
                   {models.map((m) => (
@@ -326,12 +366,12 @@ const SearchForm = () => {
                   السنة
                 </label>
                 <Select
-                  onValueChange={setSelectedYear}
+                  onValueChange={handleYearChange}
                   value={selectedYear}
                   disabled={!model || availableYears.length === 0}
                   className="w-full p-3 rounded-xl border-2 text-gray-700 border-gray-200 ring-blue-500 transition-all hover:border-blue-400 focus:ring-2 shadow-sm"
                 >
-                  <SelectItem disabled value="">
+                  <SelectItem disabled value="" className="text-gray-500">
                     اختر السنة
                   </SelectItem>
                   {availableYears.map((year) => (
@@ -348,12 +388,12 @@ const SearchForm = () => {
                   نوع القطعة
                 </label>
                 <Select
-                  onValueChange={setCategory}
+                  onValueChange={handleCategoryChange}
                   value={category}
                   disabled={loading}
                   className="w-full p-3 rounded-xl border-2 text-gray-700 border-gray-200 ring-blue-500 transition-all hover:border-blue-400 focus:ring-2 shadow-sm"
                 >
-                  <SelectItem disabled value="">
+                  <SelectItem disabled value="" className="text-gray-500">
                     اختر النوع
                   </SelectItem>
                   {categories.map((c) => (
@@ -374,12 +414,12 @@ const SearchForm = () => {
                   القطعة المطلوبة
                 </label>
                 <Select
-                  onValueChange={setPart}
+                  onValueChange={handlePartChange}
                   value={part}
                   disabled={!category}
                   className="w-full p-3 rounded-xl border-2 text-gray-700 border-gray-200 ring-blue-500 transition-all hover:border-blue-400 focus:ring-2 shadow-sm"
                 >
-                  <SelectItem disabled value="">
+                  <SelectItem disabled value="" className="text-gray-500">
                     اختر القطعة
                   </SelectItem>
                   {parts.map((p) => (
@@ -396,11 +436,11 @@ const SearchForm = () => {
                   حالة القطعة
                 </label>
                 <Select
-                  onValueChange={setCondition}
+                  onValueChange={handleConditionChange}
                   value={condition}
                   className="w-full p-3 rounded-xl border-2 text-gray-700 border-gray-200 ring-blue-500 transition-all hover:border-blue-400 focus:ring-2 shadow-sm"
                 >
-                  <SelectItem disabled value="">
+                  <SelectItem disabled value="" className="text-gray-500">
                     حالة الاستخدام
                   </SelectItem>
                   <SelectItem value="مجددة">مجددة</SelectItem>

@@ -12,11 +12,7 @@ import {
 import { NavLink, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { LogOut } from "lucide-react";
-
-const handleLogout = () => {
-  localStorage.removeItem("token");
-  window.location.href = "/login";
-};
+import useLogout from "@/hooks/useLogout";
 
 const items = [
   {
@@ -42,6 +38,7 @@ const items = [
 ];
 
 export function SellerBar() {
+  const logout = useLogout();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -65,23 +62,25 @@ export function SellerBar() {
 
       {/* Mobile Navigation Overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 sm:hidden"
           onClick={toggleMobileMenu}
         />
       )}
 
       {/* Sidebar for both Mobile and Desktop */}
-      <div 
+      <div
         className={`fixed inset-y-0 right-0 z-40 w-[240px] bg-white transform transition-transform duration-300 ease-in-out ${
-          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full sm:translate-x-0'
+          isMobileMenuOpen
+            ? "translate-x-0"
+            : "translate-x-full sm:translate-x-0"
         } shadow-lg`}
       >
         <div className="flex flex-col h-full py-4" dir="rtl">
           <div className="px-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900">لوحة التحكم</h2>
           </div>
-          
+
           <nav className="flex-1">
             <ul className="space-y-1 px-3">
               {items.map((item) => (
@@ -91,9 +90,9 @@ export function SellerBar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                        isActive 
-                          ? 'bg-blue-50 text-blue-600 font-medium' 
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        isActive
+                          ? "bg-blue-50 text-blue-600 font-medium"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`
                     }
                   >
@@ -107,7 +106,7 @@ export function SellerBar() {
 
           <div className="px-3 mt-auto border-t pt-4">
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-red-600 hover:bg-red-50 text-right"
             >
               <LogOut className="h-5 w-5" />
@@ -120,4 +119,4 @@ export function SellerBar() {
   );
 }
 
-export default SellerBar; 
+export default SellerBar;

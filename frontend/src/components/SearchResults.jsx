@@ -32,7 +32,9 @@ const SearchResults = ({ results }) => {
           نتائج البحث{" "}
           <span className="text-blue-600">({results.length} قطعة)</span>
         </h2>
-        <p className="mt-2 text-gray-600">اختر القطعة المناسبة من النتائج التالية</p>
+        <p className="mt-2 text-gray-600">
+          اختر القطعة المناسبة من النتائج التالية
+        </p>
       </div>
 
       <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -100,7 +102,9 @@ const SearchResults = ({ results }) => {
                           />
                         ))}
                       </div>
-                      <span className="text-sm text-gray-600">{result.rating}</span>
+                      <span className="text-sm text-gray-600">
+                        {result.rating}
+                      </span>
                     </div>
                   )}
 

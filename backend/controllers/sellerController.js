@@ -10,54 +10,62 @@ const { handleDatabaseError } = require("../utils/errorHandlers");
 // Get seller profile with average rating
 exports.getSellerProfile = async (req, res) => {
   try {
-    const { id } = req.params;
+    const sellerId = req.params.id;
 
-    // Get seller info and calculate average rating from all their products' reviews
+    // Get seller data including user info and seller-specific info
     const [sellerData] = await pool.query(
       `SELECT 
-        u.id,
-        u.first_name,
-        u.last_name,
-        u.email,
+        u.id, u.first_name, u.last_name, u.email,
+        s.bank_name, s.account_number, s.address, s.phone_number,
         COUNT(DISTINCT p.product_id) as total_products,
         COUNT(DISTINCT r.review_id) as total_reviews,
         AVG(r.rating) as average_rating
       FROM users u
+      LEFT JOIN sellers s ON u.id = s.user_id
       LEFT JOIN products p ON u.id = p.seller_id
       LEFT JOIN reviews r ON p.product_id = r.product_id
       WHERE u.id = ? AND u.role = 'seller'
       GROUP BY u.id`,
-      [id]
+      [sellerId]
     );
 
-    if (!sellerData[0]) {
+    if (sellerData.length === 0) {
       return res.status(404).json({ message: "Seller not found" });
     }
 
-    // Get seller's products with their individual ratings
+    // Get seller's products with their ratings
     const [products] = await pool.query(
       `SELECT 
         p.product_id,
-        p.part_name,
         p.title,
         p.price,
         p.image_url,
-        COUNT(r.review_id) as review_count,
+        p.company_name,
+        p.car_name,
+        p.part_name,
+        p.status,
+        p.description,
+        p.condition,
+        p.approval_status,
+        COUNT(DISTINCT r.review_id) as review_count,
         AVG(r.rating) as product_rating
       FROM products p
       LEFT JOIN reviews r ON p.product_id = r.product_id
-      WHERE p.seller_id = ? AND p.approval_status = 'approved'
-      GROUP BY p.product_id
-      ORDER BY p.created_at DESC`,
-      [id]
+      WHERE p.seller_id = ?
+      GROUP BY p.product_id`,
+      [sellerId]
     );
 
     const formattedSeller = {
       id: sellerData[0].id,
       name: `${sellerData[0].first_name} ${sellerData[0].last_name}`,
       email: sellerData[0].email,
-      total_products: sellerData[0].total_products,
-      total_reviews: sellerData[0].total_reviews,
+      bank_name: sellerData[0].bank_name,
+      account_number: sellerData[0].account_number,
+      address: sellerData[0].address,
+      phone_number: sellerData[0].phone_number,
+      total_products: sellerData[0].total_products || 0,
+      total_reviews: sellerData[0].total_reviews || 0,
       average_rating: parseFloat(sellerData[0].average_rating || 0).toFixed(1),
       products: products.map((product) => ({
         ...product,
@@ -70,6 +78,69 @@ exports.getSellerProfile = async (req, res) => {
     console.error("Error fetching seller profile:", error);
     res.status(500).json({
       message: "Error fetching seller profile",
+      error: error.message,
+    });
+  }
+};
+
+exports.updateSellerProfile = async (req, res) => {
+  try {
+    const sellerId = req.params.id;
+    const { name, email, phone_number, address, bank_name, account_number } =
+      req.body;
+
+    // Start transaction
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      // Split name into first_name and last_name
+      const [first_name, ...lastNameParts] = name.split(" ");
+      const last_name = lastNameParts.join(" ");
+
+      // Update user table
+      await connection.query(
+        `UPDATE users 
+         SET first_name = ?, last_name = ?, email = ?
+         WHERE id = ?`,
+        [first_name, last_name, email, sellerId]
+      );
+
+      // Check if seller record exists
+      const [sellerExists] = await connection.query(
+        "SELECT 1 FROM sellers WHERE user_id = ?",
+        [sellerId]
+      );
+
+      if (sellerExists.length > 0) {
+        // Update existing seller record
+        await connection.query(
+          `UPDATE sellers 
+           SET phone_number = ?, address = ?, bank_name = ?, account_number = ?
+           WHERE user_id = ?`,
+          [phone_number, address, bank_name, account_number, sellerId]
+        );
+      } else {
+        // Insert new seller record
+        await connection.query(
+          `INSERT INTO sellers (user_id, phone_number, address, bank_name, account_number)
+           VALUES (?, ?, ?, ?, ?)`,
+          [sellerId, phone_number, address, bank_name, account_number]
+        );
+      }
+
+      await connection.commit();
+      res.json({ message: "Profile updated successfully" });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error("Error updating seller profile:", error);
+    res.status(500).json({
+      message: "Error updating seller profile",
       error: error.message,
     });
   }
@@ -453,27 +524,27 @@ exports.getSalesReport = async (req, res) => {
       const [sales] = await pool.query(
         `
         SELECT 
-          MONTH(o.created_at) as month,
-          COUNT(oi.order_item_id) as total_sales,
+          MONTH(o.order_date) as month,
+          COUNT(oi.id) as total_sales,
           COALESCE(SUM(oi.quantity * p.price), 0) as revenue
         FROM orders o
-        JOIN order_items oi ON o.order_id = oi.order_id
+        JOIN order_items oi ON o.id = oi.order_id
         JOIN products p ON oi.product_id = p.product_id
         WHERE p.seller_id = ? 
-        AND YEAR(o.created_at) = ?
-        GROUP BY MONTH(o.created_at)
+        AND YEAR(o.order_date) = ?
+        GROUP BY MONTH(o.order_date)
         ORDER BY month
         `,
         [sellerId, year]
       );
 
       // Update the fullYearData with actual sales data where it exists
-      sales.forEach(sale => {
+      sales.forEach((sale) => {
         if (sale.month >= 1 && sale.month <= 12) {
           fullYearData[sale.month - 1] = {
             month: sale.month,
             total_sales: parseInt(sale.total_sales),
-            revenue: parseFloat(sale.revenue)
+            revenue: parseFloat(sale.revenue),
           };
         }
       });
@@ -509,19 +580,16 @@ exports.updatePaymentInfo = async (req, res) => {
     const sellerId = req.user.id;
     const { bank_name, account_holder, account_number, iban } = req.body;
 
-    // Validate required fields
     if (!bank_name || !account_holder || !account_number || !iban) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Check if payment info exists
     const [existing] = await pool.query(
       "SELECT seller_id FROM seller_payment_info WHERE seller_id = ?",
       [sellerId]
     );
 
     if (existing.length > 0) {
-      // Update existing record
       await pool.query(
         `UPDATE seller_payment_info 
          SET bank_name = ?, account_holder = ?, account_number = ?, iban = ?
@@ -529,7 +597,6 @@ exports.updatePaymentInfo = async (req, res) => {
         [bank_name, account_holder, account_number, iban, sellerId]
       );
     } else {
-      // Insert new record
       await pool.query(
         `INSERT INTO seller_payment_info 
          (seller_id, bank_name, account_holder, account_number, iban)

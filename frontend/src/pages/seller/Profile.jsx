@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { Star, User, Building, CreditCard } from "lucide-react";
+import { Star, User, Building, CreditCard, KeyRound } from "lucide-react";
 import Reviews from "../../components/Reviews";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
@@ -15,29 +15,26 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [bankInfo, setBankInfo] = useState({
-    bankName: "",
-    accountNumber: "",
-    iban: "",
-  });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     address: "",
+    bankName: "",
+    accountNumber: "",
   });
 
   useEffect(() => {
     const fetchData = async () => {
       if (!token) {
-        navigate('/login');
+        navigate("/login");
         return;
       }
 
       try {
         // Get the seller ID from the token payload
-        const tokenPayload = JSON.parse(atob(token.split('.')[1]));
-        const sellerId = tokenPayload.id; // Assuming the ID is stored in the token payload
+        const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+        const sellerId = tokenPayload.id;
 
         const profileRes = await axios.get(`/api/seller/profile/${sellerId}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -47,8 +44,10 @@ const Profile = () => {
         setFormData({
           name: profileRes.data.name,
           email: profileRes.data.email,
-          phone: profileRes.data.phone || "",
+          phone: profileRes.data.phone_number || "",
           address: profileRes.data.address || "",
+          bankName: profileRes.data.bank_name || "",
+          accountNumber: profileRes.data.account_number || "",
         });
       } catch (err) {
         setError(err.response?.data?.message || "Failed to fetch information");
@@ -63,19 +62,30 @@ const Profile = () => {
 
   const handleSave = async () => {
     try {
-      const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
       const sellerId = tokenPayload.id;
 
-      await axios.put(
+      const response = await axios.put(
         `/api/seller/profile/${sellerId}`,
-        formData,
+        {
+          name: formData.name,
+          email: formData.email,
+          phone_number: formData.phone,
+          address: formData.address,
+          bank_name: formData.bankName,
+          account_number: formData.accountNumber,
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setEditMode(false);
-      // Refresh data
-      window.location.reload();
+
+      if (response.data.message) {
+        alert("تم تحديث المعلومات بنجاح");
+        setEditMode(false);
+        // Refresh data
+        window.location.reload();
+      }
     } catch (err) {
       console.error("Error updating information:", err);
       alert(err.response?.data?.message || "Failed to update information");
@@ -97,54 +107,95 @@ const Profile = () => {
   };
 
   if (loading) return <div className="text-center py-8">جاري التحميل...</div>;
-  if (error) return <div className="text-red-500 text-center py-8">{error}</div>;
-  if (!seller) return <div className="text-center py-8">لم يتم العثور على البائع</div>;
+  if (error)
+    return <div className="text-red-500 text-center py-8">{error}</div>;
+  if (!seller)
+    return <div className="text-center py-8">لم يتم العثور على البائع</div>;
 
   return (
     <div className="space-y-6" dir="rtl">
       {/* Profile and Bank Info Section */}
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">الملف الشخصي والمعلومات البنكية</h2>
-          <Button
-            onClick={() => editMode ? handleSave() : setEditMode(true)}
-            className="px-4 py-2"
-          >
-            {editMode ? "حفظ التغييرات" : "تعديل المعلومات"}
-          </Button>
+          <h2 className="text-2xl font-bold text-gray-900">
+            الملف الشخصي والمعلومات البنكية
+          </h2>
+          <div className="flex gap-2">
+            <Link
+              to="/forgot-password"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition flex items-center gap-2"
+            >
+              <KeyRound className="w-5 h-5" />
+              تغيير كلمة المرور
+            </Link>
+            <Button
+              onClick={() => (editMode ? handleSave() : setEditMode(true))}
+              className="px-4 py-2"
+            >
+              {editMode ? "حفظ التغييرات" : "تعديل المعلومات"}
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Personal Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">المعلومات الشخصية</h3>
+            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+              المعلومات الشخصية
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  الاسم
+                </label>
                 <Input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   disabled={!editMode}
                   className="w-full"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  البريد الإلكتروني
+                </label>
                 <Input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   disabled={!editMode}
                   className="w-full"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">رقم الهاتف</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  رقم الهاتف
+                </label>
                 <Input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  disabled={!editMode}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  العنوان
+                </label>
+                <Input
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                   disabled={!editMode}
                   className="w-full"
                 />
@@ -154,34 +205,34 @@ const Profile = () => {
 
           {/* Bank Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">المعلومات البنكية</h3>
+            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+              المعلومات البنكية
+            </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">اسم البنك</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  اسم البنك
+                </label>
                 <Input
                   type="text"
-                  value={bankInfo.bankName}
-                  onChange={(e) => setBankInfo({ ...bankInfo, bankName: e.target.value })}
+                  value={formData.bankName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bankName: e.target.value })
+                  }
                   disabled={!editMode}
                   className="w-full"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">رقم الحساب</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  رقم الحساب
+                </label>
                 <Input
                   type="text"
-                  value={bankInfo.accountNumber}
-                  onChange={(e) => setBankInfo({ ...bankInfo, accountNumber: e.target.value })}
-                  disabled={!editMode}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
-                <Input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  value={formData.accountNumber}
+                  onChange={(e) =>
+                    setFormData({ ...formData, accountNumber: e.target.value })
+                  }
                   disabled={!editMode}
                   className="w-full"
                 />
@@ -233,7 +284,7 @@ const Profile = () => {
       </div>
 
       {/* Delete Account Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-6">
         <Button
           onClick={() => setShowConfirm(true)}
           className="bg-red-600 hover:bg-red-700 text-white"
@@ -255,7 +306,8 @@ const Profile = () => {
               تأكيد حذف الحساب
             </Dialog.Title>
             <Dialog.Description className="text-sm text-gray-500 mb-6">
-              هل أنت متأكد من رغبتك في حذف حسابك؟ هذا الإجراء لا يمكن التراجع عنه.
+              هل أنت متأكد من رغبتك في حذف حسابك؟ هذا الإجراء لا يمكن التراجع
+              عنه.
             </Dialog.Description>
 
             <div className="flex justify-end gap-4">
@@ -279,4 +331,4 @@ const Profile = () => {
   );
 };
 
-export default Profile; 
+export default Profile;

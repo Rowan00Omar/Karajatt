@@ -7,10 +7,22 @@ const {
   checkRole,
 } = require("../middleware/authMiddleware");
 
+// Get seller profile
 router.get("/profile/:id", sellerController.getSellerProfile);
 
+// Update seller profile
+router.put(
+  "/profile/:id",
+  authenticateToken,
+  checkRole("seller"),
+  sellerController.updateSellerProfile
+);
+
+// Upload product
 router.post(
   "/upload",
+  authenticateToken,
+  checkRole("seller"),
   photoupload.array("images", 4),
   sellerController.sellerUpload
 );

@@ -1,43 +1,103 @@
 const pool = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 
-exports.register = async (req, res) => {
-  const { first_name, last_name, email, password, role } = req.body;
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: process.env.SMTP_SECURE === "true",
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+const register = async (req, res) => {
+  const { first_name, last_name, email, password, role, phone_number } =
+    req.body;
+
   try {
-    const [userExists] = await pool.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email.toLowerCase()]
-    );
+    // Start transaction
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
 
-    if (userExists.length > 0) {
-      return res.status(400).json({ message: "User already exists" });
+    try {
+      // Check if email already exists
+      const [existingUser] = await connection.query(
+        "SELECT id FROM users WHERE email = ?",
+        [email]
+      );
+
+      if (existingUser.length > 0) {
+        await connection.rollback();
+        return res
+          .status(400)
+          .json({ message: "البريد الإلكتروني مستخدم بالفعل" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Insert into users table with phone number
+      const [result] = await connection.query(
+        `INSERT INTO users (first_name, last_name, email, password, role, phone_number) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [first_name, last_name, email, hashedPassword, role, phone_number]
+      );
+
+      const userId = result.insertId;
+
+      // If user is a seller, create seller record
+      if (role === "seller" && seller_info) {
+        await connection.query(
+          "INSERT INTO sellers (user_id, bank_name, account_number, address, phone_number) VALUES (?, ?, ?, ?, ?)",
+          [
+            userResult.insertId,
+            seller_info.bank_name.trim(),
+            seller_info.account_number.trim(),
+            seller_info.address.trim(),
+            seller_info.phone_number.trim(),
+          ]
+        );
+      }
+
+      // Commit transaction
+      await connection.commit();
+
+      // Generate JWT token
+      const token = jwt.sign({ userId, role }, process.env.JWT_SECRET, {
+        expiresIn: "24h",
+      });
+
+      res.status(201).json({
+        message: "تم إنشاء الحساب بنجاح",
+        token,
+        user: {
+          id: userId,
+          first_name,
+          last_name,
+          email,
+          role,
+          phone_number,
+        },
+      });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
     }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await pool.query(
-      `INSERT INTO users (first_name, last_name, email, password, role)
-       VALUES (?, ?, ?, ?, ?)`,
-      [
-        first_name.trim(),
-        last_name.trim(),
-        email.toLowerCase(),
-        hashedPassword,
-        role.trim(),
-      ]
-    );
-
-    console.log("ziad");
-    res.status(201).json({ message: "User registered successfully" });
   } catch (err) {
     console.error("Registration error:", err);
-    res
-      .status(500)
-      .json({ message: "Error during registration", error: err.message });
+    res.status(500).json({
+      message: "حدث خطأ أثناء إنشاء الحساب",
+      error: err.message,
+    });
   }
 };
-exports.login = async (req, res) => {
+
+const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -63,7 +123,8 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Error during login", error: err.message });
   }
 };
-exports.logout = async (req, res) => {
+
+const logout = async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
 
@@ -80,7 +141,8 @@ exports.logout = async (req, res) => {
     res.status(500).json({ error: "Logout failed" });
   }
 };
-exports.UserInfo = async (req, res) => {
+
+const UserInfo = async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [
       req.user.id,
@@ -104,7 +166,8 @@ exports.UserInfo = async (req, res) => {
       .json({ message: "Error fetching user information", error: err.message });
   }
 };
-exports.getAllUsers = async (req, res) => {
+
+const getAllUsers = async (req, res) => {
   try {
     const [users] = await pool.query("SELECT * from users");
     res.status(200).json({ users });
@@ -113,7 +176,8 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-exports.deleteUser = async (req, res) => {
+
+const deleteUser = async (req, res) => {
   try {
     console.log("hit me");
     const userId = req.params.id;
@@ -136,7 +200,7 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-exports.getOrderHistory = async (req, res) => {
+const getOrderHistory = async (req, res) => {
   const { userId } = req.params;
   try {
     const [orderItems] = await pool.query(
@@ -187,4 +251,101 @@ exports.getOrderHistory = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await pool.query(
+      "SELECT id, email FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (user.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "لم يتم العثور على مستخدم بهذا البريد الإلكتروني" });
+    }
+
+    const resetToken = jwt.sign(
+      { userId: user.rows[0].id },
+      process.env.JWT_RESET_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    await pool.query(
+      "UPDATE users SET reset_token = $1, reset_token_expires = NOW() + INTERVAL '1 hour' WHERE id = $2",
+      [resetToken, user.rows[0].id]
+    );
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
+      to: email,
+      subject: "إعادة تعيين كلمة المرور - خليجي",
+      html: `
+        <div dir="rtl" style="font-family: Arial, sans-serif;">
+          <h2>إعادة تعيين كلمة المرور</h2>
+          <p>لقد تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك.</p>
+          <p>إذا لم تقم بطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا البريد الإلكتروني.</p>
+          <p>لإعادة تعيين كلمة المرور، يرجى النقر على الرابط أدناه:</p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+            إعادة تعيين كلمة المرور
+          </a>
+          <p>ينتهي هذا الرابط خلال ساعة واحدة.</p>
+          <p>مع تحيات،<br>فريق كراجات</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({
+      message: "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني",
+    });
+  } catch (error) {
+    console.error("Error in forgotPassword:", error);
+    res.status(500).json({ message: "حدث خطأ أثناء معالجة طلبك" });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  const { token, password } = req.body;
+
+  try {
+    const user = await pool.query(
+      "SELECT id FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()",
+      [token]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(400).json({
+        message: "رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      "UPDATE users SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2",
+      [hashedPassword, user.rows[0].id]
+    );
+
+    res.json({ message: "تم تغيير كلمة المرور بنجاح" });
+  } catch (error) {
+    console.error("Error in resetPassword:", error);
+    res.status(500).json({ message: "حدث خطأ أثناء تغيير كلمة المرور" });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  logout,
+  UserInfo,
+  getAllUsers,
+  deleteUser,
+  getOrderHistory,
+  forgotPassword,
+  resetPassword,
 };

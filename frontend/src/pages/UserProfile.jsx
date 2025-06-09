@@ -9,6 +9,8 @@ import {
 import { Dialog, Transition } from "@headlessui/react";
 import React, { useState, Fragment, useEffect } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
+import { KeyRound } from "lucide-react";
 
 const UserProfile = () => {
   const [username, setUsername] = useState("");
@@ -52,7 +54,7 @@ const UserProfile = () => {
   };
 
   const filteredOrders = showInspectionOnly
-    ? orderHistory.filter(order => order.status !== 'pending')
+    ? orderHistory.filter((order) => order.status !== "pending")
     : orderHistory;
 
   return (
@@ -84,12 +86,22 @@ const UserProfile = () => {
             <p className="text-lg font-medium text-gray-900">{email}</p>
           </div>
 
-          <button
-            onClick={handleDelete}
-            className="w-fit mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition flex items-center gap-1"
-          >
-            <TrashIcon className="w-5 h-5" /> حذف الحساب
-          </button>
+          <div className="flex gap-4 mt-6">
+            <Link
+              to="/forgot-password"
+              className="w-fit bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition flex items-center gap-2"
+            >
+              <KeyRound className="w-5 h-5" />
+              تغيير كلمة المرور
+            </Link>
+
+            <button
+              onClick={handleDelete}
+              className="w-fit bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition flex items-center gap-1"
+            >
+              <TrashIcon className="w-5 h-5" /> حذف الحساب
+            </button>
+          </div>
         </div>
 
         {/* Order History */}
@@ -100,7 +112,7 @@ const UserProfile = () => {
               className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
             >
               <MagnifyingGlassIcon className="h-4 w-4 ml-2" />
-              {showInspectionOnly ? 'عرض جميع الطلبات' : 'عرض طلبات الفحص فقط'}
+              {showInspectionOnly ? "عرض جميع الطلبات" : "عرض طلبات الفحص فقط"}
             </button>
             <div className="flex items-center gap-2">
               <ReceiptRefundIcon className="w-6 h-6 text-[#4a60e9]" />
@@ -129,23 +141,24 @@ const UserProfile = () => {
                   <td className="py-3 pr-4">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        order.status === 'passed'
-                          ? 'bg-green-100 text-green-800'
-                          : order.status === 'failed'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
+                        order.status === "passed"
+                          ? "bg-green-100 text-green-800"
+                          : order.status === "failed"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                       }`}
                     >
-                      {order.status === 'passed'
-                        ? 'تم الفحص - القطعة سليمة'
-                        : order.status === 'failed'
-                        ? 'تم الفحص - القطعة غير صالحة'
-                        : 'بانتظار الفحص'}
+                      {order.status === "passed"
+                        ? "تم الفحص - القطعة سليمة"
+                        : order.status === "failed"
+                        ? "تم الفحص - القطعة غير صالحة"
+                        : "بانتظار الفحص"}
                     </span>
                   </td>
                   <td className="py-3">{order.seller}</td>
                   <td className="py-3">
-                    {(order.status === 'passed' || order.status === 'failed') && (
+                    {(order.status === "passed" ||
+                      order.status === "failed") && (
                       <a
                         href={`/api/admin/inspection/orders/${order.id}/report`}
                         target="_blank"
@@ -156,7 +169,7 @@ const UserProfile = () => {
                         تحميل تقرير الفحص
                       </a>
                     )}
-                    {order.status === 'failed' && order.inspectorPhone && (
+                    {order.status === "failed" && order.inspectorPhone && (
                       <a
                         href={`tel:${order.inspectorPhone}`}
                         className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700"

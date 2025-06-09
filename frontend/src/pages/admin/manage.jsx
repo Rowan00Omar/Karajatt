@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { UserPlus, Trash2 } from "lucide-react";
-import Signup from "@/pages/Signup";
+import { UserPlus, Trash2, Phone } from "lucide-react";
+import Signup from "../Signup";
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState([]);
@@ -57,6 +57,11 @@ export default function ManageUsersPage() {
     }
   };
 
+  const handleAddUser = () => {
+    console.log("Opening add user modal");
+    setIsAddingUser(true);
+  };
+
   const indexOfLast = currentPage * usersPerPage;
   const currentUsers = users.slice(indexOfLast - usersPerPage, indexOfLast);
   const totalPages = Math.ceil(users.length / usersPerPage);
@@ -85,7 +90,7 @@ export default function ManageUsersPage() {
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <p className="text-gray-600 mb-4">لا يوجد مستخدمين حالياً</p>
         <button
-          onClick={() => setIsAddingUser(true)}
+          onClick={handleAddUser}
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
         >
           <UserPlus className="h-5 w-5" />
@@ -96,91 +101,111 @@ export default function ManageUsersPage() {
   }
 
   return (
-    <section className="w-full animate-fadeIn">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold">إدارة المستخدمين</h2>
-        <button
-          onClick={() => setIsAddingUser(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <UserPlus className="h-5 w-5" />
-          <span>إضافة مستخدم</span>
-        </button>
-      </div>
+    <>
+      <section className="w-full animate-fadeIn">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold">إدارة المستخدمين</h2>
+          <button
+            onClick={handleAddUser}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <UserPlus className="h-5 w-5" />
+            <span>إضافة مستخدم</span>
+          </button>
+        </div>
 
-      <div className="grid gap-4">
-        {currentUsers.map((user) =>
-          user.role === "master" ? null : (
-            <div
-              key={user.id}
-              className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    {user.first_name || "مستخدم بدون اسم"} {user.last_name}
-                  </h3>
-                  <p className="text-gray-600 text-sm mt-1">
-                    {user.email || "لا يوجد بريد إلكتروني"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="px-3 py-1 rounded-full text-sm bg-gray-100">
-                    {user.role}
-                  </span>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="text-red-500 hover:text-red-600 transition-colors"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
+        <div className="grid gap-4">
+          {currentUsers.map((user) =>
+            user.role === "master" ? null : (
+              <div
+                key={user.id}
+                className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      {user.first_name || "مستخدم بدون اسم"} {user.last_name}
+                    </h3>
+                    <p className="text-gray-600 text-sm mt-1">
+                      {user.email || "لا يوجد بريد إلكتروني"}
+                    </p>
+                    <p className="text-gray-600 text-sm mt-1">
+                      <span className="inline-flex items-center">
+                        <Phone className="w-4 h-4 ml-1" />
+                        {user.phone_number || "لا يوجد رقم هاتف"}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="px-3 py-1 rounded-full text-sm bg-gray-100">
+                      {user.role}
+                    </span>
+                    <button
+                      onClick={() => handleDelete(user.id)}
+                      className="text-red-500 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        )}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-6">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                currentPage === i + 1
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 hover:bg-gray-200"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+            )
+          )}
         </div>
-      )}
+
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2 mt-6">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  currentPage === i + 1
+                    ? "bg-indigo-600 text-white"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
 
       {isAddingUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">إضافة مستخدم جديد</h3>
-              <button
-                onClick={() => setIsAddingUser(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </button>
+        <div className="fixed inset-0 z-[9999] overflow-y-auto">
+          <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              onClick={() => setIsAddingUser(false)}
+            ></div>
+
+            <div className="inline-block align-bottom bg-white rounded-lg text-right overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    إضافة مستخدم جديد
+                  </h3>
+                  <button
+                    onClick={() => setIsAddingUser(false)}
+                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <Signup
+                  flag={true}
+                  onSuccess={() => {
+                    console.log("User added successfully");
+                    setIsAddingUser(false);
+                    fetchUsers();
+                  }}
+                />
+              </div>
             </div>
-            <Signup
-              flag={true}
-              onSuccess={() => {
-                setIsAddingUser(false);
-                fetchUsers();
-              }}
-            />
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }

@@ -3,7 +3,7 @@ import AdminLayout from "./pages/admin/layout";
 import AdminPage from "./pages/admin/page";
 import SalesPage from "./pages/admin/sales";
 import InventoryPage from "./pages/admin/inventory";
-import {InventoryPage as SellerInventory} from "./pages/seller/inventory";
+import { InventoryPage as SellerInventory } from "./pages/seller/inventory";
 import UsersPage from "./pages/admin/users";
 import ManageUsersPage from "./pages/admin/manage";
 import PendingRequestsPage from "./pages/admin/pending";
@@ -25,6 +25,9 @@ import SalesReportPage from "./pages/seller/sales-report";
 import Profile from "./pages/seller/Profile";
 import UserProfile from "./pages/UserProfile";
 import CouponsPage from "./pages/admin/coupons";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import AdminProfile from "./pages/admin/Profile";
 
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
@@ -174,6 +177,7 @@ function App() {
           <Route path="pending" element={<PendingRequestsPage />} />
           <Route path="coupons" element={<CouponsPage />} />
           <Route path="inspection" element={<InspectionManagement />} />
+          <Route path="profile" element={<AdminProfile />} />
         </Route>
 
         <Route
@@ -207,6 +211,9 @@ function App() {
             </UserLayout>
           }
         />
+
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         <Route path="*" element={<RoleBasedRedirect />} />
       </Routes>

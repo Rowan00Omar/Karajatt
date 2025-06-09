@@ -22,7 +22,9 @@ const Login = () => {
     }
 
     try {
-      // Login request
+      localStorage.removeItem("token");
+      localStorage.removeItem("userRole");
+
       const response = await axios.post("/api/auth/login", {
         email,
         password,
@@ -31,10 +33,8 @@ const Login = () => {
       const token = response.data.token;
 
       if (token) {
-        // Save token to localStorage
         localStorage.setItem("token", token);
 
-        // Fetch user info (including role)
         const userInfo = await axios.get("/api/auth/userInfo", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -43,31 +43,28 @@ const Login = () => {
 
         const role = userInfo.data.role;
 
-        // Store role in localStorage for immediate access
         localStorage.setItem("userRole", role);
 
-        // Show success message
-        alert("تم تسجيل الدخول بنجاح!");
-
-        // Redirect based on role
-        switch (role) {
-          case "admin":
-            navigate("/admin");
-            break;
-          case "user":
-            navigate("/user");
-            break;
-          case "seller":
-            navigate("/seller");
-            break;
-          default:
-            navigate("/");
-        }
+        window.location.href = getRedirectPath(role);
       }
     } catch (err) {
       setError(
-        err.response?.data?.message || "Login failed! Please try again."
+        err.response?.data?.message ||
+          "حصل خطأ اثناء تسجيل الدخول يرجى المحاولة مرة أخرى"
       );
+    }
+  };
+
+  const getRedirectPath = (role) => {
+    switch (role) {
+      case "admin":
+        return "/admin";
+      case "seller":
+        return "/seller";
+      case "user":
+        return "/user";
+      default:
+        return "/";
     }
   };
 
@@ -110,6 +107,17 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                <Link
+                  to="/forgot-password"
+                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                >
+                  نسيت كلمة المرور؟
+                </Link>
               </div>
             </div>
 
