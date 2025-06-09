@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   DocumentCheckIcon,
   DocumentTextIcon,
@@ -7,13 +7,13 @@ import {
   XCircleIcon,
   CheckCircleIcon,
   MagnifyingGlassIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
 const InspectionManagement = () => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [inspectorPhone, setInspectorPhone] = useState('');
-  const [inspectorNotes, setInspectorNotes] = useState('');
+  const [inspectorPhone, setInspectorPhone] = useState("");
+  const [inspectorNotes, setInspectorNotes] = useState("");
   const [reportFile, setReportFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,18 +28,18 @@ const InspectionManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const token = localStorage.getItem('token');
+
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى');
+        setError("جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى");
         return;
       }
 
-      const response = await axios.get('/api/admin/inspection/orders', {
+      const response = await axios.get("/api/admin/inspection/orders", {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.data && response.data.orders) {
@@ -48,10 +48,11 @@ const InspectionManagement = () => {
         setOrders([]);
       }
     } catch (error) {
-      console.error('Error fetching orders:', error);
-      const errorMessage = error.response?.data?.error?.sqlMessage || 
-                          error.response?.data?.message || 
-                          'فشل في جلب الطلبات. الرجاء المحاولة مرة أخرى';
+      console.error("Error fetching orders:", error);
+      const errorMessage =
+        error.response?.data?.error?.sqlMessage ||
+        error.response?.data?.message ||
+        "فشل في جلب الطلبات. الرجاء المحاولة مرة أخرى";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -61,10 +62,10 @@ const InspectionManagement = () => {
   const handleStartInspection = async (orderId) => {
     try {
       setError(null);
-      
-      const token = localStorage.getItem('token');
+
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى');
+        setError("جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى");
         return;
       }
 
@@ -73,33 +74,31 @@ const InspectionManagement = () => {
         {},
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
-      
+
       // Keep showing the order as pending even after starting inspection
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.id === orderId 
-            ? { ...order, status: 'pending' }
-            : order
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId ? { ...order, status: "pending" } : order
         )
       );
 
-      const selectedOrder = orders.find(order => order.id === orderId);
+      const selectedOrder = orders.find((order) => order.id === orderId);
       if (selectedOrder) {
-        setSelectedOrder({ ...selectedOrder, status: 'pending' });
+        setSelectedOrder({ ...selectedOrder, status: "pending" });
       }
-
     } catch (error) {
-      console.error('Error starting inspection:', error);
-      const errorMessage = error.response?.data?.error?.sqlMessage || 
-                          error.response?.data?.message || 
-                          'فشل في بدء عملية الفحص. الرجاء المحاولة مرة أخرى';
+      console.error("Error starting inspection:", error);
+      const errorMessage =
+        error.response?.data?.error?.sqlMessage ||
+        error.response?.data?.message ||
+        "فشل في بدء عملية الفحص. الرجاء المحاولة مرة أخرى";
       setError(errorMessage);
-      
+
       fetchOrders();
     }
   };
@@ -110,32 +109,32 @@ const InspectionManagement = () => {
 
   const handleSubmitReport = async (status) => {
     if (!reportFile || !inspectorPhone) {
-      setError('الرجاء تعبئة رقم هاتف الفاحص وإرفاق ملف التقرير');
+      setError("الرجاء تعبئة رقم هاتف الفاحص وإرفاق ملف التقرير");
       return;
     }
 
     try {
       setError(null);
-      
-      const token = localStorage.getItem('token');
+
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى');
+        setError("جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى");
         return;
       }
 
       // Create FormData object
       const formData = new FormData();
-      formData.append('report', reportFile);
-      formData.append('inspectionStatus', status);
-      formData.append('inspectorPhone', inspectorPhone);
-      formData.append('inspectorNotes', inspectorNotes || '');
+      formData.append("report", reportFile);
+      formData.append("inspectionStatus", status);
+      formData.append("inspectorPhone", inspectorPhone);
+      formData.append("inspectorNotes", inspectorNotes || "");
 
-      console.log('Submitting form data:', {
+      console.log("Submitting form data:", {
         status,
         inspectorPhone,
-        inspectorNotes: inspectorNotes || '',
+        inspectorNotes: inspectorNotes || "",
         reportFile: reportFile.name,
-        formDataEntries: Array.from(formData.entries())
+        formDataEntries: Array.from(formData.entries()),
       });
 
       const response = await axios.post(
@@ -143,22 +142,22 @@ const InspectionManagement = () => {
         formData,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      console.log('Report submission response:', response.data);
+      console.log("Report submission response:", response.data);
 
       // Clear form and refresh orders list
       setSelectedOrder(null);
-      setInspectorPhone('');
-      setInspectorNotes('');
+      setInspectorPhone("");
+      setInspectorNotes("");
       setReportFile(null);
       await fetchOrders();
     } catch (error) {
-      console.error('Error submitting report:', {
+      console.error("Error submitting report:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
@@ -166,22 +165,22 @@ const InspectionManagement = () => {
         config: {
           url: error.config?.url,
           method: error.config?.method,
-          headers: error.config?.headers
-        }
+          headers: error.config?.headers,
+        },
       });
       setError(
-        error.response?.data?.error?.message || 
-        error.response?.data?.message || 
-        'فشل في رفع التقرير. الرجاء المحاولة مرة أخرى'
+        error.response?.data?.error?.message ||
+          error.response?.data?.message ||
+          "فشل في رفع التقرير. الرجاء المحاولة مرة أخرى"
       );
     }
   };
 
   const handleDownloadReport = async (orderId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        setError('جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى');
+        setError("جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى");
         return;
       }
 
@@ -191,32 +190,35 @@ const InspectionManagement = () => {
 
       // First verify the file exists
       try {
-        await axios.head(`/api/admin/inspection/orders/${orderId}/report/verify`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
+        await axios.head(
+          `/api/admin/inspection/orders/${orderId}/report/verify`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
       } catch (error) {
         if (error.response?.status === 404) {
-          throw new Error('تقرير الفحص غير موجود');
+          throw new Error("تقرير الفحص غير موجود");
         }
-        throw new Error('فشل في التحقق من وجود الملف');
+        throw new Error("فشل في التحقق من وجود الملف");
       }
 
       // Open download in new window/tab
       const downloadUrl = `/api/admin/inspection/orders/${orderId}/report/download`;
-      const downloadWindow = window.open('', '_blank');
-      
+      const downloadWindow = window.open("", "_blank");
+
       // Create a temporary form to send the token as POST data
-      const form = document.createElement('form');
-      form.method = 'POST';
+      const form = document.createElement("form");
+      form.method = "POST";
       form.action = downloadUrl;
-      form.target = '_blank';
+      form.target = "_blank";
 
       // Add token as hidden input
-      const tokenInput = document.createElement('input');
-      tokenInput.type = 'hidden';
-      tokenInput.name = 'token';
+      const tokenInput = document.createElement("input");
+      tokenInput.type = "hidden";
+      tokenInput.name = "token";
       tokenInput.value = token;
       form.appendChild(tokenInput);
 
@@ -227,15 +229,15 @@ const InspectionManagement = () => {
 
       // Close the blank window we opened if it's still blank
       setTimeout(() => {
-        if (downloadWindow && downloadWindow.location.href === 'about:blank') {
+        if (downloadWindow && downloadWindow.location.href === "about:blank") {
           downloadWindow.close();
         }
       }, 1000);
 
       setDownloadingOrderId(null);
     } catch (error) {
-      console.error('Error initiating download:', error);
-      setError(error.message || 'فشل في بدء تحميل التقرير');
+      console.error("Error initiating download:", error);
+      setError(error.message || "فشل في بدء تحميل التقرير");
       setDownloadingOrderId(null);
     }
   };
@@ -243,26 +245,28 @@ const InspectionManagement = () => {
   // Filter orders based on the toggle state
   const filteredOrders = React.useMemo(() => {
     return showInspectedOnly
-      ? orders.filter(order => order.status === 'passed' || order.status === 'failed')
-      : orders.filter(order => order.status === 'pending');
+      ? orders.filter(
+          (order) => order.status === "passed" || order.status === "failed"
+        )
+      : orders.filter((order) => order.status === "pending");
   }, [orders, showInspectedOnly]);
 
   const getStatusDisplay = (status) => {
     switch (status) {
-      case 'passed':
+      case "passed":
         return {
-          text: 'تم الفحص - القطعة سليمة',
-          className: 'bg-green-100 text-green-800'
+          text: "تم الفحص - القطعة سليمة",
+          className: "bg-green-100 text-green-800",
         };
-      case 'failed':
+      case "failed":
         return {
-          text: 'تم الفحص - القطعة غير صالحة',
-          className: 'bg-red-100 text-red-800'
+          text: "تم الفحص - القطعة غير صالحة",
+          className: "bg-red-100 text-red-800",
         };
       default:
         return {
-          text: 'بانتظار الفحص',
-          className: 'bg-yellow-100 text-yellow-800'
+          text: "بانتظار الفحص",
+          className: "bg-yellow-100 text-yellow-800",
         };
     }
   };
@@ -282,25 +286,38 @@ const InspectionManagement = () => {
           <button
             onClick={() => setShowInspectedOnly(!showInspectedOnly)}
             className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-              showInspectedOnly ? 'bg-gray-600 hover:bg-gray-700' : 'bg-blue-600 hover:bg-blue-700'
+              showInspectedOnly
+                ? "bg-gray-600 hover:bg-gray-700"
+                : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             <MagnifyingGlassIcon className="h-5 w-5 ml-2" />
-            {showInspectedOnly ? 'عرض الطلبات المعلقة' : 'عرض الطلبات المفحوصة'}
+            {showInspectedOnly ? "عرض الطلبات المعلقة" : "عرض الطلبات المفحوصة"}
           </button>
           {selectedOrder && (
             <button
               onClick={() => setSelectedOrder(null)}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L4.414 9H17a1 1 0 110 2H4.414l5.293 5.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 ml-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L4.414 9H17a1 1 0 110 2H4.414l5.293 5.293a1 1 0 010 1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
               العودة إلى القائمة
             </button>
           )}
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 text-right">إدارة فحص الطلبات</h1>
+        <h1 className="text-3xl font-bold text-gray-900 text-right">
+          إدارة فحص الطلبات
+        </h1>
       </div>
 
       {error && (
@@ -316,7 +333,7 @@ const InspectionManagement = () => {
               تقرير الفحص - طلب رقم {selectedOrder.id}
             </h2>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 text-right mb-2">
@@ -359,14 +376,14 @@ const InspectionManagement = () => {
 
             <div className="flex justify-end space-x-4">
               <button
-                onClick={() => handleSubmitReport('failed')}
+                onClick={() => handleSubmitReport("failed")}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
               >
                 <XCircleIcon className="h-5 w-5 ml-2" />
                 القطعة غير صالحة
               </button>
               <button
-                onClick={() => handleSubmitReport('passed')}
+                onClick={() => handleSubmitReport("passed")}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
               >
                 <CheckCircleIcon className="h-5 w-5 ml-2" />
@@ -407,7 +424,7 @@ const InspectionManagement = () => {
               {filteredOrders.map((order) => {
                 const statusDisplay = getStatusDisplay(order.status);
                 const isDownloading = downloadingOrderId === order.id;
-                
+
                 return (
                   <tr key={order.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -421,7 +438,10 @@ const InspectionManagement = () => {
                     <td className="px-6 py-4 text-right">
                       <div className="space-y-1">
                         {order.products?.map((product, index) => (
-                          <div key={`${order.id}-${product.title}-${index}`} className="text-sm">
+                          <div
+                            key={`${order.id}-${product.title}-${index}`}
+                            className="text-sm"
+                          >
                             <div className="font-medium text-gray-900">
                               {product.title}
                             </div>
@@ -439,15 +459,17 @@ const InspectionManagement = () => {
                       {order.total_price} ر.س
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {new Date(order.created_at).toLocaleDateString('ar-SA')}
+                      {new Date(order.created_at).toLocaleDateString("ar-SA")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusDisplay.className}`}>
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusDisplay.className}`}
+                      >
                         {statusDisplay.text}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {order.status === 'pending' ? (
+                      {order.status === "pending" ? (
                         <button
                           onClick={() => handleStartInspection(order.id)}
                           className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
@@ -460,16 +482,32 @@ const InspectionManagement = () => {
                           onClick={() => handleDownloadReport(order.id)}
                           disabled={isDownloading}
                           className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white ${
-                            isDownloading 
-                              ? 'bg-gray-400 cursor-not-allowed' 
-                              : 'bg-green-600 hover:bg-green-700'
+                            isDownloading
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-green-600 hover:bg-green-700"
                           }`}
                         >
                           {isDownloading ? (
                             <>
-                              <svg className="animate-spin h-4 w-4 ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              <svg
+                                className="animate-spin h-4 w-4 ml-2"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                               </svg>
                               جاري التحميل...
                             </>
@@ -493,4 +531,4 @@ const InspectionManagement = () => {
   );
 };
 
-export default InspectionManagement; 
+export default InspectionManagement;

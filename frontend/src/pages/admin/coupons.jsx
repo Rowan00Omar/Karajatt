@@ -12,7 +12,7 @@ export default function CouponsPage() {
     code: "",
     discount_percentage: "",
     expiry_date: "",
-    is_active: true
+    is_active: true,
   });
 
   useEffect(() => {
@@ -39,13 +39,9 @@ export default function CouponsPage() {
     try {
       const token = localStorage.getItem("token");
       if (editingCoupon) {
-        await axios.put(
-          `/api/coupons/${editingCoupon.id}`,
-          formData,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        await axios.put(`/api/coupons/${editingCoupon.id}`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       } else {
         await axios.post("/api/coupons", formData, {
           headers: { Authorization: `Bearer ${token}` },
@@ -80,8 +76,8 @@ export default function CouponsPage() {
     setFormData({
       code: coupon.code,
       discount_percentage: coupon.discount_percentage,
-      expiry_date: new Date(coupon.expiry_date).toISOString().split('T')[0],
-      is_active: coupon.is_active
+      expiry_date: new Date(coupon.expiry_date).toISOString().split("T")[0],
+      is_active: coupon.is_active,
     });
     setIsModalOpen(true);
   };
@@ -91,7 +87,7 @@ export default function CouponsPage() {
       code: "",
       discount_percentage: "",
       expiry_date: "",
-      is_active: true
+      is_active: true,
     });
     setEditingCoupon(null);
   };
@@ -142,7 +138,8 @@ export default function CouponsPage() {
                   خصم {coupon.discount_percentage}%
                 </p>
                 <p className="text-gray-500 text-sm">
-                  ينتهي في: {new Date(coupon.expiry_date).toLocaleDateString("ar-SA")}
+                  ينتهي في:{" "}
+                  {new Date(coupon.expiry_date).toLocaleDateString("ar-SA")}
                 </p>
               </div>
               <div className="flex items-center gap-4">
@@ -262,4 +259,4 @@ export default function CouponsPage() {
       )}
     </section>
   );
-} 
+}
