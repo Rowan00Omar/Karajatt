@@ -2,7 +2,7 @@ const bodyParser = require("body-parser");
 const express = require("express");
 require("dotenv").config();
 const cors = require("cors");
-const fileUpload = require('express-fileupload');
+const fileUpload = require("express-fileupload");
 
 const app = express();
 
@@ -15,20 +15,24 @@ const productRoutes = require("./routes/productRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const couponRoutes = require("./routes/couponRoutes");
+const apiRoutes = require("./routes/api");
 
 //Middleware
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.json());
-app.use(fileUpload({
-  createParentPath: true,
-  limits: { 
-    fileSize: 10 * 1024 * 1024 // 10MB max file size
-  },
-}));
+app.use(
+  fileUpload({
+    createParentPath: true,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB max file size
+    },
+  })
+);
 
 //Routes
-app.use("/api", reviewRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api", apiRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/filtering", filteringRoutes);

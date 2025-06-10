@@ -39,11 +39,11 @@ exports.getOrdersForInspection = async (req, res) => {
     );
 
     // Transform the data to handle multiple products per order
-    const transformedOrders = orders.map(order => {
-      const productTitles = order.product_titles?.split(',') || [];
-      const partNames = order.part_names?.split(',') || [];
-      const quantities = order.quantities?.split(',') || [];
-      const sellerEmails = order.seller_emails_ordered?.split(',') || [];
+    const transformedOrders = orders.map((order) => {
+      const productTitles = order.product_titles?.split(",") || [];
+      const partNames = order.part_names?.split(",") || [];
+      const quantities = order.quantities?.split(",") || [];
+      const sellerEmails = order.seller_emails_ordered?.split(",") || [];
 
       return {
         id: order.id,
@@ -56,25 +56,26 @@ exports.getOrdersForInspection = async (req, res) => {
         seller_emails: [...new Set(sellerEmails)], // Remove duplicates
         inspector_phone: order.inspector_phone,
         report_file_path: order.report_file_path,
-        products: productTitles.map((title, index) => ({
-          title: title,
-          part_name: partNames[index],
-          quantity: parseInt(quantities[index]),
-          seller_email: sellerEmails[index]
-        })) || []
+        products:
+          productTitles.map((title, index) => ({
+            title: title,
+            part_name: partNames[index],
+            quantity: parseInt(quantities[index]),
+            seller_email: sellerEmails[index],
+          })) || [],
       };
     });
 
     res.json({ orders: transformedOrders });
   } catch (error) {
     console.error("Error details:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Failed to fetch orders for inspection",
       error: {
         message: error.message,
         code: error.code,
-        sqlMessage: error.sqlMessage
-      }
+        sqlMessage: error.sqlMessage,
+      },
     });
   }
 };
@@ -82,11 +83,11 @@ exports.getOrdersForInspection = async (req, res) => {
 // Start inspection process for an order
 exports.startInspection = async (req, res) => {
   const orderId = parseInt(req.params.orderId, 10);
-  
+
   if (isNaN(orderId)) {
     return res.status(400).json({ message: "Invalid order ID" });
   }
-  
+
   try {
     // First verify the order exists and is in pending status
     const [orders] = await pool.query(
@@ -95,20 +96,22 @@ exports.startInspection = async (req, res) => {
     );
 
     if (orders.length === 0) {
-      return res.status(404).json({ message: "Order not found or not in pending status" });
+      return res
+        .status(404)
+        .json({ message: "Order not found or not in pending status" });
     }
 
     // No need to update status since we're keeping it as pending
     res.json({ message: "Inspection process started" });
   } catch (error) {
     console.error("Error details:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Failed to start inspection",
       error: {
         message: error.message,
         code: error.code,
-        sqlMessage: error.sqlMessage
-      }
+        sqlMessage: error.sqlMessage,
+      },
     });
   }
 };
@@ -117,60 +120,69 @@ exports.startInspection = async (req, res) => {
 exports.submitInspectionReport = async (req, res) => {
   try {
     const { orderId } = req.params;
-    console.log('Starting report submission for order:', orderId);
-    
+    console.log("Starting report submission for order:", orderId);
+
     // Validate required fields
     if (!req.body.inspectionStatus || !req.body.inspectorPhone) {
-      return res.status(400).json({ 
-        message: "Missing required fields: status and inspector phone number are required" 
+      return res.status(400).json({
+        message:
+          "Missing required fields: status and inspector phone number are required",
       });
     }
 
     if (!req.files || !req.files.report) {
-      return res.status(400).json({ 
-        message: "No report file uploaded" 
+      return res.status(400).json({
+        message: "No report file uploaded",
       });
     }
 
     // Validate file type
     const reportFile = req.files.report;
-    console.log('Uploaded file details:', {
+    console.log("Uploaded file details:", {
       name: reportFile.name,
       size: reportFile.size,
-      mimetype: reportFile.mimetype
+      mimetype: reportFile.mimetype,
     });
 
-    if (reportFile.mimetype !== 'application/pdf') {
+    if (reportFile.mimetype !== "application/pdf") {
       return res.status(400).json({
-        message: "Only PDF files are allowed"
+        message: "Only PDF files are allowed",
       });
     }
 
     const inspectionStatus = req.body.inspectionStatus;
     const inspectorPhone = req.body.inspectorPhone;
-    const inspectorNotes = req.body.inspectorNotes || '';
+    const inspectorNotes = req.body.inspectorNotes || "";
 
     const reportFileName = `inspection_report_${orderId}_${Date.now()}.pdf`;
-    const reportPath = path.join(__dirname, '..', 'uploads', 'reports', reportFileName);
-    console.log('Saving report to:', reportPath);
+    const reportPath = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      "reports",
+      reportFileName
+    );
+    console.log("Saving report to:", reportPath);
 
     // Ensure uploads directory exists
-    await fs.mkdir(path.join(__dirname, '..', 'uploads', 'reports'), { recursive: true });
-    
+    await fs.mkdir(path.join(__dirname, "..", "uploads", "reports"), {
+      recursive: true,
+    });
+
     try {
       // Move the file
       await reportFile.mv(reportPath);
-      console.log('File saved successfully');
+      console.log("File saved successfully");
 
       // Verify file was saved
       const stats = await fs.stat(reportPath);
-      console.log('Saved file stats:', {
+      console.log("Saved file stats:", {
         size: stats.size,
-        path: reportPath
+        path: reportPath,
       });
     } catch (error) {
-      console.error('Error saving file:', error);
-      throw new Error('Failed to save report file');
+      console.error("Error saving file:", error);
+      throw new Error("Failed to save report file");
     }
 
     // Start transaction
@@ -179,25 +191,31 @@ exports.submitInspectionReport = async (req, res) => {
 
     try {
       // Update order status to match inspection result
-      await connection.query(
-        "UPDATE orders SET status = ? WHERE id = ?",
-        [inspectionStatus, orderId]
-      );
+      await connection.query("UPDATE orders SET status = ? WHERE id = ?", [
+        inspectionStatus,
+        orderId,
+      ]);
 
       // Create inspection report record
       await connection.query(
         `INSERT INTO inspection_reports 
         (order_id, inspector_phone, status, report_file_path, inspector_notes)
         VALUES (?, ?, ?, ?, ?)`,
-        [orderId, inspectorPhone, inspectionStatus, reportFileName, inspectorNotes]
+        [
+          orderId,
+          inspectorPhone,
+          inspectionStatus,
+          reportFileName,
+          inspectorNotes,
+        ]
       );
 
       await connection.commit();
-      console.log('Database transaction completed successfully');
-      
-      res.json({ 
+      console.log("Database transaction completed successfully");
+
+      res.json({
         message: "Inspection report submitted successfully",
-        reportPath: reportFileName
+        reportPath: reportFileName,
       });
     } catch (error) {
       await connection.rollback();
@@ -207,13 +225,13 @@ exports.submitInspectionReport = async (req, res) => {
     }
   } catch (error) {
     console.error("Error submitting inspection report:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Failed to submit inspection report",
       error: {
         message: error.message,
         code: error.code,
-        sqlMessage: error.sqlMessage
-      }
+        sqlMessage: error.sqlMessage,
+      },
     });
   }
 };
@@ -243,7 +261,7 @@ exports.getInspectionReport = async (req, res) => {
 exports.verifyReport = async (req, res) => {
   try {
     const { orderId } = req.params;
-    console.log('Verifying report existence for order:', orderId);
+    console.log("Verifying report existence for order:", orderId);
 
     // Get the report details from the database
     const [reports] = await pool.query(
@@ -255,7 +273,13 @@ exports.verifyReport = async (req, res) => {
       return res.status(404).end();
     }
 
-    const reportPath = path.join(__dirname, '..', 'uploads', 'reports', reports[0].report_file_path);
+    const reportPath = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      "reports",
+      reports[0].report_file_path
+    );
 
     // Check if file exists
     try {
@@ -274,7 +298,7 @@ exports.verifyReport = async (req, res) => {
 exports.downloadReport = async (req, res) => {
   try {
     const { orderId } = req.params;
-    console.log('Starting report download for order:', orderId);
+    console.log("Starting report download for order:", orderId);
 
     // Get the report details from the database
     const [reports] = await pool.query(
@@ -283,36 +307,45 @@ exports.downloadReport = async (req, res) => {
     );
 
     if (reports.length === 0) {
-      console.log('No report found for order:', orderId);
+      console.log("No report found for order:", orderId);
       return res.status(404).json({ message: "تقرير الفحص غير موجود" });
     }
 
-    const reportPath = path.join(__dirname, '..', 'uploads', 'reports', reports[0].report_file_path);
-    console.log('Attempting to download file:', reportPath);
+    const reportPath = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      "reports",
+      reports[0].report_file_path
+    );
+    console.log("Attempting to download file:", reportPath);
 
     // Check if file exists
     try {
       await fs.access(reportPath);
     } catch (error) {
-      console.error('File not found:', error);
+      console.error("File not found:", error);
       return res.status(404).json({ message: "ملف التقرير غير موجود" });
     }
 
     // Get file stats
     const stats = await fs.stat(reportPath);
-    
+
     // Set headers
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', stats.size);
-    res.setHeader('Content-Disposition', `attachment; filename="inspection_report_${orderId}.pdf"`);
-    
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Length", stats.size);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="inspection_report_${orderId}.pdf"`
+    );
+
     // Stream the file
-    const fileStream = require('fs').createReadStream(reportPath);
+    const fileStream = require("fs").createReadStream(reportPath);
     fileStream.pipe(res);
 
     // Handle stream errors
-    fileStream.on('error', (error) => {
-      console.error('Error streaming file:', error);
+    fileStream.on("error", (error) => {
+      console.error("Error streaming file:", error);
       if (!res.headersSent) {
         res.status(500).json({ message: "حدث خطأ أثناء تحميل الملف" });
       }
@@ -320,14 +353,69 @@ exports.downloadReport = async (req, res) => {
   } catch (error) {
     console.error("Error in download process:", error);
     if (!res.headersSent) {
-      res.status(500).json({ 
+      res.status(500).json({
         message: "فشل في تحميل التقرير",
         error: {
           message: error.message,
           code: error.code,
-          sqlMessage: error.sqlMessage
-        }
+          sqlMessage: error.sqlMessage,
+        },
       });
     }
   }
-}; 
+};
+
+// Get inspection fee
+exports.getInspectionFee = async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT fee FROM inspection_settings ORDER BY id DESC LIMIT 1"
+    );
+
+    if (rows.length === 0) {
+      // If no fee is set, return the default fee
+      return res.json({ fee: 49.0 });
+    }
+
+    res.json({ fee: rows[0].fee });
+  } catch (error) {
+    console.error("Error fetching inspection fee:", error);
+    res.status(500).json({
+      message: "Failed to fetch inspection fee",
+      error: {
+        message: error.message,
+        code: error.code,
+        sqlMessage: error.sqlMessage,
+      },
+    });
+  }
+};
+
+// Update inspection fee
+exports.updateInspectionFee = async (req, res) => {
+  try {
+    const { fee } = req.body;
+
+    if (typeof fee !== "number" || fee < 0) {
+      return res.status(400).json({ message: "Invalid fee value" });
+    }
+
+    await pool.query("INSERT INTO inspection_settings (fee) VALUES (?)", [fee]);
+
+    res.json({
+      success: true,
+      message: "Inspection fee updated successfully",
+      fee: fee,
+    });
+  } catch (error) {
+    console.error("Error updating inspection fee:", error);
+    res.status(500).json({
+      message: "Failed to update inspection fee",
+      error: {
+        message: error.message,
+        code: error.code,
+        sqlMessage: error.sqlMessage,
+      },
+    });
+  }
+};

@@ -7,12 +7,10 @@ const {
 } = require("../utils/cloudinary");
 const { handleDatabaseError } = require("../utils/errorHandlers");
 
-// Get seller profile with average rating
 exports.getSellerProfile = async (req, res) => {
   try {
     const sellerId = req.params.id;
 
-    // Get seller data including user info and seller-specific info
     const [sellerData] = await pool.query(
       `SELECT 
         u.id, u.first_name, u.last_name, u.email,
@@ -33,7 +31,6 @@ exports.getSellerProfile = async (req, res) => {
       return res.status(404).json({ message: "Seller not found" });
     }
 
-    // Get seller's products with their ratings
     const [products] = await pool.query(
       `SELECT 
         p.product_id,
@@ -89,16 +86,13 @@ exports.updateSellerProfile = async (req, res) => {
     const { name, email, phone_number, address, bank_name, account_number } =
       req.body;
 
-    // Start transaction
     const connection = await pool.getConnection();
     await connection.beginTransaction();
 
     try {
-      // Split name into first_name and last_name
       const [first_name, ...lastNameParts] = name.split(" ");
       const last_name = lastNameParts.join(" ");
 
-      // Update user table
       await connection.query(
         `UPDATE users 
          SET first_name = ?, last_name = ?, email = ?
@@ -106,14 +100,12 @@ exports.updateSellerProfile = async (req, res) => {
         [first_name, last_name, email, sellerId]
       );
 
-      // Check if seller record exists
       const [sellerExists] = await connection.query(
         "SELECT 1 FROM sellers WHERE user_id = ?",
         [sellerId]
       );
 
       if (sellerExists.length > 0) {
-        // Update existing seller record
         await connection.query(
           `UPDATE sellers 
            SET phone_number = ?, address = ?, bank_name = ?, account_number = ?
@@ -121,7 +113,6 @@ exports.updateSellerProfile = async (req, res) => {
           [phone_number, address, bank_name, account_number, sellerId]
         );
       } else {
-        // Insert new seller record
         await connection.query(
           `INSERT INTO sellers (user_id, phone_number, address, bank_name, account_number)
            VALUES (?, ?, ?, ?, ?)`,
@@ -193,7 +184,6 @@ exports.sellerUpload = async (req, res) => {
 
     const category_id = categoryRows[0].id;
 
-    // Insert product with initial approval_status as 'pending'
     await pool.query(
       `INSERT INTO products (
         company_name, car_name, start_year, end_year, category_id, part_name, status, 
@@ -311,7 +301,6 @@ exports.filterProducts = async (req, res) => {
   }
 };
 
-// Get all reviews for a seller
 exports.getSellerReviews = async (req, res) => {
   const { id } = req.params;
   const page = parseInt(req.query.page) || 1;
@@ -319,7 +308,6 @@ exports.getSellerReviews = async (req, res) => {
   const offset = (page - 1) * limit;
 
   try {
-    // Get total count of reviews for seller's products
     const [countResult] = await pool.query(
       `SELECT COUNT(DISTINCT r.review_id) as count 
        FROM reviews r
@@ -329,7 +317,6 @@ exports.getSellerReviews = async (req, res) => {
     );
     const totalReviews = countResult[0].count;
 
-    // Get reviews with user info for seller's products
     const [reviews] = await pool.query(
       `SELECT 
          r.review_id,
@@ -350,7 +337,6 @@ exports.getSellerReviews = async (req, res) => {
       [id, limit, offset]
     );
 
-    // Get average rating
     const [avgRating] = await pool.query(
       `SELECT ROUND(AVG(r.rating), 1) as average_rating
        FROM reviews r
@@ -371,14 +357,12 @@ exports.getSellerReviews = async (req, res) => {
   }
 };
 
-// Add a new seller review
 exports.addSellerReview = async (req, res) => {
   const { seller_id } = req.params;
   const { rating, comment, product_id } = req.body;
   const user_id = req.user.id;
 
   try {
-    // Verify the product belongs to the seller
     const [product] = await pool.query(
       "SELECT product_id FROM products WHERE product_id = ? AND seller_id = ?",
       [product_id, seller_id]
@@ -390,7 +374,6 @@ exports.addSellerReview = async (req, res) => {
       });
     }
 
-    // Check if user has already reviewed this product
     const [existingReview] = await pool.query(
       "SELECT * FROM reviews WHERE user_id = ? AND product_id = ?",
       [user_id, product_id]
@@ -402,14 +385,12 @@ exports.addSellerReview = async (req, res) => {
       });
     }
 
-    // Add the review
     const [result] = await pool.query(
       `INSERT INTO reviews (user_id, product_id, rating, comment, created_at, updated_at) 
        VALUES (?, ?, ?, ?, NOW(), NOW())`,
       [user_id, product_id, rating, comment]
     );
 
-    // Get the inserted review with reviewer name
     const [review] = await pool.query(
       `SELECT r.*, CONCAT(u.first_name, ' ', u.last_name) as reviewer_name 
        FROM reviews r 
@@ -424,7 +405,6 @@ exports.addSellerReview = async (req, res) => {
   }
 };
 
-// Update a seller review
 exports.updateSellerReview = async (req, res) => {
   const { review_id } = req.params;
   const { rating, comment } = req.body;
@@ -441,7 +421,6 @@ exports.updateSellerReview = async (req, res) => {
       return res.status(404).json({ message: "Review not found" });
     }
 
-    // Get the updated review with reviewer name
     const [review] = await pool.query(
       `SELECT sr.*, CONCAT(u.first_name, ' ', u.last_name) as reviewer_name 
        FROM seller_reviews sr 
@@ -456,7 +435,6 @@ exports.updateSellerReview = async (req, res) => {
   }
 };
 
-// Delete a seller review
 exports.deleteSellerReview = async (req, res) => {
   const { review_id } = req.params;
 
@@ -507,19 +485,16 @@ exports.getSalesReport = async (req, res) => {
     const sellerId = req.user.id;
     const year = parseInt(req.params.year);
 
-    // Validate year
     if (isNaN(year) || year < 2000 || year > 2100) {
       return res.status(400).json({ error: "Invalid year" });
     }
 
-    // Create an array of all months with zero values
     const fullYearData = Array.from({ length: 12 }, (_, i) => ({
       month: i + 1,
       total_sales: 0,
       revenue: 0,
     }));
 
-    // Try to get sales data if it exists
     try {
       const [sales] = await pool.query(
         `
@@ -538,7 +513,6 @@ exports.getSalesReport = async (req, res) => {
         [sellerId, year]
       );
 
-      // Update the fullYearData with actual sales data where it exists
       sales.forEach((sale) => {
         if (sale.month >= 1 && sale.month <= 12) {
           fullYearData[sale.month - 1] = {
@@ -550,7 +524,6 @@ exports.getSalesReport = async (req, res) => {
       });
     } catch (err) {
       console.error("Error fetching sales data:", err);
-      // Continue with zero values if there's an error
     }
 
     res.json({ sales: fullYearData });
@@ -617,11 +590,9 @@ exports.getInventory = async (req, res) => {
     const sellerId = req.user.id;
     const { sort = "created_at", order = "desc" } = req.query;
 
-    // Validate sort field
     const allowedSortFields = ["created_at", "stock", "price"];
     const sortField = allowedSortFields.includes(sort) ? sort : "created_at";
 
-    // Validate order direction
     const orderDirection = order.toLowerCase() === "asc" ? "ASC" : "DESC";
 
     const [products] = await pool.query(
@@ -647,12 +618,10 @@ exports.updateStock = async (req, res) => {
     const productId = req.params.id;
     const { stock } = req.body;
 
-    // Validate stock value
     if (typeof stock !== "number" || stock < 0) {
       return res.status(400).json({ error: "Invalid stock value" });
     }
 
-    // Verify product belongs to seller
     const [product] = await pool.query(
       "SELECT product_id FROM products WHERE product_id = ? AND seller_id = ?",
       [productId, sellerId]
@@ -662,7 +631,6 @@ exports.updateStock = async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Update stock
     await pool.query("UPDATE products SET stock = ? WHERE product_id = ?", [
       stock,
       productId,
@@ -680,7 +648,6 @@ exports.deleteProduct = async (req, res) => {
     const sellerId = req.user.id;
     const productId = req.params.id;
 
-    // Verify product belongs to seller
     const [product] = await pool.query(
       "SELECT product_id FROM products WHERE product_id = ? AND seller_id = ?",
       [productId, sellerId]
@@ -690,7 +657,6 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Delete the product
     await pool.query("DELETE FROM products WHERE product_id = ?", [productId]);
 
     res.json({ message: "Product deleted successfully" });

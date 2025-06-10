@@ -115,7 +115,6 @@ const SellerUpload = () => {
       return;
     }
 
-    // Validate year range
     if (Number(startYear) > Number(endYear)) {
       setError("سنة البداية يجب أن تكون أقل من أو تساوي سنة النهاية");
       return;

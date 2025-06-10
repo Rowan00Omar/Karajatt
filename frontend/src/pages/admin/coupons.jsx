@@ -92,6 +92,34 @@ export default function CouponsPage() {
     setEditingCoupon(null);
   };
 
+  const isCouponExpired = (expiryDate) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(expiryDate);
+    return expiry < today;
+  };
+
+  const getCouponStatus = (coupon) => {
+    if (!coupon.is_active) {
+      return {
+        text: "غير نشط",
+        className: "bg-red-100 text-red-800",
+      };
+    }
+
+    if (isCouponExpired(coupon.expiry_date)) {
+      return {
+        text: "منتهي الصلاحية",
+        className: "bg-gray-100 text-gray-800",
+      };
+    }
+
+    return {
+      text: "نشط",
+      className: "bg-green-100 text-green-800",
+    };
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -139,18 +167,21 @@ export default function CouponsPage() {
                 </p>
                 <p className="text-gray-500 text-sm">
                   ينتهي في:{" "}
-                  {new Date(coupon.expiry_date).toLocaleDateString("ar-SA")}
+                  {new Date(coupon.expiry_date).toLocaleDateString("ar", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    calendar: "gregory",
+                  })}
                 </p>
               </div>
               <div className="flex items-center gap-4">
                 <span
                   className={`px-3 py-1 rounded-full text-sm ${
-                    coupon.is_active
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
+                    getCouponStatus(coupon).className
                   }`}
                 >
-                  {coupon.is_active ? "نشط" : "غير نشط"}
+                  {getCouponStatus(coupon).text}
                 </span>
                 <button
                   onClick={() => handleEdit(coupon)}

@@ -24,11 +24,11 @@ const {
 
 // Product Reviews
 // Get paginated reviews for a product (public access)
-router.get("/product/:id/reviews", getProductReviews);
+router.get("/product/:id", getProductReviews);
 
 // Add a new review (requires authenticated user)
 router.post(
-  "/product/:product_id/reviews",
+  "/product/:product_id",
   authenticateToken,
   checkRole("user", "seller"),
   reviewLimiter,
@@ -37,7 +37,7 @@ router.post(
 
 // Update a product review (requires review ownership)
 router.put(
-  "/reviews/:review_id",
+  "/product/:review_id",
   authenticateToken,
   checkRole("user", "seller"),
   checkReviewOwnership,
@@ -47,7 +47,7 @@ router.put(
 
 // Delete a product review (requires review ownership)
 router.delete(
-  "/reviews/:review_id",
+  "/product/:review_id",
   authenticateToken,
   checkRole("user", "seller"),
   checkReviewOwnership,
@@ -56,11 +56,11 @@ router.delete(
 
 // Seller Reviews
 // Get paginated reviews for a seller (public access)
-router.get("/seller/:id/reviews", getSellerReviews);
+router.get("/seller/:id", getSellerReviews);
 
 // Add a new seller review (requires authenticated user)
 router.post(
-  "/seller/:seller_id/reviews",
+  "/seller/:seller_id",
   authenticateToken,
   checkRole("user"),
   reviewLimiter,
@@ -69,7 +69,7 @@ router.post(
 
 // Update a seller review (requires review ownership)
 router.put(
-  "/seller/reviews/:review_id",
+  "/seller/:review_id",
   authenticateToken,
   checkRole("user"),
   checkReviewOwnership,
@@ -79,7 +79,7 @@ router.put(
 
 // Delete a seller review (requires review ownership)
 router.delete(
-  "/seller/reviews/:review_id",
+  "/seller/:review_id",
   authenticateToken,
   checkRole("user"),
   checkReviewOwnership,

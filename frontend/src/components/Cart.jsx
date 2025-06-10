@@ -1,8 +1,8 @@
+import React, { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
-import { X } from "lucide-react";
+import { X, Star } from "lucide-react";
 import Button from "./Button";
 import axios from "axios";
-import { useState } from "react";
 
 const Cart = ({ onClose }) => {
   const {
@@ -18,6 +18,27 @@ const Cart = ({ onClose }) => {
 
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
+  const [inspectionFee, setInspectionFee] = useState(49);
+  const [feeError, setFeeError] = useState(null);
+
+  useEffect(() => {
+    const fetchInspectionFee = async () => {
+      try {
+        const response = await axios.get("/api/inspection/fee");
+        if (response.data && response.data.fee !== undefined) {
+          setInspectionFee(response.data.fee);
+        }
+      } catch (error) {
+        console.error("Error fetching inspection fee:", error);
+        setInspectionFee(49);
+        setFeeError(null);
+      }
+    };
+
+    fetchInspectionFee();
+  }, []);
+
+  const totalInspectionFees = cartItems.length * inspectionFee;
 
   const handleCheckout = async (cartItems) => {
     const token = localStorage.getItem("token");
@@ -32,6 +53,7 @@ const Cart = ({ onClose }) => {
         cartItems,
         userId,
         appliedCoupon,
+        inspectionFees: totalInspectionFees,
       });
     } catch (err) {
       console.error("Payment failed:", err);
@@ -52,6 +74,8 @@ const Cart = ({ onClose }) => {
       setCouponCode("");
     }
   };
+
+  const finalTotal = cartTotal + totalInspectionFees;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end p-4 pointer-events-none">
@@ -97,6 +121,9 @@ const Cart = ({ onClose }) => {
                     </h3>
                     <p className="text-gray-600 mt-1">
                       {(parseFloat(item.price) || 0).toFixed(2)} ر.س
+                    </p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      رسوم الفحص: {inspectionFee} ر.س
                     </p>
                   </div>
                   <button
@@ -161,9 +188,16 @@ const Cart = ({ onClose }) => {
                   <span>- {discount.toFixed(2)} ر.س</span>
                 </div>
               )}
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>رسوم الفحص:</span>
+                <span>{totalInspectionFees.toFixed(2)} ر.س</span>
+              </div>
+              {feeError && (
+                <p className="text-red-500 text-xs text-right">{feeError}</p>
+              )}
               <div className="flex justify-between font-bold text-lg text-babyJanaBlue pt-2 border-t">
                 <span>المجموع:</span>
-                <span>{cartTotal.toFixed(2)} ر.س</span>
+                <span>{finalTotal.toFixed(2)} ر.س</span>
               </div>
             </div>
 

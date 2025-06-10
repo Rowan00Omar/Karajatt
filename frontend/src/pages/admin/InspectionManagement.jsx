@@ -7,6 +7,7 @@ import {
   XCircleIcon,
   CheckCircleIcon,
   MagnifyingGlassIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 
 const InspectionManagement = () => {
@@ -19,10 +20,92 @@ const InspectionManagement = () => {
   const [error, setError] = useState(null);
   const [showInspectedOnly, setShowInspectedOnly] = useState(false);
   const [downloadingOrderId, setDownloadingOrderId] = useState(null);
+  const [inspectionFee, setInspectionFee] = useState(49);
+  const [isEditingFee, setIsEditingFee] = useState(false);
+  const [feeError, setFeeError] = useState("");
 
   useEffect(() => {
     fetchOrders();
+    fetchInspectionFee();
   }, []);
+
+  const fetchInspectionFee = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setFeeError("جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى");
+        return;
+      }
+
+      const response = await axios.get("/api/admin/inspection/fee", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data && response.data.fee !== undefined) {
+        setInspectionFee(response.data.fee);
+      } else {
+        console.error("Invalid response format:", response.data);
+        setFeeError("فشل في جلب رسوم الفحص. الرجاء تحديث الصفحة");
+      }
+    } catch (error) {
+      console.error("Error fetching inspection fee:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      setFeeError("فشل في جلب رسوم الفحص. الرجاء تحديث الصفحة");
+    }
+  };
+
+  const handleFeeChange = async () => {
+    const value = parseFloat(inspectionFee);
+    if (isNaN(value) || value < 0) {
+      setFeeError("الرجاء إدخال قيمة صحيحة");
+      return;
+    }
+    setFeeError("");
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setFeeError("جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى");
+        return;
+      }
+
+      const response = await axios.put(
+        "/api/admin/inspection/fee",
+        { fee: value },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        setInspectionFee(value);
+        setIsEditingFee(false);
+      } else {
+        setFeeError("فشل في تحديث رسوم الفحص. الرجاء المحاولة مرة أخرى");
+      }
+    } catch (error) {
+      console.error("Error updating inspection fee:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "فشل في تحديث رسوم الفحص. الرجاء المحاولة مرة أخرى";
+      setFeeError(errorMessage);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -288,7 +371,7 @@ const InspectionManagement = () => {
             className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
               showInspectedOnly
                 ? "bg-gray-600 hover:bg-gray-700"
-                : "bg-blue-600 hover:bg-blue-700"
+                : "bg-indigo-600 hover:bg-indigo-700"
             }`}
           >
             <MagnifyingGlassIcon className="h-5 w-5 ml-2" />
@@ -318,6 +401,58 @@ const InspectionManagement = () => {
         <h1 className="text-3xl font-bold text-gray-900 text-right">
           إدارة فحص الطلبات
         </h1>
+      </div>
+
+      {/* Inspection Fee Management */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <CurrencyDollarIcon className="h-6 w-6 text-gray-500" />
+            <h2 className="text-xl font-semibold">رسوم الفحص</h2>
+          </div>
+          {isEditingFee ? (
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                value={inspectionFee}
+                onChange={(e) => setInspectionFee(e.target.value)}
+                className="w-32 border rounded-lg p-2 text-right"
+                min="0"
+                step="0.01"
+              />
+              <span className="text-gray-600">ر.س</span>
+              <button
+                onClick={handleFeeChange}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
+              >
+                حفظ
+              </button>
+              <button
+                onClick={() => {
+                  setIsEditingFee(false);
+                  setFeeError("");
+                  fetchInspectionFee(); // Reset to original value
+                }}
+                className="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+              >
+                إلغاء
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="text-xl font-semibold">{inspectionFee} ر.س</span>
+              <button
+                onClick={() => setIsEditingFee(true)}
+                className="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm hover:bg-blue-200 transition-colors"
+              >
+                تعديل
+              </button>
+            </div>
+          )}
+        </div>
+        {feeError && (
+          <p className="text-red-500 text-sm mt-2 text-right">{feeError}</p>
+        )}
       </div>
 
       {error && (
@@ -459,7 +594,12 @@ const InspectionManagement = () => {
                       {order.total_price} ر.س
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      {new Date(order.created_at).toLocaleDateString("ar-SA")}
+                      {new Date(order.created_at).toLocaleDateString("ar", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        calendar: "gregory",
+                      })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <span

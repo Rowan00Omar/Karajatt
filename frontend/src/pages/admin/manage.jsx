@@ -58,7 +58,6 @@ export default function ManageUsersPage() {
   };
 
   const handleAddUser = () => {
-    console.log("Opening add user modal");
     setIsAddingUser(true);
   };
 
@@ -137,8 +136,20 @@ export default function ManageUsersPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="px-3 py-1 rounded-full text-sm bg-gray-100">
-                      {user.role}
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        user.role === "admin"
+                          ? "bg-indigo-100 text-indigo-800"
+                          : user.role === "seller"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
+                      {user.role === "admin"
+                        ? "مشرف"
+                        : user.role === "seller"
+                        ? "بائع"
+                        : "مستخدم"}
                     </span>
                     <button
                       onClick={() => handleDelete(user.id)}
@@ -174,14 +185,21 @@ export default function ManageUsersPage() {
 
       {isAddingUser && (
         <div className="fixed inset-0 z-[9999] overflow-y-auto">
-          <div className="flex min-h-screen items-center justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+          <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              className="fixed inset-0 transition-opacity"
               onClick={() => setIsAddingUser(false)}
             ></div>
 
-            <div className="inline-block align-bottom bg-white rounded-lg text-right overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <span
+              className="hidden sm:inline-block sm:h-screen sm:align-middle"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+
+            <div className="relative inline-block transform overflow-hidden rounded-lg bg-white text-right align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
+              <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xl font-semibold text-gray-900">
                     إضافة مستخدم جديد
@@ -193,14 +211,15 @@ export default function ManageUsersPage() {
                     ✕
                   </button>
                 </div>
-                <Signup
-                  flag={true}
-                  onSuccess={() => {
-                    console.log("User added successfully");
-                    setIsAddingUser(false);
-                    fetchUsers();
-                  }}
-                />
+                <div className="mt-2">
+                  <Signup
+                    flag={true}
+                    onSuccess={() => {
+                      setIsAddingUser(false);
+                      fetchUsers();
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>

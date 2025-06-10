@@ -25,7 +25,6 @@ const useLogout = () => {
         navigate("/login");
       } else {
         console.error("Logout failed:", await response.text());
-        // Still remove local data and redirect even if server revocation fails
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
         navigate("/login");

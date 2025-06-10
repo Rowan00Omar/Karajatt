@@ -19,6 +19,9 @@ const {
   getPendingRequests,
   approveRequest,
   rejectRequest,
+  getUserStats,
+  getSalesStats,
+  getInventoryStats,
 } = require("../controllers/adminController");
 
 const {
@@ -26,8 +29,15 @@ const {
   startInspection,
   submitInspectionReport,
   getInspectionReport,
-  downloadReport
+  downloadReport,
+  getInspectionFee,
+  updateInspectionFee,
 } = require("../controllers/inspectionController");
+
+// Dashboard statistics routes
+router.get("/stats/users", getUserStats);
+router.get("/stats/sales", getSalesStats);
+router.get("/stats/inventory", getInventoryStats);
 
 // User management routes
 router.get("/users", getAllUsers);
@@ -46,10 +56,14 @@ router.post("/approve-request/:id", approveRequest);
 router.post("/reject-request/:id", rejectRequest);
 
 // Inspection management routes
+router.get("/inspection/fee", getInspectionFee);
+router.put("/inspection/fee", updateInspectionFee);
 router.get("/inspection/orders", getOrdersForInspection);
 router.post("/inspection/orders/:orderId/start", startInspection);
 router.post("/inspection/orders/:orderId/report", submitInspectionReport);
 router.get("/inspection/orders/:orderId/report", getInspectionReport);
-router.get("/inspection/reports/:reportId/download", downloadReport);
+router.head("/inspection/orders/:orderId/report/verify", getInspectionReport);
+router.post("/inspection/orders/:orderId/report/download", downloadReport);
+router.get("/inspection/orders/:orderId/report/download", downloadReport);
 
 module.exports = router;

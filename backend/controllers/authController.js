@@ -114,6 +114,11 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    await pool.query(
+      "UPDATE users SET last_active = CURRENT_TIMESTAMP WHERE id = ?",
+      [userRows[0].id]
+    );
+
     const token = jwt.sign({ id: userRows[0].id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });

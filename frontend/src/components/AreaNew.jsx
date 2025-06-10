@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 import { TrendingUp } from "lucide-react";
 
 import {
@@ -10,6 +17,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   ChartConfig,
@@ -35,13 +43,13 @@ const salesData = {
     { date: "2024-04-24", مبيعات: 15500 },
     { date: "2024-04-25", مبيعات: 16200 },
     { date: "2024-04-26", مبيعات: 17800 },
-    { date: "2024-04-27", مبيعات: 18500 }
+    { date: "2024-04-27", مبيعات: 18500 },
   ],
   monthly: [
     { date: "2024-01-01", مبيعات: 45000 },
     { date: "2024-02-01", مبيعات: 48000 },
     { date: "2024-03-01", مبيعات: 52000 },
-    { date: "2024-04-01", مبيعات: 55000 }
+    { date: "2024-04-01", مبيعات: 55000 },
   ],
   yearly: [
     { date: "2023-01-01", مبيعات: 520000 },
@@ -49,61 +57,81 @@ const salesData = {
     { date: "2023-07-01", مبيعات: 620000 },
     { date: "2023-10-01", مبيعات: 680000 },
     { date: "2024-01-01", مبيعات: 720000 },
-    { date: "2024-04-01", مبيعات: 780000 }
-  ]
+    { date: "2024-04-01", مبيعات: 780000 },
+  ],
 };
 
 const chartConfig = {
   مبيعات: {
     label: "المبيعات",
-    color: "#4a60e9"
-  }
+    color: "#4a60e9",
+  },
 };
 
-export function Chart() {
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString("ar-SA", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+export function Chart({ data = [] }) {
   const [timeRange, setTimeRange] = React.useState("7d");
 
   const getCurrentData = () => {
-    switch(timeRange) {
+    const now = new Date();
+    let filterDate;
+
+    switch (timeRange) {
       case "7d":
-        return salesData.weekly;
+        filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
       case "30d":
-        return salesData.monthly;
+        filterDate = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          now.getDate()
+        );
+        break;
       case "90d":
-        return salesData.yearly;
+        filterDate = new Date(
+          now.getFullYear(),
+          now.getMonth() - 3,
+          now.getDate()
+        );
+        break;
       default:
-        return salesData.weekly;
+        filterDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     }
+
+    return data.filter((item) => new Date(item.name) >= filterDate);
   };
 
-  const totalSales = React.useMemo(() => {
-    const data = getCurrentData();
-    return data[data.length - 1].مبيعات.toLocaleString('ar-SA');
-  }, [timeRange]);
+  const getGrowthRate = () => {
+    if (!data || data.length < 2) return "0%";
 
-  const formatDate = (date) => {
-    const d = new Date(date);
-    if (timeRange === "90d") {
-      return d.toLocaleDateString('ar-SA', { year: 'numeric', month: 'short' });
-    } else if (timeRange === "30d") {
-      return d.toLocaleDateString('ar-SA', { month: 'short' });
-    }
-    return d.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+    const currentPeriod = data.slice(-1)[0]?.value || 0;
+    const previousPeriod = data.slice(-2)[0]?.value || 0;
+
+    if (previousPeriod === 0) return "0%";
+
+    const growth = ((currentPeriod - previousPeriod) / previousPeriod) * 100;
+    return `${growth.toFixed(1)}%`;
   };
 
   return (
     <Card>
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1 text-right">
-          <CardTitle>إجمالي المبيعات</CardTitle>
-          <CardDescription>{totalSales} ريال</CardDescription>
+        <div className="grid flex-1 gap-1 text-center sm:text-right">
+          <CardTitle>المبيعات والإيرادات</CardTitle>
+          <CardDescription>إجمالي المبيعات والإيرادات</CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
             className="w-[160px] rounded-lg sm:ml-auto"
-            aria-label="اختر الفترة الزمنية"
+            aria-label="اختر فترة زمنية"
           >
-            <SelectValue placeholder="اختر الفترة" />
+            <SelectValue placeholder="آخر 7 أيام" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
             <SelectItem value="7d" className="rounded-lg">
@@ -119,7 +147,10 @@ export function Chart() {
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
+        <ChartContainer
+          config={chartConfig}
+          className="aspect-auto h-[250px] w-full"
+        >
           <AreaChart data={getCurrentData()}>
             <defs>
               <linearGradient id="fillSales" x1="0" y1="0" x2="0" y2="1">
@@ -129,7 +160,7 @@ export function Chart() {
             </defs>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
-              dataKey="date"
+              dataKey="name"
               tickLine={false}
               axisLine={false}
               tickMargin={8}
@@ -139,7 +170,7 @@ export function Chart() {
             <YAxis
               axisLine={false}
               tickLine={false}
-              tickFormatter={(value) => value.toLocaleString('ar-SA')}
+              tickFormatter={(value) => value.toLocaleString("ar-SA")}
               tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
             />
             <Tooltip
@@ -148,10 +179,10 @@ export function Chart() {
                   return (
                     <div className="rounded-lg bg-white p-2 shadow-md text-right">
                       <p className="text-sm font-medium">
-                        {formatDate(payload[0].payload.date)}
+                        {formatDate(payload[0].payload.name)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {payload[0].value.toLocaleString('ar-SA')} ريال
+                        {payload[0].value.toLocaleString("ar-SA")} ريال
                       </p>
                     </div>
                   );
@@ -161,13 +192,19 @@ export function Chart() {
             />
             <Area
               type="monotone"
-              dataKey="مبيعات"
+              dataKey="value"
               stroke="#4a60e9"
               fill="url(#fillSales)"
             />
           </AreaChart>
         </ChartContainer>
       </CardContent>
+      <CardFooter className="flex-col gap-2 text-sm">
+        <div className="flex items-center gap-2 font-medium leading-none text-right w-full">
+          <TrendingUp className="h-4 w-4" />
+          نمو بنسبة {getGrowthRate()} عن الفترة السابقة
+        </div>
+      </CardFooter>
     </Card>
   );
 }

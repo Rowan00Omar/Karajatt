@@ -29,13 +29,13 @@ const registrationsData = {
     { day: "الثلاثاء", value: 35 },
     { day: "الأربعاء", value: 30 },
     { day: "الخميس", value: 40 },
-    { day: "الجمعة", value: 45 }
+    { day: "الجمعة", value: 45 },
   ],
   monthly: [
     { week: "الأسبوع 1", value: 120 },
     { week: "الأسبوع 2", value: 145 },
     { week: "الأسبوع 3", value: 160 },
-    { week: "الأسبوع 4", value: 180 }
+    { week: "الأسبوع 4", value: 180 },
   ],
   yearly: [
     { month: "يناير", value: 520 },
@@ -49,8 +49,8 @@ const registrationsData = {
     { month: "سبتمبر", value: 750 },
     { month: "أكتوبر", value: 780 },
     { month: "نوفمبر", value: 820 },
-    { month: "ديسمبر", value: 850 }
-  ]
+    { month: "ديسمبر", value: 850 },
+  ],
 };
 
 const visitsData = {
@@ -61,13 +61,13 @@ const visitsData = {
     { day: "الثلاثاء", value: 1400 },
     { day: "الأربعاء", value: 1600 },
     { day: "الخميس", value: 1800 },
-    { day: "الجمعة", value: 2000 }
+    { day: "الجمعة", value: 2000 },
   ],
   monthly: [
     { week: "الأسبوع 1", value: 5500 },
     { week: "الأسبوع 2", value: 6000 },
     { week: "الأسبوع 3", value: 6500 },
-    { week: "الأسبوع 4", value: 7000 }
+    { week: "الأسبوع 4", value: 7000 },
   ],
   yearly: [
     { month: "يناير", value: 22000 },
@@ -81,57 +81,87 @@ const visitsData = {
     { month: "سبتمبر", value: 31000 },
     { month: "أكتوبر", value: 32000 },
     { month: "نوفمبر", value: 33000 },
-    { month: "ديسمبر", value: 34000 }
-  ]
+    { month: "ديسمبر", value: 34000 },
+  ],
 };
 
 const chartConfig = {
   value: {
     label: "القيمة",
-    color: "#4a60e9"
-  }
+    color: "#4a60e9",
+  },
 };
 
-export function Chart({ type = "registrations" }) {
+export function Chart({ type = "registrations", data = [] }) {
   const [timeRange, setTimeRange] = useState("أسبوعيًا");
-  const data = type === "registrations" ? registrationsData : visitsData;
   const title = type === "registrations" ? "التسجيلات الجديدة" : "عدد الزيارات";
-  
+
   const getCurrentData = () => {
-    switch(timeRange) {
-      case "أسبوعيًا":
-        return data.weekly;
-      case "شهريًا":
-        return data.monthly;
-      case "سنويًا":
-        return data.yearly;
-      default:
-        return data.weekly;
-    }
+    // Filter data based on time range
+    const now = new Date();
+    const filtered = data.filter((item) => {
+      const date = new Date(item.name);
+      if (timeRange === "أسبوعيًا") {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return date >= weekAgo;
+      } else if (timeRange === "شهريًا") {
+        const monthAgo = new Date(
+          now.getFullYear(),
+          now.getMonth() - 1,
+          now.getDate()
+        );
+        return date >= monthAgo;
+      } else if (timeRange === "سنويًا") {
+        const yearAgo = new Date(
+          now.getFullYear() - 1,
+          now.getMonth(),
+          now.getDate()
+        );
+        return date >= yearAgo;
+      }
+      return true;
+    });
+
+    // Group data based on time range
+    const grouped = filtered.reduce((acc, item) => {
+      const date = new Date(item.name);
+      let key;
+
+      if (timeRange === "أسبوعيًا") {
+        key = date.toLocaleDateString("ar-SA", { weekday: "long" });
+      } else if (timeRange === "شهريًا") {
+        key = `الأسبوع ${Math.ceil(date.getDate() / 7)}`;
+      } else {
+        key = date.toLocaleDateString("ar-SA", { month: "long" });
+      }
+
+      if (!acc[key]) {
+        acc[key] = { name: key, value: 0 };
+      }
+      acc[key].value += item.value;
+      return acc;
+    }, {});
+
+    return Object.values(grouped);
   };
 
-  const getXAxisKey = () => {
-    switch(timeRange) {
-      case "أسبوعيًا":
-        return "day";
-      case "شهريًا":
-        return "week";
-      case "سنويًا":
-        return "month";
-      default:
-        return "day";
-    }
+  const getGrowthRate = () => {
+    if (!data || data.length < 2) return "0%";
+
+    const currentPeriod = data.slice(-1)[0]?.value || 0;
+    const previousPeriod = data.slice(-2)[0]?.value || 0;
+
+    if (previousPeriod === 0) return "0%";
+
+    const growth = ((currentPeriod - previousPeriod) / previousPeriod) * 100;
+    return `${growth.toFixed(1)}%`;
   };
 
   return (
     <Card>
       <CardHeader className="flex flex-row justify-between items-center">
         <CardTitle className="text-right">{title}</CardTitle>
-        <Select
-          className="w-32"
-          onValueChange={setTimeRange}
-          value={timeRange}
-        >
+        <Select className="w-32" onValueChange={setTimeRange} value={timeRange}>
           {criteria.map((m) => (
             <SelectItem key={m} value={m}>
               {m}
@@ -147,7 +177,7 @@ export function Chart({ type = "registrations" }) {
           >
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis
-              dataKey={getXAxisKey()}
+              dataKey="name"
               axisLine={false}
               tickLine={false}
               tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
@@ -162,8 +192,12 @@ export function Chart({ type = "registrations" }) {
                 if (active && payload && payload.length) {
                   return (
                     <div className="rounded-lg bg-white p-2 shadow-md">
-                      <p className="text-sm font-medium">{payload[0].payload[getXAxisKey()]}</p>
-                      <p className="text-xs text-muted-foreground">{payload[0].value}</p>
+                      <p className="text-sm font-medium">
+                        {payload[0].payload.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {payload[0].value}
+                      </p>
                     </div>
                   );
                 }
@@ -181,10 +215,13 @@ export function Chart({ type = "registrations" }) {
       <CardFooter className="flex-col gap-2 text-sm">
         <div className="flex items-center gap-2 font-medium leading-none text-right w-full">
           <TrendingUp className="h-4 w-4" />
-          زيادة بنسبة {type === "registrations" ? "15.2" : "8.5"}% عن {
-            timeRange === "أسبوعيًا" ? "الأسبوع" :
-            timeRange === "شهريًا" ? "الشهر" : "العام"
-          } السابق
+          زيادة بنسبة {getGrowthRate()} عن{" "}
+          {timeRange === "أسبوعيًا"
+            ? "الأسبوع"
+            : timeRange === "شهريًا"
+            ? "الشهر"
+            : "العام"}{" "}
+          السابق
         </div>
       </CardFooter>
     </Card>

@@ -16,9 +16,10 @@ import {
   LogOut,
   Ticket,
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, Link } from "react-router-dom";
 import { useState } from "react";
 import useLogout from "@/hooks/useLogout";
+import Logo from "@/assets/Logo.svg";
 
 const items = [
   {
@@ -91,19 +92,22 @@ export function AdminBar({ isOpen }) {
 
       {/* Sidebar for both Mobile and Desktop */}
       <div
-        className={`fixed inset-y-0 right-0 z-40 w-[240px] bg-white transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 right-0 z-40 w-[280px] bg-white transform transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen
             ? "translate-x-0"
             : "translate-x-full sm:translate-x-0"
         }`}
       >
         <div className="flex flex-col h-full py-4" dir="rtl">
-          <div className="px-4 mb-4">
-            <h2 className="text-xl font-bold">لوحة التحكم</h2>
+          <div className="px-6 mb-6">
+            <Link to="/" className="flex items-center mb-6">
+              <img src={Logo} alt="Khaliji Logo" className="h-8 w-auto" />
+            </Link>
+            <h2 className="text-xl font-bold text-gray-900">لوحة التحكم</h2>
           </div>
 
           <nav className="flex-1">
-            <ul className="space-y-1 px-2">
+            <ul className="space-y-1 px-3">
               {items.map((item) => (
                 <li key={item.title}>
                   <NavLink
@@ -112,8 +116,8 @@ export function AdminBar({ isOpen }) {
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                         isActive
-                          ? "bg-indigo-50 text-indigo-600"
-                          : "hover:bg-gray-100"
+                          ? "bg-indigo-50 text-indigo-600 font-medium"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`
                     }
                   >
@@ -125,10 +129,10 @@ export function AdminBar({ isOpen }) {
             </ul>
           </nav>
 
-          <div className="px-4 mt-auto">
+          <div className="px-3 mt-auto border-t pt-4">
             <button
               onClick={logout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors hover:bg-gray-100 text-right"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-red-600 hover:bg-red-50 text-right"
             >
               <LogOut className="h-5 w-5" />
               <span>تسجيل الخروج</span>

@@ -53,8 +53,8 @@ const Reviews = ({ type, id }) => {
       setLoading(true);
       const endpoint =
         type === "product"
-          ? `/api/product/${id}/reviews`
-          : `/api/seller/${id}/reviews`;
+          ? `/api/reviews/product/${id}`
+          : `/api/reviews/seller/${id}`;
 
       const response = await axios.get(endpoint);
       setReviews(response.data.reviews);
@@ -102,8 +102,8 @@ const Reviews = ({ type, id }) => {
 
       const endpoint =
         type === "product"
-          ? `/api/product/${id}/reviews`
-          : `/api/seller/${id}/reviews`;
+          ? `/api/reviews/product/${id}`
+          : `/api/reviews/seller/${id}`;
 
       await axios.post(endpoint, newReview, {
         headers: { Authorization: `Bearer ${token}` },

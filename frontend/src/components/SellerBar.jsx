@@ -8,11 +8,12 @@ import {
   User,
   Upload,
   Settings,
+  LogOut,
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, Link } from "react-router-dom";
 import { useState } from "react";
-import { LogOut } from "lucide-react";
 import useLogout from "@/hooks/useLogout";
+import Logo from "@/assets/Logo.svg";
 
 const items = [
   {
@@ -70,7 +71,7 @@ export function SellerBar() {
 
       {/* Sidebar for both Mobile and Desktop */}
       <div
-        className={`fixed inset-y-0 right-0 z-40 w-[240px] bg-white transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 right-0 z-40 w-[280px] bg-white transform transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen
             ? "translate-x-0"
             : "translate-x-full sm:translate-x-0"
@@ -78,6 +79,9 @@ export function SellerBar() {
       >
         <div className="flex flex-col h-full py-4" dir="rtl">
           <div className="px-6 mb-6">
+            <Link to="/" className="flex items-center mb-6">
+              <img src={Logo} alt="Khaliji Logo" className="h-8 w-auto" />
+            </Link>
             <h2 className="text-xl font-bold text-gray-900">لوحة التحكم</h2>
           </div>
 
@@ -91,7 +95,7 @@ export function SellerBar() {
                     className={({ isActive }) =>
                       `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                         isActive
-                          ? "bg-blue-50 text-blue-600 font-medium"
+                          ? "bg-indigo-50 text-indigo-600 font-medium"
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`
                     }

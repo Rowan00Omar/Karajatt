@@ -202,3 +202,253 @@ exports.updateProductStatus = async (req, res) => {
     res.status(500).json({ message: "Failed to update product status" });
   }
 };
+
+// Get user statistics for dashboard
+exports.getUserStats = async (req, res) => {
+  try {
+    const year = req.query.year || new Date().getFullYear();
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    // Get total users
+    const [totalUsers] = await pool.query(
+      "SELECT COUNT(*) as count FROM users WHERE role = 'user'"
+    );
+
+    // Get active users (users who placed orders in last 30 days)
+    const [activeUsers] = await pool.query(
+      `SELECT COUNT(DISTINCT user_id) as count 
+       FROM orders 
+       WHERE order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)`
+    );
+
+    // Get user registration data for the selected year
+    const [registrationData] = await pool.query(
+      `SELECT 
+        DATE_FORMAT(created_at, '%Y-%m') as date,
+        COUNT(*) as count
+       FROM users
+       WHERE created_at BETWEEN ? AND ?
+       GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+       ORDER BY date`,
+      [startDate, endDate]
+    );
+
+    // Calculate user growth
+    const [lastMonthUsers] = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM users 
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+    );
+    const [previousMonthUsers] = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM users 
+       WHERE created_at BETWEEN DATE_SUB(NOW(), INTERVAL 2 MONTH) AND DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+    );
+
+    const userGrowth =
+      previousMonthUsers[0].count === 0
+        ? "+100%"
+        : `${(
+            ((lastMonthUsers[0].count - previousMonthUsers[0].count) /
+              previousMonthUsers[0].count) *
+            100
+          ).toFixed(1)}%`;
+
+    // Calculate active users growth
+    const [lastMonthActive] = await pool.query(
+      `SELECT COUNT(DISTINCT user_id) as count 
+       FROM orders 
+       WHERE order_date >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+    );
+    const [previousMonthActive] = await pool.query(
+      `SELECT COUNT(DISTINCT user_id) as count 
+       FROM orders 
+       WHERE order_date BETWEEN DATE_SUB(NOW(), INTERVAL 2 MONTH) AND DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+    );
+
+    const activeGrowth =
+      previousMonthActive[0].count === 0
+        ? "+100%"
+        : `${(
+            ((lastMonthActive[0].count - previousMonthActive[0].count) /
+              previousMonthActive[0].count) *
+            100
+          ).toFixed(1)}%`;
+
+    // Format registration data to include all months
+    const formattedRegistrationData = [];
+    for (let month = 1; month <= 12; month++) {
+      const monthStr = month.toString().padStart(2, "0");
+      const dateStr = `${year}-${monthStr}`;
+      const monthData = registrationData.find((d) => d.date === dateStr);
+      formattedRegistrationData.push({
+        name: dateStr,
+        value: monthData ? monthData.count : 0,
+      });
+    }
+
+    res.json({
+      totalUsers: totalUsers[0].count,
+      activeUsers: activeUsers[0].count,
+      userGrowth,
+      activeGrowth,
+      registrationData: formattedRegistrationData,
+      visitData: formattedRegistrationData, // Using same data for visits for now
+    });
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    res.status(500).json({ message: "Failed to fetch user statistics" });
+  }
+};
+
+exports.getSalesStats = async (req, res) => {
+  try {
+    const year = req.query.year || new Date().getFullYear();
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    // Get total completed orders
+    const [totalOrders] = await pool.query(
+      "SELECT COUNT(*) as count FROM orders WHERE status = 'passed'"
+    );
+
+    // Get sales data for completed orders only
+    const [salesData] = await pool.query(
+      `SELECT 
+        DATE_FORMAT(order_date, '%Y-%m') as date,
+        COUNT(*) as count,
+        SUM(total_price) as amount
+       FROM orders
+       WHERE order_date BETWEEN ? AND ?
+       AND status = 'passed'
+       GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+       ORDER BY date`,
+      [startDate, endDate]
+    );
+
+    // Calculate order growth for completed orders
+    const [lastMonthOrders] = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM orders 
+       WHERE order_date >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+       AND status = 'passed'`
+    );
+    const [previousMonthOrders] = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM orders 
+       WHERE order_date BETWEEN DATE_SUB(NOW(), INTERVAL 2 MONTH) AND DATE_SUB(NOW(), INTERVAL 1 MONTH)
+       AND status = 'passed'`
+    );
+
+    const orderGrowth =
+      previousMonthOrders[0].count === 0
+        ? "+100%"
+        : `${(
+            ((lastMonthOrders[0].count - previousMonthOrders[0].count) /
+              previousMonthOrders[0].count) *
+            100
+          ).toFixed(1)}%`;
+
+    // Format sales data to include all months
+    const formattedSalesData = [];
+    for (let month = 1; month <= 12; month++) {
+      const monthStr = month.toString().padStart(2, "0");
+      const dateStr = `${year}-${monthStr}`;
+      const monthData = salesData.find((d) => d.date === dateStr);
+      formattedSalesData.push({
+        name: dateStr,
+        value: monthData ? monthData.amount || 0 : 0,
+      });
+    }
+
+    res.json({
+      totalOrders: totalOrders[0].count,
+      orderGrowth,
+      salesData: formattedSalesData,
+    });
+  } catch (error) {
+    console.error("Error fetching sales stats:", error);
+    res.status(500).json({ message: "Failed to fetch sales statistics" });
+  }
+};
+
+exports.getInventoryStats = async (req, res) => {
+  try {
+    const year = req.query.year || new Date().getFullYear();
+    const startDate = `${year}-01-01`;
+    const endDate = `${year}-12-31`;
+
+    // Get total available products
+    const [totalProducts] = await pool.query(
+      "SELECT COUNT(*) as count FROM products WHERE approval_status = 'approved'"
+    );
+
+    // Get new products added this month
+    const [newProducts] = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM products 
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+    );
+
+    // Get inventory movement data for selected year
+    const [inventoryMovement] = await pool.query(
+      `SELECT 
+        DATE_FORMAT(created_at, '%Y-%m') as date,
+        COUNT(*) as stock_count
+       FROM products
+       WHERE created_at BETWEEN ? AND ?
+       GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+       ORDER BY date`,
+      [startDate, endDate]
+    );
+
+    // Calculate trends
+    const [lastMonthProducts] = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM products 
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+    );
+    const [previousMonthProducts] = await pool.query(
+      `SELECT COUNT(*) as count 
+       FROM products 
+       WHERE created_at BETWEEN DATE_SUB(NOW(), INTERVAL 2 MONTH) AND DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+    );
+
+    const stockTrend =
+      previousMonthProducts[0].count === 0 ||
+      previousMonthProducts[0].count === null
+        ? "+100%"
+        : `${(
+            ((lastMonthProducts[0].count - previousMonthProducts[0].count) /
+              previousMonthProducts[0].count) *
+            100
+          ).toFixed(1)}%`;
+
+    const productsTrend =
+      newProducts[0].count === 0 ? "0%" : `+${newProducts[0].count}%`;
+
+    // Format inventory data to include all months
+    const formattedInventoryData = [];
+    for (let month = 1; month <= 12; month++) {
+      const monthStr = month.toString().padStart(2, "0");
+      const dateStr = `${year}-${monthStr}`;
+      const monthData = inventoryMovement.find((d) => d.date === dateStr);
+      formattedInventoryData.push({
+        name: dateStr,
+        value: monthData ? monthData.stock_count : 0,
+      });
+    }
+
+    res.json({
+      totalStock: totalProducts[0].count || 0,
+      stockTrend,
+      newProducts: newProducts[0].count,
+      productsTrend,
+      inventoryMovement: formattedInventoryData,
+    });
+  } catch (error) {
+    console.error("Error fetching inventory stats:", error);
+    res.status(500).json({ message: "Failed to fetch inventory statistics" });
+  }
+};

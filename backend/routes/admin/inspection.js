@@ -1,22 +1,46 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const inspectionController = require('../../controllers/inspectionController');
-const { authenticateToken } = require('../../middleware/auth');
+const inspectionController = require("../../controllers/inspectionController");
+const { authenticateToken } = require("../../middleware/auth");
 
-// Get all orders that need inspection
-router.get('/orders', authenticateToken, inspectionController.getOrdersForInspection);
+router.get("/fee", authenticateToken, inspectionController.getInspectionFee);
 
-// Start inspection process
-router.post('/orders/:orderId/start', authenticateToken, inspectionController.startInspection);
+router.put("/fee", authenticateToken, inspectionController.updateInspectionFee);
+
+router.get(
+  "/orders",
+  authenticateToken,
+  inspectionController.getOrdersForInspection
+);
+
+router.post(
+  "/orders/:orderId/start",
+  authenticateToken,
+  inspectionController.startInspection
+);
 
 // Submit inspection report
-router.post('/orders/:orderId/report', authenticateToken, inspectionController.submitInspectionReport);
+router.post(
+  "/orders/:orderId/report",
+  authenticateToken,
+  inspectionController.submitInspectionReport
+);
 
-// Verify report exists
-router.head('/orders/:orderId/report/verify', authenticateToken, inspectionController.verifyReport);
+router.head(
+  "/orders/:orderId/report/verify",
+  authenticateToken,
+  inspectionController.verifyReport
+);
 
-// Download inspection report (accept both POST and GET)
-router.post('/orders/:orderId/report/download', authenticateToken, inspectionController.downloadReport);
-router.get('/orders/:orderId/report/download', authenticateToken, inspectionController.downloadReport);
+router.post(
+  "/orders/:orderId/report/download",
+  authenticateToken,
+  inspectionController.downloadReport
+);
+router.get(
+  "/orders/:orderId/report/download",
+  authenticateToken,
+  inspectionController.downloadReport
+);
 
-module.exports = router; 
+module.exports = router;

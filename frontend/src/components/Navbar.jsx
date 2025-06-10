@@ -1,16 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Home,
-  Search,
-  User,
-  MessageCircleMore,
-  ChevronDown,
-  Bell,
-  LogOut,
-} from "lucide-react";
+import { Home, User, ChevronDown, LogOut } from "lucide-react";
 import CartButton from "./CartButton";
 import useLogout from "@/hooks/useLogout";
+import Logo from "@/assets/Logo.svg";
 
 const Navbar = () => {
   const logout = useLogout();
@@ -29,42 +22,39 @@ const Navbar = () => {
       navigate("/login");
       return;
     }
-
     navigate("/user/profile");
-    return;
   };
 
   return (
     <>
       {/* Desktop Nav */}
-      <nav className="hidden md:flex fixed justify-between bg-indigo-500 items-center top-0 left-0 right-0 w-full p-4 z-50 shadow-md">
-        <div className="flex flex-row space-x-10">
-          <a
-            href="#"
-            className="flex items-center hover:text-lightGray text-white font-black text-xl"
-          >
-            محادثات <ChevronDown className="w-5 h-5" />
-          </a>
-          <a
-            href="#"
-            className="flex items-center hover:text-lightGray text-white font-black text-xl"
-          >
-            اكتشف <ChevronDown className="w-5 h-5" />
-          </a>
-        </div>
-        <div className="flex items-center space-x-6">
-          <div className="hover:text-lightGray text-white p-2">
+      <nav className="hidden md:flex fixed justify-between bg-white items-center top-0 left-0 right-0 w-full px-6 py-4 z-40 shadow-md">
+        <div className="w-[144px]"></div>
+
+        <Link
+          to="/"
+          className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+        >
+          <img
+            src={Logo}
+            alt="Khaliji Logo"
+            className="h-16 w-auto transition-transform hover:scale-105 drop-shadow-md"
+          />
+        </Link>
+
+        <div className="flex items-center space-x-4">
+          <div className="text-gray-700 hover:text-indigo-600 transition-colors p-2 cursor-pointer">
             <CartButton />
           </div>
           <button
             onClick={handleProfileClick}
-            className="hover:text-lightGray text-white p-2"
+            className="text-gray-700 hover:text-indigo-600 transition-colors p-2 cursor-pointer"
           >
             <User className="w-6 h-6" />
           </button>
           <button
             onClick={logout}
-            className="hover:text-lightGray text-white p-2"
+            className="text-gray-700 hover:text-indigo-600 transition-colors p-2 cursor-pointer"
           >
             <LogOut className="w-6 h-6" />
           </button>
@@ -74,26 +64,23 @@ const Navbar = () => {
       {/* Mobile Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full shadow-lg border-t border-gray-200 z-50 bg-white">
         <div className="flex justify-around items-center h-16">
-          <a
-            href="#"
-            className="flex flex-col items-center text-gray-600 hover:text-lightGray p-2"
+          <Link
+            to="/"
+            className="flex flex-col items-center text-gray-600 hover:text-indigo-600 transition-colors p-2 cursor-pointer"
           >
             <Home className="w-6 h-6" />
-          </a>
-          <a
-            href="#"
-            className="flex flex-col items-center text-gray-600 hover:text-lightGray p-2"
-          >
-            <MessageCircleMore className="w-6 h-6" />
-          </a>
-          <div className="flex flex-col items-center text-gray-600 hover:text-lightGray p-2">
+            <span className="text-xs mt-1">الرئيسية</span>
+          </Link>
+          <div className="flex flex-col items-center text-gray-600 hover:text-indigo-600 transition-colors p-2 cursor-pointer">
             <CartButton />
+            <span className="text-xs mt-1">السلة</span>
           </div>
           <button
             onClick={handleProfileClick}
-            className="flex flex-col items-center text-gray-600 hover:text-lightGray p-2"
+            className="flex flex-col items-center text-gray-600 hover:text-indigo-600 transition-colors p-2 cursor-pointer"
           >
             <User className="w-6 h-6" />
+            <span className="text-xs mt-1">حسابي</span>
           </button>
         </div>
       </nav>
