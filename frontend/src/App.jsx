@@ -29,6 +29,7 @@ import CouponsPage from "./pages/admin/coupons";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import SellersManagementPage from "./pages/admin/sellers";
+import PaymentResult from "./pages/PaymentResult";
 
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
@@ -193,6 +194,10 @@ function App() {
                       <Route path="orders" element={<div>My Orders</div>} />
                       <Route path="part/:id" element={<ProductDetail />} />
                       <Route path="profile" element={<UserProfile />} />
+                      <Route
+                        path="payment/result"
+                        element={<PaymentResult />}
+                      />
                     </Routes>
                   </main>
                 </div>
@@ -217,20 +222,26 @@ function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Public Routes */}
-        <Route path="/search" element={
-          <UserLayout>
-            <SearchForm />
-          </UserLayout>
-        } />
-        
-        {/* Protected Product Routes */}
-        <Route path="/part/:id" element={
-          <ProtectedRoute>
+        <Route
+          path="/search"
+          element={
             <UserLayout>
-              <ProductDetail />
+              <SearchForm />
             </UserLayout>
-          </ProtectedRoute>
-        } />
+          }
+        />
+
+        {/* Protected Product Routes */}
+        <Route
+          path="/part/:id"
+          element={
+            <ProtectedRoute>
+              <UserLayout>
+                <ProductDetail />
+              </UserLayout>
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="*" element={<RoleBasedRedirect />} />
       </Routes>

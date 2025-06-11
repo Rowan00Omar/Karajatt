@@ -119,10 +119,29 @@ const login = async (req, res) => {
       [userRows[0].id]
     );
 
-    const token = jwt.sign({ id: userRows[0].id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+    const user = userRows[0];
+    const token = jwt.sign(
+      {
+        id: user.id,
+        role: user.role,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
     });
-    res.json({ token });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Error during login", error: err.message });

@@ -2,50 +2,77 @@ const axios = require("axios");
 const config = require("../config/paymob");
 
 class PaymobService {
-  static async getAuthToken() {
-    const response = await axios.post(
-      "https://accept.paymobsolutions.com/api/auth/tokens",
-      { api_key: config.apiKey }
-    );
-    return response.data.token;
+  async getAuthToken() {
+    try {
+      const response = await axios.post(`${config.baseUrl}/auth/tokens`, {
+        api_key: config.apiKey,
+      });
+      return response.data.token;
+    } catch (error) {
+      console.error(
+        "Error getting auth token:",
+        error.response?.data || error.message
+      );
+      throw error;
+    }
   }
 
-  static async createOrder() {
-    const response = await axios.post(
-      "https://accept.paymobsolutions.com/api/ecommerce/orders",
-      {
-        auth_token: token,
-        delivery_needed: false,
-        amount_cents: amount * 100,
-        currency: "SAR",
-        items: items.map((item) => ({
-          name: item.name,
-          amount_cents: item.price * 100,
-          quantity: item.quantity,
-        })),
-      }
-    );
-    return response.data.id;
-  }
-  static async generatePaymentKey(token, orderId, phone) {
-    const response = await axios.post(
-      "https://accept.paymobsolutions.com/api/acceptance/payment_keys",
-      {
-        auth_token: token,
-        amount_cents: amount * 100,
-        currency: "SAR",
-        order_id: orderId,
-        integration_id: config.stcPayIntegrationId,
-        billing_data: {
-          first_name: "Customer",
-          last_name: "Name",
-          email: "customer@example.com",
-          phone_number: phone,
-          country: "SA",
+  async createOrder(authToken, orderData) {
+    try {
+      const response = await axios.post(
+        `${config.baseUrl}/ecommerce/orders`,
+        {
+          auth_token: authToken,
+          delivery_needed: false,
+          amount_cents: orderData.amount_cents,
+          currency: "SAR",
+          items: orderData.items,
         },
-      }
-    );
-    return response.data.token;
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error creating order:",
+        error.response?.data || error.message
+      );
+      throw error;
+    }
+  }
+
+  async getPaymentKey(authToken, paymentData) {
+    try {
+      const response = await axios.post(
+        `${config.baseUrl}/acceptance/payment_keys`,
+        {
+          auth_token: authToken,
+          amount_cents: paymentData.amount_cents,
+          expiration: 3600,
+          order_id: paymentData.order_id,
+          billing_data: paymentData.billing_data,
+          currency: "SAR",
+          integration_id: config.integrationId,
+          lock_order_when_paid: true,
+        },
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
+      return response.data.token;
+    } catch (error) {
+      console.error(
+        "Error getting payment key:",
+        error.response?.data || error.message
+      );
+      throw error;
+    }
+  }
+
+  generatePaymentUrl(paymentToken) {
+    return `${config.checkoutUrl}?payment_token=${paymentToken}`;
   }
 }
-module.exports = PaymobService;
+
+module.exports = new PaymobService();

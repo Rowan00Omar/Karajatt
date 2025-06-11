@@ -20,6 +20,8 @@ const Cart = ({ onClose }) => {
   const [couponError, setCouponError] = useState("");
   const [inspectionFee, setInspectionFee] = useState(49);
   const [feeError, setFeeError] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
 
   useEffect(() => {
     const fetchInspectionFee = async () => {
@@ -40,23 +42,83 @@ const Cart = ({ onClose }) => {
 
   const totalInspectionFees = cartItems.length * inspectionFee;
 
-  const handleCheckout = async (cartItems) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
+  const handleCheckout = async () => {
     try {
-      const response = await axios.get("/api/auth/userInfo", {
+      setIsProcessing(true);
+      setPaymentError(null);
+
+      // Get user token and info
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("يرجى تسجيل الدخول للمتابعة");
+      }
+
+      const userResponse = await axios.get("/api/auth/userInfo", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const userId = response.data.id;
-      const data = await axios.post("/api/payments/checkout", {
-        cartItems,
+
+      const userId = userResponse.data.id;
+
+      // Prepare billing data
+      const billingData = {
+        firstName: userResponse.data.first_name || "NA",
+        lastName: userResponse.data.last_name || "NA",
+        email: userResponse.data.email || "NA",
+        phone: userResponse.data.phone_number || "NA",
+        country: "SA",
+      };
+
+      // Format items for PayMob
+      const formattedItems = cartItems.map((item) => ({
+        name: item.title || item.part_name || "Product",
+        amount_cents: Math.round(parseFloat(item.price) * 100),
+        description:
+          item.description ||
+          item.title ||
+          item.part_name ||
+          "Product Description",
+        quantity: item.quantity || 1,
+      }));
+
+      // Initialize payment
+      const paymentResponse = await axios.post("/api/payments/checkout", {
+        cartItems: formattedItems,
         userId,
-        appliedCoupon,
+        billingData,
+        amount: finalTotal,
         inspectionFees: totalInspectionFees,
+        appliedCoupon: appliedCoupon
+          ? {
+              code: appliedCoupon.code,
+              discount: discount,
+            }
+          : null,
       });
-    } catch (err) {
-      console.error("Payment failed:", err);
+
+      if (paymentResponse.data.success && paymentResponse.data.paymentUrl) {
+        // Store order ID in localStorage for later reference
+        localStorage.setItem("currentOrderId", paymentResponse.data.orderId);
+        // Redirect to PayMob payment page
+        window.location.href = paymentResponse.data.paymentUrl;
+      } else {
+        throw new Error(
+          paymentResponse.data.error || "فشل في تهيئة عملية الدفع"
+        );
+      }
+    } catch (error) {
+      console.error("Payment failed:", error);
+      console.error("Error details:", {
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+      });
+      setPaymentError(
+        error.response?.data?.message ||
+          error.message ||
+          "فشلت عملية الدفع. يرجى المحاولة مرة أخرى."
+      );
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -201,11 +263,18 @@ const Cart = ({ onClose }) => {
               </div>
             </div>
 
+            {paymentError && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                {paymentError}
+              </div>
+            )}
+
             <Button
-              onClick={() => handleCheckout(cartItems)}
-              className="w-full py-3 text-sm font-medium rounded-xl"
+              onClick={handleCheckout}
+              disabled={isProcessing}
+              className="w-full py-3 text-sm font-medium rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              اتمام الشراء
+              {isProcessing ? "جاري المعالجة..." : "اتمام الشراء"}
             </Button>
           </div>
         )}
