@@ -195,43 +195,7 @@ export default function SalesReportPage() {
         </div>
       </div>
 
-      {bestSelling.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
-            <h3 className="text-lg font-semibold">الأكثر مبيعاً</h3>
-            <p className="mt-1 text-sm text-gray-500">أفضل المنتجات أداءً من حيث المبيعات</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">المنتج</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">إجمالي المبيعات</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">الإيرادات</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {bestSelling.map((product) => (
-                  <tr key={product.product_id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="px-6 py-4 text-right">
-                      <div>
-                        <p className="font-medium text-gray-900">{product.title}</p>
-                        <p className="text-sm text-gray-500">{product.part_name}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-medium text-gray-900">{product.total_sales} قطعة</span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-medium text-gray-900">{product.revenue.toLocaleString()} ر.س</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+    
     </div>
   );
 } 

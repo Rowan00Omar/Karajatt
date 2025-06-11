@@ -187,7 +187,7 @@ function App() {
             <ProtectedRoute allowedRole="user">
               <UserLayout>
                 <div className="min-h-screen bg-gray-50">
-                  <main className="pt-16 md:pt-20">
+                  <main>
                     <Routes>
                       <Route index element={<SearchForm />} />
                       <Route path="orders" element={<div>My Orders</div>} />
