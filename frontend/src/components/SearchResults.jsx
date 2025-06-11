@@ -11,6 +11,13 @@ const SearchResults = ({ results }) => {
   const handleAddToCart = (e, product) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    
     addToCart(product);
   };
 
@@ -22,6 +29,13 @@ const SearchResults = ({ results }) => {
       console.error("No product ID found in result:", result);
       return;
     }
+    
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    
     navigate(`/user/part/${productId}`);
   };
 

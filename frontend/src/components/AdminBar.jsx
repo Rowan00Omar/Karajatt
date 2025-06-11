@@ -15,6 +15,7 @@ import {
   ClipboardCheck,
   LogOut,
   Ticket,
+  Store,
 } from "lucide-react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { useState } from "react";
@@ -41,6 +42,11 @@ const items = [
     title: "إدارة المستخدمين",
     path: "/admin/manage",
     icon: Users,
+  },
+  {
+    title: "إدارة البائعين",
+    path: "/admin/sellers",
+    icon: Store,
   },
   {
     title: "الطلبات المعلقة",

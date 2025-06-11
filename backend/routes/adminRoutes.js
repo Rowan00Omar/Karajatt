@@ -22,6 +22,7 @@ const {
   getUserStats,
   getSalesStats,
   getInventoryStats,
+  getSellers,
 } = require("../controllers/adminController");
 
 const {
@@ -29,6 +30,7 @@ const {
   startInspection,
   submitInspectionReport,
   getInspectionReport,
+  verifyReport,
   downloadReport,
   getInspectionFee,
   updateInspectionFee,
@@ -38,6 +40,9 @@ const {
 router.get("/stats/users", getUserStats);
 router.get("/stats/sales", getSalesStats);
 router.get("/stats/inventory", getInventoryStats);
+
+// Sellers management routes
+router.get("/sellers", getSellers);
 
 // User management routes
 router.get("/users", getAllUsers);
@@ -62,7 +67,7 @@ router.get("/inspection/orders", getOrdersForInspection);
 router.post("/inspection/orders/:orderId/start", startInspection);
 router.post("/inspection/orders/:orderId/report", submitInspectionReport);
 router.get("/inspection/orders/:orderId/report", getInspectionReport);
-router.head("/inspection/orders/:orderId/report/verify", getInspectionReport);
+router.head("/inspection/orders/:orderId/report/verify", verifyReport);
 router.post("/inspection/orders/:orderId/report/download", downloadReport);
 router.get("/inspection/orders/:orderId/report/download", downloadReport);
 

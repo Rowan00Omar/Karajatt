@@ -13,8 +13,8 @@ exports.getSellerProfile = async (req, res) => {
 
     const [sellerData] = await pool.query(
       `SELECT 
-        u.id, u.first_name, u.last_name, u.email,
-        s.bank_name, s.account_number, s.address, s.phone_number,
+        u.id, u.first_name, u.last_name, u.email, u.phone_number as user_phone,
+        s.bank_name, s.account_number, s.address, s.phone_number as seller_phone,
         COUNT(DISTINCT p.product_id) as total_products,
         COUNT(DISTINCT r.review_id) as total_reviews,
         AVG(r.rating) as average_rating
@@ -60,7 +60,7 @@ exports.getSellerProfile = async (req, res) => {
       bank_name: sellerData[0].bank_name,
       account_number: sellerData[0].account_number,
       address: sellerData[0].address,
-      phone_number: sellerData[0].phone_number,
+      phone_number: sellerData[0].seller_phone || sellerData[0].user_phone || null,
       total_products: sellerData[0].total_products || 0,
       total_reviews: sellerData[0].total_reviews || 0,
       average_rating: parseFloat(sellerData[0].average_rating || 0).toFixed(1),
@@ -156,15 +156,33 @@ exports.sellerUpload = async (req, res) => {
 
   try {
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: "No images uploaded" });
+      return res.status(400).json({ message: "No images uploaded" });
     }
-    const filePaths = req.files.map((file) =>
-      path.join(__dirname, "../images", file.filename)
-    );
 
+    // Get file paths and ensure they exist
+    const filePaths = req.files.map((file) => {
+      const filePath = path.join(__dirname, "../images", file.filename);
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File not found: ${filePath}`);
+      }
+      return filePath;
+    });
+
+    // Upload to cloudinary with better error handling
     const uploadResults = await cloudinaryUploadMultipleImages(filePaths);
+    
+    if (!Array.isArray(uploadResults) || uploadResults.some(result => result instanceof Error)) {
+      throw new Error("Failed to upload images to cloud storage");
+    }
 
-    filePaths.forEach((filePath) => fs.unlinkSync(filePath));
+    // Clean up local files
+    for (const filePath of filePaths) {
+      try {
+        await fs.promises.unlink(filePath);
+      } catch (err) {
+        console.error(`Failed to delete temporary file: ${filePath}`, err);
+      }
+    }
 
     const [
       image_url,
@@ -173,23 +191,25 @@ exports.sellerUpload = async (req, res) => {
       extra_image3_url = null,
     ] = uploadResults.map((r) => r.secure_url);
 
+    // Validate category
     const [categoryRows] = await pool.query(
       "SELECT id FROM categories WHERE category_name = ?",
       [category.trim()]
     );
 
     if (categoryRows.length === 0) {
-      return res.status(400).json({ error: "Invalid category name." });
+      return res.status(400).json({ message: "Invalid category name" });
     }
 
     const category_id = categoryRows[0].id;
 
+    // Insert into database
     await pool.query(
       `INSERT INTO products (
         company_name, car_name, start_year, end_year, category_id, part_name, status, 
         title, image_url, extra_image1, extra_image2, extra_image3,
         description, storage_duration, price, \`condition\`, seller_id, approval_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         manufacturer.trim(),
         model.trim(),
@@ -216,7 +236,11 @@ exports.sellerUpload = async (req, res) => {
       images: uploadResults.map((r) => r.secure_url),
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Upload error:", err);
+    res.status(500).json({ 
+      message: err.message || "حدث خطأ أثناء رفع القطعة",
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 };
 

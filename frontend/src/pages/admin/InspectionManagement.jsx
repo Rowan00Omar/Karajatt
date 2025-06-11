@@ -207,18 +207,21 @@ const InspectionManagement = () => {
 
       // Create FormData object
       const formData = new FormData();
+      
+      // Append the file with the exact field name expected by the backend
       formData.append("report", reportFile);
+      
+      // Append other form fields
       formData.append("inspectionStatus", status);
       formData.append("inspectorPhone", inspectorPhone);
-      formData.append("inspectorNotes", inspectorNotes || "");
+      if (inspectorNotes) {
+        formData.append("inspectorNotes", inspectorNotes);
+      }
 
-      console.log("Submitting form data:", {
-        status,
-        inspectorPhone,
-        inspectorNotes: inspectorNotes || "",
-        reportFile: reportFile.name,
-        formDataEntries: Array.from(formData.entries()),
-      });
+      // Log the form data for debugging
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value instanceof File ? value.name : value);
+      }
 
       const response = await axios.post(
         `/api/admin/inspection/orders/${selectedOrder.id}/report`,
@@ -226,7 +229,6 @@ const InspectionManagement = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -267,60 +269,38 @@ const InspectionManagement = () => {
         return;
       }
 
-      // Set downloading state
       setDownloadingOrderId(orderId);
       setError(null);
 
-      // First verify the file exists
-      try {
-        await axios.head(
-          `/api/admin/inspection/orders/${orderId}/report/verify`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-      } catch (error) {
-        if (error.response?.status === 404) {
-          throw new Error("تقرير الفحص غير موجود");
+      // Fetch the PDF as a Blob
+      const response = await axios.get(
+        `/api/admin/inspection/orders/${orderId}/report/download`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
         }
-        throw new Error("فشل في التحقق من وجود الملف");
-      }
+      );
 
-      // Open download in new window/tab
-      const downloadUrl = `/api/admin/inspection/orders/${orderId}/report/download`;
-      const downloadWindow = window.open("", "_blank");
-
-      // Create a temporary form to send the token as POST data
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = downloadUrl;
-      form.target = "_blank";
-
-      // Add token as hidden input
-      const tokenInput = document.createElement("input");
-      tokenInput.type = "hidden";
-      tokenInput.name = "token";
-      tokenInput.value = token;
-      form.appendChild(tokenInput);
-
-      // Add form to body, submit it, and remove it
-      document.body.appendChild(form);
-      form.submit();
-      document.body.removeChild(form);
-
-      // Close the blank window we opened if it's still blank
-      setTimeout(() => {
-        if (downloadWindow && downloadWindow.location.href === "about:blank") {
-          downloadWindow.close();
-        }
-      }, 1000);
+      // Create a link element to trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `inspection_report_${orderId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       setDownloadingOrderId(null);
     } catch (error) {
-      console.error("Error initiating download:", error);
-      setError(error.message || "فشل في بدء تحميل التقرير");
+      console.error("Error downloading report:", error);
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "فشل في تحميل التقرير";
+      setError(message);
       setDownloadingOrderId(null);
     }
   };

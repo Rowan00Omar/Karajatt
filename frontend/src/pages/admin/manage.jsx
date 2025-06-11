@@ -6,10 +6,10 @@ import Signup from "../Signup";
 export default function ManageUsersPage() {
   const [users, setUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAddingUser, setIsAddingUser] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("all");
   const usersPerPage = 8;
 
   useEffect(() => {
@@ -61,9 +61,14 @@ export default function ManageUsersPage() {
     setIsAddingUser(true);
   };
 
+  const filteredUsers = users.filter(user => {
+    if (selectedRole === "all") return true;
+    return user.role === selectedRole;
+  });
+
   const indexOfLast = currentPage * usersPerPage;
-  const currentUsers = users.slice(indexOfLast - usersPerPage, indexOfLast);
-  const totalPages = Math.ceil(users.length / usersPerPage);
+  const currentUsers = filteredUsers.slice(indexOfLast - usersPerPage, indexOfLast);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
   if (loading) {
     return (
@@ -103,7 +108,24 @@ export default function ManageUsersPage() {
     <>
       <section className="w-full animate-fadeIn">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold">إدارة المستخدمين</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl sm:text-2xl font-bold">إدارة المستخدمين</h2>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedRole}
+                onChange={(e) => {
+                  setSelectedRole(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="all">جميع المستخدمين</option>
+                <option value="admin">المشرفين</option>
+                <option value="seller">البائعين</option>
+                <option value="user">المستخدمين</option>
+              </select>
+            </div>
+          </div>
           <button
             onClick={handleAddUser}
             className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -187,7 +209,7 @@ export default function ManageUsersPage() {
         <div className="fixed inset-0 z-[9999] overflow-y-auto">
           <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div
-              className="fixed inset-0 transition-opacity"
+              className="fixed inset-0 bg-white/30 backdrop-blur-sm transition-opacity"
               onClick={() => setIsAddingUser(false)}
             ></div>
 
@@ -198,28 +220,27 @@ export default function ManageUsersPage() {
               &#8203;
             </span>
 
-            <div className="relative inline-block transform overflow-hidden rounded-lg bg-white text-right align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:align-middle">
-              <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    إضافة مستخدم جديد
-                  </h3>
-                  <button
-                    onClick={() => setIsAddingUser(false)}
-                    className="text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    ✕
-                  </button>
+            <div className="relative inline-block transform overflow-hidden rounded-lg bg-white text-right align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:align-middle">
+              <div className="bg-white px-6 py-8">
+                <div className="border-b border-gray-200 pb-6 mb-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      إضافة مستخدم جديد
+                    </h3>
+                    <button
+                      onClick={() => setIsAddingUser(false)}
+                      className="text-gray-400 hover:text-gray-500 transition-colors"
+                    >
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div className="mt-2">
-                  <Signup
-                    flag={true}
-                    onSuccess={() => {
-                      setIsAddingUser(false);
-                      fetchUsers();
-                    }}
-                  />
-                </div>
+                <Signup onSuccess={() => {
+                  setIsAddingUser(false);
+                  fetchUsers();
+                }} />
               </div>
             </div>
           </div>

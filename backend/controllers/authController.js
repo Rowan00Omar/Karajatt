@@ -174,7 +174,18 @@ const UserInfo = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const [users] = await pool.query("SELECT * from users");
+    const [users] = await pool.query(
+      `SELECT 
+        u.id, 
+        u.first_name, 
+        u.last_name, 
+        u.email, 
+        u.role, 
+        COALESCE(u.phone_number, s.phone_number) as phone_number
+       FROM users u
+       LEFT JOIN sellers s ON u.id = s.user_id
+       WHERE role != 'master'`
+    );
     res.status(200).json({ users });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -263,7 +274,7 @@ const forgotPassword = async (req, res) => {
 
   try {
     const user = await pool.query(
-      "SELECT id, email FROM users WHERE email = $1",
+      "SELECT id, email FROM users WHERE email = ?",
       [email]
     );
 
@@ -280,7 +291,7 @@ const forgotPassword = async (req, res) => {
     );
 
     await pool.query(
-      "UPDATE users SET reset_token = $1, reset_token_expires = NOW() + INTERVAL '1 hour' WHERE id = $2",
+      "UPDATE users SET reset_token = ?, reset_token_expires = NOW() + INTERVAL '1 hour' WHERE id = ?",
       [resetToken, user.rows[0].id]
     );
 
@@ -319,7 +330,7 @@ const resetPassword = async (req, res) => {
 
   try {
     const user = await pool.query(
-      "SELECT id FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()",
+      "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > NOW()",
       [token]
     );
 
@@ -332,7 +343,7 @@ const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await pool.query(
-      "UPDATE users SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE id = $2",
+      "UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?",
       [hashedPassword, user.rows[0].id]
     );
 

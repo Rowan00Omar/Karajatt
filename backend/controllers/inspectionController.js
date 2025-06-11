@@ -121,38 +121,59 @@ exports.submitInspectionReport = async (req, res) => {
   try {
     const { orderId } = req.params;
     console.log("Starting report submission for order:", orderId);
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
+    console.log("Content type:", req.headers['content-type']);
+
+    // Check if form data exists
+    if (!req.body) {
+      console.log("No form data received");
+      return res.status(400).json({
+        message: "No form data received"
+      });
+    }
+
+    // Check if files exist
+    if (!req.files || !req.files.report) {
+      console.log("No files received");
+      return res.status(400).json({
+        message: "No report file uploaded"
+      });
+    }
+
+    // Get form fields from request
+    const inspectionStatus = req.body.inspectionStatus;
+    const inspectorPhone = req.body.inspectorPhone;
+    const inspectorNotes = req.body.inspectorNotes || "";
+
+    console.log("Form fields:", {
+      inspectionStatus,
+      inspectorPhone,
+      inspectorNotes
+    });
 
     // Validate required fields
-    if (!req.body.inspectionStatus || !req.body.inspectorPhone) {
+    if (!inspectionStatus || !inspectorPhone) {
+      console.log("Missing required fields:", { inspectionStatus, inspectorPhone });
       return res.status(400).json({
-        message:
-          "Missing required fields: status and inspector phone number are required",
+        message: "Missing required fields: status and inspector phone number are required"
       });
     }
 
-    if (!req.files || !req.files.report) {
-      return res.status(400).json({
-        message: "No report file uploaded",
-      });
-    }
-
-    // Validate file type
+    // Validate file
     const reportFile = req.files.report;
     console.log("Uploaded file details:", {
       name: reportFile.name,
       size: reportFile.size,
       mimetype: reportFile.mimetype,
+      tempFilePath: reportFile.tempFilePath
     });
 
     if (reportFile.mimetype !== "application/pdf") {
       return res.status(400).json({
-        message: "Only PDF files are allowed",
+        message: "Only PDF files are allowed"
       });
     }
-
-    const inspectionStatus = req.body.inspectionStatus;
-    const inspectorPhone = req.body.inspectorPhone;
-    const inspectorNotes = req.body.inspectorNotes || "";
 
     const reportFileName = `inspection_report_${orderId}_${Date.now()}.pdf`;
     const reportPath = path.join(
@@ -162,23 +183,28 @@ exports.submitInspectionReport = async (req, res) => {
       "reports",
       reportFileName
     );
-    console.log("Saving report to:", reportPath);
 
     // Ensure uploads directory exists
     await fs.mkdir(path.join(__dirname, "..", "uploads", "reports"), {
-      recursive: true,
+      recursive: true
     });
 
     try {
-      // Move the file
-      await reportFile.mv(reportPath);
-      console.log("File saved successfully");
+      // Move the file using the tempFilePath
+      if (reportFile.tempFilePath) {
+        await fs.rename(reportFile.tempFilePath, reportPath);
+      } else {
+        // Fallback to mv() if tempFilePath is not available
+        await reportFile.mv(reportPath);
+      }
+      
+      console.log("File saved successfully to:", reportPath);
 
       // Verify file was saved
       const stats = await fs.stat(reportPath);
       console.log("Saved file stats:", {
         size: stats.size,
-        path: reportPath,
+        path: reportPath
       });
     } catch (error) {
       console.error("Error saving file:", error);
@@ -191,23 +217,17 @@ exports.submitInspectionReport = async (req, res) => {
 
     try {
       // Update order status to match inspection result
-      await connection.query("UPDATE orders SET status = ? WHERE id = ?", [
-        inspectionStatus,
-        orderId,
-      ]);
+      await connection.query(
+        "UPDATE orders SET status = ? WHERE id = ?",
+        [inspectionStatus, orderId]
+      );
 
       // Create inspection report record
       await connection.query(
         `INSERT INTO inspection_reports 
         (order_id, inspector_phone, status, report_file_path, inspector_notes)
         VALUES (?, ?, ?, ?, ?)`,
-        [
-          orderId,
-          inspectorPhone,
-          inspectionStatus,
-          reportFileName,
-          inspectorNotes,
-        ]
+        [orderId, inspectorPhone, inspectionStatus, reportFileName, inspectorNotes]
       );
 
       await connection.commit();
@@ -215,7 +235,7 @@ exports.submitInspectionReport = async (req, res) => {
 
       res.json({
         message: "Inspection report submitted successfully",
-        reportPath: reportFileName,
+        reportPath: reportFileName
       });
     } catch (error) {
       await connection.rollback();
@@ -230,8 +250,8 @@ exports.submitInspectionReport = async (req, res) => {
       error: {
         message: error.message,
         code: error.code,
-        sqlMessage: error.sqlMessage,
-      },
+        sqlMessage: error.sqlMessage
+      }
     });
   }
 };

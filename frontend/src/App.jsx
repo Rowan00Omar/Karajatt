@@ -15,6 +15,7 @@ import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Footer from "./components/Footer";
+import LandingPage from "./pages/LandingPage";
 import { useEffect, useState } from "react";
 import { CartProvider } from "./context/CartContext";
 import "./App.css";
@@ -27,7 +28,7 @@ import UserProfile from "./pages/UserProfile";
 import CouponsPage from "./pages/admin/coupons";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import AdminProfile from "./pages/admin/Profile";
+import SellersManagementPage from "./pages/admin/sellers";
 
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
@@ -169,15 +170,15 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<AdminPage />} />
+          <Route index element={<Navigate to="sales" replace />} />
           <Route path="sales" element={<SalesPage />} />
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="users" element={<UsersPage />} />
           <Route path="manage" element={<ManageUsersPage />} />
+          <Route path="sellers" element={<SellersManagementPage />} />
           <Route path="pending" element={<PendingRequestsPage />} />
           <Route path="coupons" element={<CouponsPage />} />
           <Route path="inspection" element={<InspectionManagement />} />
-          <Route path="profile" element={<AdminProfile />} />
         </Route>
 
         <Route
@@ -200,7 +201,7 @@ function App() {
           }
         />
 
-        <Route path="/" element={<HomeRoute />} />
+        <Route path="/" element={<LandingPage />} />
 
         {/* Public seller profile route */}
         <Route
@@ -214,6 +215,22 @@ function App() {
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+        {/* Public Routes */}
+        <Route path="/search" element={
+          <UserLayout>
+            <SearchForm />
+          </UserLayout>
+        } />
+        
+        {/* Protected Product Routes */}
+        <Route path="/part/:id" element={
+          <ProtectedRoute>
+            <UserLayout>
+              <ProductDetail />
+            </UserLayout>
+          </ProtectedRoute>
+        } />
 
         <Route path="*" element={<RoleBasedRedirect />} />
       </Routes>

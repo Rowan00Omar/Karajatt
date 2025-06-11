@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const inspectionController = require("../../controllers/inspectionController");
 const { authenticateToken } = require("../../middleware/auth");
+const fileUpload = require("express-fileupload");
 
 router.get("/fee", authenticateToken, inspectionController.getInspectionFee);
 
@@ -23,6 +24,10 @@ router.post(
 router.post(
   "/orders/:orderId/report",
   authenticateToken,
+  fileUpload({
+    createParentPath: true,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max file size
+  }),
   inspectionController.submitInspectionReport
 );
 
@@ -37,6 +42,7 @@ router.post(
   authenticateToken,
   inspectionController.downloadReport
 );
+
 router.get(
   "/orders/:orderId/report/download",
   authenticateToken,

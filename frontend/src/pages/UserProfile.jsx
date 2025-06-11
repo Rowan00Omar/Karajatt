@@ -59,130 +59,137 @@ const UserProfile = () => {
 
   return (
     <div
-      className="min-h-screen bg-white py-25 px-4 flex justify-center"
+      className="min-h-screen bg-white py-6 sm:py-8 px-4 flex justify-center"
       dir="rtl"
     >
-      <div className="w-full max-w-4xl flex flex-col gap-8 text-right">
+      <div className="w-full max-w-4xl flex flex-col gap-4 sm:gap-8 text-right">
         {/* User Info */}
-        <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-[#4a60e9] text-white w-12 h-12 flex items-center justify-center rounded-full text-lg font-semibold">
+        <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-4 sm:mb-6">
+            <div className="bg-[#4a60e9] text-white w-10 sm:w-12 h-10 sm:h-12 flex items-center justify-center rounded-full text-base sm:text-lg font-semibold">
               {initials}
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-[#4a60e9]">
+              <h2 className="text-lg sm:text-xl font-semibold text-[#4a60e9]">
                 بيانات المستخدم
               </h2>
             </div>
           </div>
 
-          <div className="mb-4">
-            <p className="text-sm text-gray-500">الاسم الكامل</p>
-            <p className="text-lg font-medium text-gray-900">{username}</p>
+          <div className="mb-3 sm:mb-4">
+            <p className="text-xs sm:text-sm text-gray-500">الاسم الكامل</p>
+            <p className="text-base sm:text-lg font-medium text-gray-900">{username}</p>
           </div>
 
-          <div className="mb-6">
-            <p className="text-sm text-gray-500">البريد الإلكتروني</p>
-            <p className="text-lg font-medium text-gray-900">{email}</p>
+          <div className="mb-4 sm:mb-6">
+            <p className="text-xs sm:text-sm text-gray-500">البريد الإلكتروني</p>
+            <p className="text-base sm:text-lg font-medium text-gray-900 break-all">{email}</p>
           </div>
 
-          <div className="flex gap-4 mt-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6">
             <Link
               to="/forgot-password"
-              className="w-fit bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition flex items-center gap-2"
+              className="w-full sm:w-fit bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg transition flex items-center justify-center sm:justify-start gap-2 text-sm sm:text-base"
             >
-              <KeyRound className="w-5 h-5" />
+              <KeyRound className="w-4 sm:w-5 h-4 sm:h-5" />
               تغيير كلمة المرور
             </Link>
 
             <button
               onClick={handleDelete}
-              className="w-fit bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md transition flex items-center gap-1"
+              className="w-full sm:w-fit bg-red-600 hover:bg-red-700 text-white py-2.5 px-4 rounded-lg transition flex items-center justify-center sm:justify-start gap-2 text-sm sm:text-base"
             >
-              <TrashIcon className="w-5 h-5" /> حذف الحساب
+              <TrashIcon className="w-4 sm:w-5 h-4 sm:h-5" /> حذف الحساب
             </button>
           </div>
         </div>
 
         {/* Order History */}
-        <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-6 overflow-x-auto">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-4 sm:p-6 overflow-x-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
             <button
               onClick={() => setShowInspectionOnly(!showInspectionOnly)}
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
             >
               <MagnifyingGlassIcon className="h-4 w-4 ml-2" />
               {showInspectionOnly ? "عرض جميع الطلبات" : "عرض طلبات الفحص فقط"}
             </button>
-            <div className="flex items-center gap-2">
-              <ReceiptRefundIcon className="w-6 h-6 text-[#4a60e9]" />
-              <h2 className="text-xl font-semibold text-[#4a60e9]">
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
+              <ReceiptRefundIcon className="w-5 sm:w-6 h-5 sm:h-6 text-[#4a60e9]" />
+              <h2 className="text-lg sm:text-xl font-semibold text-[#4a60e9]">
                 الطلبات السابقة
               </h2>
             </div>
           </div>
-          <table className="min-w-full text-sm text-right">
-            <thead className="text-gray-500 border-b">
-              <tr>
-                <th className="py-2 pr-4">اسم القطعة</th>
-                <th className="py-2 pr-4">تاريخ الطلب</th>
-                <th className="py-2 pr-4">السعر</th>
-                <th className="py-2 pr-4">حالة الفحص</th>
-                <th className="py-2">اسم البائع</th>
-                <th className="py-2">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-800">
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b hover:bg-gray-50">
-                  <td className="py-3 pr-4">{order.partName}</td>
-                  <td className="py-3 pr-4">{order.orderDate}</td>
-                  <td className="py-3 pr-4">{order.price}</td>
-                  <td className="py-3 pr-4">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        order.status === "passed"
-                          ? "bg-green-100 text-green-800"
-                          : order.status === "failed"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {order.status === "passed"
-                        ? "تم الفحص - القطعة سليمة"
-                        : order.status === "failed"
-                        ? "تم الفحص - القطعة غير صالحة"
-                        : "بانتظار الفحص"}
-                    </span>
-                  </td>
-                  <td className="py-3">{order.seller}</td>
-                  <td className="py-3">
-                    {(order.status === "passed" ||
-                      order.status === "failed") && (
-                      <a
-                        href={`/api/admin/inspection/orders/${order.id}/report`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <DocumentTextIcon className="h-4 w-4 ml-1" />
-                        تحميل تقرير الفحص
-                      </a>
-                    )}
-                    {order.status === "failed" && order.inspectorPhone && (
-                      <a
-                        href={`tel:${order.inspectorPhone}`}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
-                      >
-                        <PhoneIcon className="h-4 w-4 ml-1" />
-                        اتصال بالفاحص
-                      </a>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full text-sm text-right">
+                <thead className="text-gray-500 border-b">
+                  <tr>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">اسم القطعة</th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">تاريخ الطلب</th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">السعر</th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">حالة الفحص</th>
+                    <th className="py-2 text-xs sm:text-sm font-medium">اسم البائع</th>
+                    <th className="py-2 text-xs sm:text-sm font-medium">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="text-gray-800">
+                  {filteredOrders.map((order) => (
+                    <tr key={order.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 pr-4 text-xs sm:text-sm">{order.partName}</td>
+                      <td className="py-3 pr-4 text-xs sm:text-sm">{order.orderDate}</td>
+                      <td className="py-3 pr-4 text-xs sm:text-sm">{order.price}</td>
+                      <td className="py-3 pr-4">
+                        <span
+                          className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            order.status === "passed"
+                              ? "bg-green-100 text-green-800"
+                              : order.status === "failed"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {order.status === "passed"
+                            ? "تم الفحص - القطعة سليمة"
+                            : order.status === "failed"
+                            ? "تم الفحص - القطعة غير صالحة"
+                            : "بانتظار الفحص"}
+                        </span>
+                      </td>
+                      <td className="py-3 text-xs sm:text-sm">{order.seller}</td>
+                      <td className="py-3">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          {(order.status === "passed" ||
+                            order.status === "failed") && (
+                            <a
+                              href={`/api/admin/inspection/orders/${order.id}/report`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
+                            >
+                              <DocumentTextIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
+                              تحميل تقرير الفحص
+                            </a>
+                          )}
+                          {order.status === "failed" && order.inspectorPhone && (
+                            <a
+                              href={`tel:${order.inspectorPhone}`}
+                              className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 whitespace-nowrap"
+                            >
+                              <PhoneIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
+                              اتصال بالفاحص
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         {/* Confirmation Modal */}
@@ -224,13 +231,13 @@ const UserProfile = () => {
 
                   <div className="mt-6 flex gap-3 justify-end">
                     <button
-                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md"
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm"
                       onClick={() => setIsModalOpen(false)}
                     >
                       إلغاء
                     </button>
                     <button
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
                       onClick={() => {
                         setIsModalOpen(false);
                         // perform actual delete here

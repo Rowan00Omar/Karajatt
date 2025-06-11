@@ -23,7 +23,7 @@ router.post(
   "/upload",
   authenticateToken,
   checkRole("seller"),
-  photoupload.array("images", 4),
+  photoupload,
   sellerController.sellerUpload
 );
 

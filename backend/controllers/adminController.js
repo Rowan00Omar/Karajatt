@@ -66,8 +66,18 @@ exports.rejectRequest = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const [users] = await pool.query(
-      "SELECT id, first_name, last_name, email, role FROM users WHERE role != 'master'"
+      `SELECT 
+        u.id, 
+        u.first_name, 
+        u.last_name, 
+        u.email, 
+        u.role, 
+        COALESCE(u.phone_number, s.phone_number) as phone_number
+       FROM users u
+       LEFT JOIN sellers s ON u.id = s.user_id
+       WHERE u.role != 'master'`
     );
+
     res.json({ users });
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -450,5 +460,75 @@ exports.getInventoryStats = async (req, res) => {
   } catch (error) {
     console.error("Error fetching inventory stats:", error);
     res.status(500).json({ message: "Failed to fetch inventory statistics" });
+  }
+};
+
+// Get all sellers with their statistics
+exports.getSellers = async (req, res) => {
+  try {
+    // Get all sellers with their statistics
+    const [sellers] = await pool.query(
+      `SELECT 
+        u.id,
+        u.first_name,
+        u.last_name,
+        u.email,
+        COALESCE(u.phone_number, s.phone_number) as phone_number,
+        s.bank_name,
+        s.account_number,
+        s.address,
+        COUNT(DISTINCT p.product_id) as total_products,
+        COUNT(DISTINCT r.review_id) as total_reviews,
+        COALESCE(AVG(r.rating), 0) as average_rating
+      FROM users u
+      JOIN sellers s ON u.id = s.user_id
+      LEFT JOIN products p ON u.id = p.seller_id
+      LEFT JOIN reviews r ON p.product_id = r.product_id
+      WHERE u.role = 'seller'
+      GROUP BY u.id`
+    );
+
+    // Get overall statistics
+    const [stats] = await pool.query(
+      `SELECT 
+        COUNT(DISTINCT u.id) as totalSellers,
+        COUNT(DISTINCT CASE WHEN p.product_id IS NOT NULL THEN u.id END) as activeSellers,
+        COUNT(DISTINCT p.product_id) as totalProducts,
+        COALESCE(AVG(r.rating), 0) as averageRating
+      FROM users u
+      JOIN sellers s ON u.id = s.user_id
+      LEFT JOIN products p ON u.id = p.seller_id
+      LEFT JOIN reviews r ON p.product_id = r.product_id
+      WHERE u.role = 'seller'`
+    );
+
+    // Get products for each seller
+    for (let seller of sellers) {
+      const [products] = await pool.query(
+        `SELECT 
+          p.product_id,
+          p.title,
+          p.part_name,
+          p.price
+        FROM products p
+        WHERE p.seller_id = ?
+        ORDER BY p.created_at DESC
+        LIMIT 3`,
+        [seller.id]
+      );
+      seller.products = products;
+      seller.name = `${seller.first_name} ${seller.last_name}`.trim();
+    }
+
+    res.json({
+      sellers,
+      totalSellers: stats[0].totalSellers,
+      activeSellers: stats[0].activeSellers,
+      totalProducts: stats[0].totalProducts,
+      averageRating: stats[0].averageRating
+    });
+  } catch (error) {
+    console.error("Error fetching sellers:", error);
+    res.status(500).json({ message: "Failed to fetch sellers data" });
   }
 };

@@ -3,6 +3,8 @@ import Hero from "../components/Hero";
 import Navbar from "../components/Navbar";
 import Features from "../components/Features";
 import Cta from "../components/Cta";
+import Footer from "../components/Footer";
+
 const LandingPage = () => {
   return (
     <>
@@ -14,6 +16,8 @@ const LandingPage = () => {
       <Features />
       {/* CTA Section */}
       <Cta />
+      {/* Footer Section */}
+      <Footer />
     </>
   );
 };

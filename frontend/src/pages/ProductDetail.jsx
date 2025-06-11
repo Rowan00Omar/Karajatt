@@ -45,7 +45,7 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(`/api/product/getSingleProduct/${id}`);
+        const response = await axios.get(`/api/products/getSingleProduct/${id}`);
         setProduct(response.data);
         // Create array of all available images
         const images = [
@@ -76,29 +76,32 @@ const ProductDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid md:grid-cols-2 gap-8 items-start">
         {/* Product Images */}
-        <div className="relative" {...handlers}>
-          <div className="aspect-w-4 aspect-h-3 rounded-lg overflow-hidden">
+        <div className="relative max-w-md mx-auto w-full" {...handlers}>
+          <div className="relative w-full h-[400px] rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
             <Zoom>
-              <img
-                src={allImages[currentImageIndex] || "/placeholder.jpg"}
-                alt={product.title}
-                className="w-full h-full object-cover"
-              />
+              <div className="flex items-center justify-center w-full h-full">
+                <img
+                  src={allImages[currentImageIndex] || "/placeholder.jpg"}
+                  alt={product.title}
+                  className="max-w-full max-h-full object-contain"
+                  style={{ backgroundColor: 'white' }}
+                />
+              </div>
             </Zoom>
           </div>
           {allImages.length > 1 && (
             <>
               <button
                 onClick={prevImage}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md hover:bg-white"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md hover:bg-white transition-all duration-200"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
               <button
                 onClick={nextImage}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md hover:bg-white"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full shadow-md hover:bg-white transition-all duration-200"
               >
                 <ChevronRight className="w-6 h-6" />
               </button>
@@ -110,8 +113,8 @@ const ProductDetail = () => {
                 <button
                   key={idx}
                   onClick={() => setCurrentImageIndex(idx)}
-                  className={`w-2 h-2 rounded-full ${
-                    idx === currentImageIndex ? "bg-blue-600" : "bg-gray-300"
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
+                    idx === currentImageIndex ? "bg-blue-600 scale-110" : "bg-gray-300 hover:bg-gray-400"
                   }`}
                 />
               ))}

@@ -13,7 +13,7 @@ const CartButton = () => {
       <div className="relative">
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2  text-gray-700 hover:text-indigo-600"
+          className="p-2  text-gray-400 hover:text-white"
         >
           <ShoppingCart className="w-6 h-6" />
         </button>
