@@ -122,15 +122,15 @@ const Profile = () => {
           </h2>
           <div className="flex gap-2">
             <Link
-              to="/forgot-password"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition flex items-center gap-2"
+              to={`/reset-password/${token}`}
+              className="w-full sm:w-fit bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg transition flex items-center justify-center sm:justify-start gap-2 text-sm sm:text-base"
             >
-              <KeyRound className="w-5 h-5" />
+              <KeyRound className="w-4 sm:w-5 h-4 sm:h-5" />
               تغيير كلمة المرور
             </Link>
             <Button
               onClick={() => (editMode ? handleSave() : setEditMode(true))}
-              className="px-4 py-2"
+              className="px-4 py-2 rounded-md"
             >
               {editMode ? "حفظ التغييرات" : "تعديل المعلومات"}
             </Button>

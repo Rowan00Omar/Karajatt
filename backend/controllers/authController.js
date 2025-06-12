@@ -2,6 +2,8 @@ const pool = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const path = require("path");
+const fs = require("fs").promises;
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -345,31 +347,171 @@ const forgotPassword = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  const { token, password } = req.body;
+  const { token, password, currentPassword } = req.body;
 
   try {
-    const user = await pool.query(
-      "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > NOW()",
-      [token]
-    );
+    let userId;
+    
+    // If there's an auth token in the header, use it for logged-in users
+    if (req.headers.authorization) {
+      const authToken = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(authToken, process.env.JWT_SECRET);
+      userId = decoded.id;
 
-    if (user.rows.length === 0) {
-      return res.status(400).json({
-        message: "رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية",
-      });
+      // Verify current password
+      const [user] = await pool.query("SELECT password FROM users WHERE id = ?", [userId]);
+      
+      if (user.length === 0) {
+        return res.status(404).json({ message: "المستخدم غير موجود" });
+      }
+
+      const validPassword = await bcrypt.compare(currentPassword, user[0].password);
+      if (!validPassword) {
+        return res.status(400).json({ message: "كلمة المرور الحالية غير صحيحة" });
+      }
+    } else {
+      // For password reset through email token
+      const [user] = await pool.query(
+        "SELECT id FROM users WHERE reset_token = ? AND reset_token_expires > NOW()",
+        [token]
+      );
+
+      if (user.length === 0) {
+        return res.status(400).json({
+          message: "رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية",
+        });
+      }
+      
+      userId = user[0].id;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await pool.query(
       "UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?",
-      [hashedPassword, user.rows[0].id]
+      [hashedPassword, userId]
     );
 
     res.json({ message: "تم تغيير كلمة المرور بنجاح" });
   } catch (error) {
     console.error("Error in resetPassword:", error);
     res.status(500).json({ message: "حدث خطأ أثناء تغيير كلمة المرور" });
+  }
+};
+
+const getPassedOrdersHistory = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const [orders] = await pool.query(
+      `SELECT DISTINCT
+        o.id,
+        o.order_date as orderDate,
+        o.total_price as price,
+        o.status,
+        p.title as partName,
+        p.part_name,
+        CONCAT(u.first_name, ' ', u.last_name) as seller,
+        ir.inspector_phone as inspectorPhone,
+        ir.inspector_notes as inspectorNotes,
+        oi.id as orderItemId
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      JOIN products p ON oi.product_id = p.product_id
+      JOIN users u ON p.seller_id = u.id
+      LEFT JOIN inspection_reports ir ON o.id = ir.order_id
+      WHERE o.user_id = ? AND o.status = 'passed'
+      GROUP BY 
+        o.id,
+        o.order_date,
+        o.total_price,
+        o.status,
+        p.title,
+        p.part_name,
+        u.first_name,
+        u.last_name,
+        ir.inspector_phone,
+        ir.inspector_notes,
+        oi.id
+      ORDER BY o.order_date DESC`,
+      [userId]
+    );
+
+    // Format dates and prices and create unique keys
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      orderDate: new Date(order.orderDate).toLocaleDateString('ar-SA'),
+      price: `${order.price} ر.س`,
+      uniqueKey: `${order.id}-${order.orderItemId}`
+    }));
+
+    res.json(formattedOrders);
+  } catch (error) {
+    console.error('Error fetching passed orders history:', error);
+    res.status(500).json({
+      message: 'فشل في جلب سجل الطلبات',
+      error: error.message
+    });
+  }
+};
+
+const downloadInspectionReport = async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    const userId = req.user.id; // From JWT token
+
+    // First verify that this order belongs to the user
+    const [orders] = await pool.query(
+      `SELECT o.id 
+       FROM orders o
+       WHERE o.id = ? AND o.user_id = ? AND o.status = 'passed'`,
+      [orderId, userId]
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({ 
+        message: "التقرير غير موجود أو لا يمكنك الوصول إليه" 
+      });
+    }
+
+    // Get the report file path
+    const [reports] = await pool.query(
+      `SELECT report_file_path 
+       FROM inspection_reports 
+       WHERE order_id = ?`,
+      [orderId]
+    );
+
+    if (reports.length === 0) {
+      return res.status(404).json({ 
+        message: "تقرير الفحص غير موجود" 
+      });
+    }
+
+    const reportPath = path.join(
+      __dirname,
+      "..",
+      "uploads",
+      "reports",
+      reports[0].report_file_path
+    );
+
+    // Check if file exists
+    try {
+      await fs.access(reportPath);
+    } catch (error) {
+      return res.status(404).json({ 
+        message: "ملف التقرير غير موجود" 
+      });
+    }
+
+    // Send the file
+    res.sendFile(reportPath);
+  } catch (error) {
+    console.error("Error downloading report:", error);
+    res.status(500).json({
+      message: "فشل في تحميل التقرير",
+      error: error.message
+    });
   }
 };
 
@@ -383,4 +525,6 @@ module.exports = {
   getOrderHistory,
   forgotPassword,
   resetPassword,
+  getPassedOrdersHistory,
+  downloadInspectionReport,
 };

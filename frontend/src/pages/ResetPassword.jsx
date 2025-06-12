@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { KeyRound } from "lucide-react";
+import { KeyRound, X } from "lucide-react";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
 const ResetPassword = () => {
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -14,12 +15,32 @@ const ResetPassword = () => {
 
   const { token } = useParams();
   const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem("token");
+
+  const handleClose = () => {
+    const userRole = localStorage.getItem("userRole");
+    if (userRole === "seller") {
+      navigate("/seller");
+    } else if (userRole === "user") {
+      navigate("/user");
+    } else if (userRole === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/login");
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setMessage("");
     setLoading(true);
+
+    if (isLoggedIn && !currentPassword) {
+      setError("يرجى إدخال كلمة المرور الحالية");
+      setLoading(false);
+      return;
+    }
 
     if (!password || !confirmPassword) {
       setError("يرجى تعبئة جميع الحقول");
@@ -40,13 +61,32 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await axios.post("/api/auth/reset-password", {
-        token,
-        password,
-      });
+      const authToken = localStorage.getItem("token");
+      const response = await axios.post(
+        "/api/auth/reset-password",
+        {
+          token: token || authToken,
+          password,
+          ...(isLoggedIn && { currentPassword }),
+        },
+        {
+          headers: authToken ? {
+            Authorization: `Bearer ${authToken}`
+          } : {}
+        }
+      );
       setMessage(response.data.message || "تم تغيير كلمة المرور بنجاح");
       setTimeout(() => {
-        navigate("/login");
+        const userRole = localStorage.getItem("userRole");
+        if (userRole === "seller") {
+          navigate("/seller");
+        } else if (userRole === "user") {
+          navigate("/user");
+        } else if (userRole === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/login");
+        }
       }, 2000);
     } catch (err) {
       setError(
@@ -58,9 +98,15 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
+    <div className="fixed inset-0 flex flex-col justify-center items-center bg-gray-900/30 backdrop-blur-md px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md relative">
         <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
+          <button
+            onClick={handleClose}
+            className="absolute top-4 left-4 text-gray-400 hover:text-gray-500 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
           <form className="space-y-6" onSubmit={handleSubmit} dir="rtl">
             {/* Header */}
             <div className="flex flex-col items-center space-y-4">
@@ -68,10 +114,10 @@ const ResetPassword = () => {
                 <KeyRound className="text-indigo-600" size={32} />
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
-                إعادة تعيين كلمة المرور
+                {isLoggedIn ? "تغيير كلمة المرور" : "إعادة تعيين كلمة المرور"}
               </h2>
               <p className="text-gray-600 text-center">
-                أدخل كلمة المرور الجديدة
+                {isLoggedIn ? "قم بإدخال كلمة المرور الحالية والجديدة" : "أدخل كلمة المرور الجديدة"}
               </p>
             </div>
 
@@ -91,6 +137,18 @@ const ResetPassword = () => {
 
             {/* Form Fields */}
             <div className="space-y-4">
+              {isLoggedIn && (
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="كلمة المرور الحالية"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full"
+                    disabled={loading}
+                  />
+                </div>
+              )}
               <div>
                 <Input
                   type="password"

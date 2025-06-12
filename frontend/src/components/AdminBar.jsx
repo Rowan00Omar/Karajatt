@@ -16,6 +16,7 @@ import {
   LogOut,
   Ticket,
   Store,
+  KeyRound,
 } from "lucide-react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { useState } from "react";
@@ -136,6 +137,13 @@ export function AdminBar({ isOpen }) {
           </nav>
 
           <div className="px-3 mt-auto border-t pt-4">
+            <Link
+              to={`/reset-password/${localStorage.getItem("token")}`}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-indigo-600 hover:bg-indigo-50 text-right mb-2"
+            >
+              <KeyRound className="h-5 w-5" />
+              <span>تغيير كلمة المرور</span>
+            </Link>
             <button
               onClick={logout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-red-600 hover:bg-red-50 text-right"

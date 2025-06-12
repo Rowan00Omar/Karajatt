@@ -10,6 +10,8 @@ const {
   getOrderHistory,
   forgotPassword,
   resetPassword,
+  getPassedOrdersHistory,
+  downloadInspectionReport
 } = require("../controllers/authController");
 const {
   authenticateToken,
@@ -25,6 +27,10 @@ router.get("/users", authenticateToken, checkRole("admin"), getAllUsers);
 router.delete("/users/:id", authenticateToken, checkRole("admin"), deleteUser);
 
 router.get("/orders/:userId", authenticateToken, getOrderHistory);
+
+router.get("/orders/passed/:userId", authenticateToken, getPassedOrdersHistory);
+
+router.get("/orders/:orderId/report/download", authenticateToken, downloadInspectionReport);
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
