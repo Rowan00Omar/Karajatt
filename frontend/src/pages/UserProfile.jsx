@@ -20,6 +20,7 @@ const UserProfile = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
+  const [visiblePhoneOrderId, setVisiblePhoneOrderId] = useState(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -196,16 +197,23 @@ const UserProfile = () => {
                               className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
                             >
                               <DocumentTextIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
-                              تحميل تقرير الفحص
+                               تقرير الفحص
                             </button>
                             {order.inspectorPhone && (
-                              <a
-                                href={`tel:${order.inspectorPhone}`}
-                                className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 whitespace-nowrap"
-                              >
-                                <PhoneIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
-                                اتصال بالفاحص
-                              </a>
+                              visiblePhoneOrderId === order.id ? (
+                                <span className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-green-700 bg-green-100 whitespace-nowrap">
+                                  <PhoneIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
+                                  {order.inspectorPhone}
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setVisiblePhoneOrderId(order.id)}
+                                  className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 whitespace-nowrap"
+                                >
+                                  <PhoneIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
+                                </button>
+                              )
                             )}
                           </div>
                         </td>

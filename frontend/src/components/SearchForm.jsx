@@ -518,11 +518,6 @@ const SearchForm = () => {
 
               {results.length > 0 ? (
                 <>
-                  <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center px-4 py-2 bg-blue-50 rounded-full text-blue-700 text-sm font-medium">
-                      <span>تم العثور على {totalResults} منتج</span>
-                    </div>
-                  </div>
                   <SearchResults results={results} />
                 </>
               ) : (

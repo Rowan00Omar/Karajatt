@@ -21,7 +21,7 @@ import {
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { useState } from "react";
 import useLogout from "@/hooks/useLogout";
-import Logo from "@/assets/Logo.svg";
+import Logo from "@/assets/LogoNoBack.png";
 
 const items = [
   {
