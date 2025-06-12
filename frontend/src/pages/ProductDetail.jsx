@@ -75,7 +75,7 @@ const ProductDetail = () => {
     return <div className="text-center py-8">لم يتم العثور على المنتج</div>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-32">
       <div className="grid md:grid-cols-2 gap-8 items-start">
         {/* Product Images */}
         <div className="relative max-w-md mx-auto w-full" {...handlers}>

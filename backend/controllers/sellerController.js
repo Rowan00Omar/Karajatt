@@ -60,7 +60,8 @@ exports.getSellerProfile = async (req, res) => {
       bank_name: sellerData[0].bank_name,
       account_number: sellerData[0].account_number,
       address: sellerData[0].address,
-      phone_number: sellerData[0].seller_phone || sellerData[0].user_phone || null,
+      phone_number:
+        sellerData[0].seller_phone || sellerData[0].user_phone || null,
       total_products: sellerData[0].total_products || 0,
       total_reviews: sellerData[0].total_reviews || 0,
       average_rating: parseFloat(sellerData[0].average_rating || 0).toFixed(1),
@@ -72,7 +73,6 @@ exports.getSellerProfile = async (req, res) => {
 
     res.json(formattedSeller);
   } catch (error) {
-    console.error("Error fetching seller profile:", error);
     res.status(500).json({
       message: "Error fetching seller profile",
       error: error.message,
@@ -129,7 +129,6 @@ exports.updateSellerProfile = async (req, res) => {
       connection.release();
     }
   } catch (error) {
-    console.error("Error updating seller profile:", error);
     res.status(500).json({
       message: "Error updating seller profile",
       error: error.message,
@@ -170,8 +169,11 @@ exports.sellerUpload = async (req, res) => {
 
     // Upload to cloudinary with better error handling
     const uploadResults = await cloudinaryUploadMultipleImages(filePaths);
-    
-    if (!Array.isArray(uploadResults) || uploadResults.some(result => result instanceof Error)) {
+
+    if (
+      !Array.isArray(uploadResults) ||
+      uploadResults.some((result) => result instanceof Error)
+    ) {
       throw new Error("Failed to upload images to cloud storage");
     }
 
@@ -236,10 +238,9 @@ exports.sellerUpload = async (req, res) => {
       images: uploadResults.map((r) => r.secure_url),
     });
   } catch (err) {
-    console.error("Upload error:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       message: err.message || "حدث خطأ أثناء رفع القطعة",
-      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      details: process.env.NODE_ENV === "development" ? err.stack : undefined,
     });
   }
 };
@@ -499,7 +500,6 @@ exports.getBestSelling = async (req, res) => {
 
     res.json({ products });
   } catch (err) {
-    console.error("Error fetching best sellers:", err);
     res.status(500).json({ error: "Failed to fetch best-selling parts" });
   }
 };
@@ -547,12 +547,11 @@ exports.getSalesReport = async (req, res) => {
         }
       });
     } catch (err) {
-      console.error("Error fetching sales data:", err);
+      throw err;
     }
 
     res.json({ sales: fullYearData });
   } catch (err) {
-    console.error("Error in sales report:", err);
     res.status(500).json({ error: "Failed to fetch sales report" });
   }
 };
@@ -567,7 +566,6 @@ exports.getPaymentInfo = async (req, res) => {
 
     res.json({ payment_info: rows[0] || {} });
   } catch (err) {
-    console.error("Error fetching payment info:", err);
     res.status(500).json({ error: "Failed to fetch payment information" });
   }
 };
@@ -604,7 +602,6 @@ exports.updatePaymentInfo = async (req, res) => {
 
     res.json({ message: "Payment information updated successfully" });
   } catch (err) {
-    console.error("Error updating payment info:", err);
     res.status(500).json({ error: "Failed to update payment information" });
   }
 };
@@ -631,7 +628,6 @@ exports.getInventory = async (req, res) => {
 
     res.json({ products });
   } catch (err) {
-    console.error("Error fetching inventory:", err);
     res.status(500).json({ error: "Failed to fetch inventory" });
   }
 };
@@ -662,7 +658,6 @@ exports.updateStock = async (req, res) => {
 
     res.json({ message: "Stock updated successfully" });
   } catch (err) {
-    console.error("Error updating stock:", err);
     res.status(500).json({ error: "Failed to update stock" });
   }
 };
@@ -685,7 +680,6 @@ exports.deleteProduct = async (req, res) => {
 
     res.json({ message: "Product deleted successfully" });
   } catch (err) {
-    console.error("Error deleting product:", err);
     res.status(500).json({ error: "Failed to delete product" });
   }
 };

@@ -15,7 +15,6 @@ exports.getPendingRequests = async (req, res) => {
 
     res.json({ requests });
   } catch (error) {
-    console.error("Error fetching pending requests:", error);
     res.status(500).json({ message: "Failed to fetch pending requests" });
   }
 };
@@ -36,7 +35,6 @@ exports.approveRequest = async (req, res) => {
 
     res.json({ message: "Product approved successfully" });
   } catch (error) {
-    console.error("Error approving request:", error);
     res.status(500).json({ message: "Failed to approve request" });
   }
 };
@@ -57,7 +55,6 @@ exports.rejectRequest = async (req, res) => {
 
     res.json({ message: "Product rejected successfully" });
   } catch (error) {
-    console.error("Error rejecting request:", error);
     res.status(500).json({ message: "Failed to reject request" });
   }
 };
@@ -525,7 +522,7 @@ exports.getSellers = async (req, res) => {
       totalSellers: stats[0].totalSellers,
       activeSellers: stats[0].activeSellers,
       totalProducts: stats[0].totalProducts,
-      averageRating: stats[0].averageRating
+      averageRating: stats[0].averageRating,
     });
   } catch (error) {
     console.error("Error fetching sellers:", error);

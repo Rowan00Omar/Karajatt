@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
 import {
   DocumentCheckIcon,
   DocumentTextIcon,
@@ -8,7 +11,12 @@ import {
   CheckCircleIcon,
   MagnifyingGlassIcon,
   CurrencyDollarIcon,
+  ExclamationCircleIcon,
+  ArrowUpTrayIcon,
 } from "@heroicons/react/24/outline";
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const InspectionManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -23,6 +31,13 @@ const InspectionManagement = () => {
   const [inspectionFee, setInspectionFee] = useState(49);
   const [isEditingFee, setIsEditingFee] = useState(false);
   const [feeError, setFeeError] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [numPages, setNumPages] = useState(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [pdfError, setPdfError] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -186,18 +201,82 @@ const InspectionManagement = () => {
     }
   };
 
-  const handleFileChange = (event) => {
-    setReportFile(event.target.files[0]);
-  };
-
-  const handleSubmitReport = async (status) => {
-    if (!reportFile || !inspectorPhone) {
-      setError("الرجاء تعبئة رقم هاتف الفاحص وإرفاق ملف التقرير");
-      return;
+  const validatePdfFile = (file) => {
+    if (!file) {
+      setUploadError("يرجى اختيار ملف");
+      return false;
     }
 
+    if (file.type !== "application/pdf") {
+      setUploadError("يجب أن يكون الملف بصيغة PDF");
+      return false;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      setUploadError("حجم الملف يجب أن لا يتجاوز 10 ميجابايت");
+      return false;
+    }
+
+    setUploadError("");
+    return true;
+  };
+
+  // Function to handle PDF document load success
+  function onDocumentLoadSuccess({ numPages }) {
+    setNumPages(numPages);
+    setPdfError(null);
+  }
+
+  // Function to handle PDF loading error
+  function onDocumentLoadError(error) {
+    console.error('Error while loading document:', error);
+    setPdfError('Failed to load PDF file');
+  }
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (validatePdfFile(file)) {
+      setReportFile(file);
+      // Create a preview URL
+      const url = URL.createObjectURL(file);
+      setPdfUrl(url);
+      // Reset error states
+      setPdfError(null);
+      setUploadError("");
+    } else {
+      event.target.value = null;
+      setReportFile(null);
+      setPdfUrl(null);
+    }
+  };
+
+  // Cleanup function for the PDF URL
+  useEffect(() => {
+    return () => {
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+      }
+    };
+  }, [pdfUrl]);
+
+  const handleSubmitReport = async (status) => {
     try {
+      // Validate required fields
+      if (!reportFile || !inspectorPhone) {
+        setError("الرجاء تعبئة رقم هاتف الفاحص وإرفاق ملف التقرير");
+        return;
+      }
+
+      // Validate phone number format (Saudi format)
+      const phoneRegex = /^(05)[0-9]{8}$/;
+      if (!phoneRegex.test(inspectorPhone)) {
+        setError("رقم الهاتف يجب أن يبدأ ب 05 ويتكون من 10 أرقام");
+        return;
+      }
+
       setError(null);
+      setIsUploading(true);
+      setUploadProgress(0);
 
       const token = localStorage.getItem("token");
       if (!token) {
@@ -205,23 +284,46 @@ const InspectionManagement = () => {
         return;
       }
 
-      // Create FormData object
+      // Create FormData
       const formData = new FormData();
       
-      // Append the file with the exact field name expected by the backend
-      formData.append("report", reportFile);
+      // Add file first - ensure it's a File object
+      if (!(reportFile instanceof File)) {
+        setError("خطأ في تحميل الملف. الرجاء المحاولة مرة أخرى");
+        return;
+      }
       
-      // Append other form fields
+      // Log file details before upload
+      console.log("File details:", {
+        name: reportFile.name,
+        type: reportFile.type,
+        size: reportFile.size,
+        lastModified: reportFile.lastModified
+      });
+
+      // Append form data in specific order
+      formData.append("report", reportFile);
       formData.append("inspectionStatus", status);
       formData.append("inspectorPhone", inspectorPhone);
-      if (inspectorNotes) {
-        formData.append("inspectorNotes", inspectorNotes);
+      if (inspectorNotes && inspectorNotes.trim()) {
+        formData.append("inspectorNotes", inspectorNotes.trim());
       }
 
-      // Log the form data for debugging
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value instanceof File ? value.name : value);
-      }
+      // Log FormData contents
+      console.log("FormData entries:", Array.from(formData.entries()));
+
+      // Log request details
+      console.log("Submitting report with:", {
+        orderId: selectedOrder.id,
+        status,
+        inspectorPhone,
+        hasNotes: !!inspectorNotes,
+        formDataEntries: Array.from(formData.entries()).map(([key, value]) => ({
+          key,
+          type: value instanceof File ? 'File' : 'string',
+          value: value instanceof File ? `${value.name} (${value.type})` : value
+        }))
+      });
 
       const response = await axios.post(
         `/api/admin/inspection/orders/${selectedOrder.id}/report`,
@@ -229,35 +331,67 @@ const InspectionManagement = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+            "Accept": "application/json"
           },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+            console.log(`Upload progress: ${percentCompleted}%`);
+          },
+          validateStatus: function (status) {
+            return status >= 200 && status < 500; // Handle all responses to get error details
+          }
         }
       );
 
-      console.log("Report submission response:", response.data);
+      console.log("Upload response:", response.data);
 
-      // Clear form and refresh orders list
+      // Cleanup
       setSelectedOrder(null);
       setInspectorPhone("");
       setInspectorNotes("");
       setReportFile(null);
+      setPdfUrl(null);
+      setUploadProgress(0);
       await fetchOrders();
     } catch (error) {
       console.error("Error submitting report:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
-        headers: error.response?.headers,
-        config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          headers: error.config?.headers,
-        },
+        statusText: error.response?.statusText,
+        debug: error.response?.data?.debug
       });
-      setError(
-        error.response?.data?.error?.message ||
-          error.response?.data?.message ||
-          "فشل في رفع التقرير. الرجاء المحاولة مرة أخرى"
-      );
+
+      let errorMessage = "فشل في رفع التقرير. ";
+      
+      if (error.response?.data?.error) {
+        errorMessage += error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage += error.response.data.message;
+      } else if (error.response?.status === 413) {
+        errorMessage += "حجم الملف كبير جداً. الحد الأقصى هو 10 ميجابايت";
+      } else if (error.response?.status === 415) {
+        errorMessage += "نوع الملف غير مدعوم. يرجى رفع ملف PDF فقط";
+      } else if (error.response?.status === 401) {
+        errorMessage += "جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى";
+      } else if (error.response?.status === 404) {
+        errorMessage += "الطلب غير موجود";
+      } else if (error.response?.status === 500) {
+        errorMessage += "حدث خطأ في الخادم. الرجاء المحاولة مرة أخرى";
+        if (error.response?.data?.debug) {
+          console.error("Server debug info:", error.response.data.debug);
+        }
+      } else {
+        errorMessage += "الرجاء المحاولة مرة أخرى";
+      }
+
+      setError(errorMessage);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -272,7 +406,14 @@ const InspectionManagement = () => {
       setDownloadingOrderId(orderId);
       setError(null);
 
-      // Fetch the PDF as a Blob
+      // First verify if the report exists
+      await axios.head(
+        `/api/admin/inspection/orders/${orderId}/report/verify`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       const response = await axios.get(
         `/api/admin/inspection/orders/${orderId}/report/download`,
         {
@@ -283,8 +424,8 @@ const InspectionManagement = () => {
         }
       );
 
-      // Create a link element to trigger download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", `inspection_report_${orderId}.pdf`);
@@ -292,15 +433,14 @@ const InspectionManagement = () => {
       link.click();
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
-
-      setDownloadingOrderId(null);
     } catch (error) {
       console.error("Error downloading report:", error);
-      const message =
-        error.response?.data?.message ||
-        error.message ||
-        "فشل في تحميل التقرير";
-      setError(message);
+      if (error.response?.status === 404) {
+        setError("تقرير الفحص غير موجود");
+      } else {
+        setError("فشل في تحميل التقرير. الرجاء المحاولة مرة أخرى");
+      }
+    } finally {
       setDownloadingOrderId(null);
     }
   };
@@ -477,32 +617,145 @@ const InspectionManagement = () => {
               />
             </div>
 
-            <div>
+            <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 text-right mb-2">
                 تقرير الفحص (PDF)
               </label>
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={handleFileChange}
-                className="w-full text-right"
-              />
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md relative">
+                <div className="space-y-1 text-center">
+                  {!reportFile ? (
+                    <>
+                      <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
+                      <div className="flex text-sm text-gray-600">
+                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                          <span>اختر ملف PDF</span>
+                          <input
+                            id="file-upload"
+                            name="file-upload"
+                            type="file"
+                            accept=".pdf,application/pdf"
+                            className="sr-only"
+                            onChange={handleFileChange}
+                            disabled={isUploading}
+                          />
+                        </label>
+                      </div>
+                      <p className="text-xs text-gray-500">PDF حتى 10 ميجابايت</p>
+                    </>
+                  ) : (
+                    <div className="w-full">
+                      <p className="text-sm text-gray-600 mb-4">
+                        تم اختيار: {reportFile.name}
+                      </p>
+                      {pdfUrl && (
+                        <div className="border rounded-lg p-4 bg-gray-50">
+                          <Document
+                            file={pdfUrl}
+                            onLoadSuccess={onDocumentLoadSuccess}
+                            onLoadError={onDocumentLoadError}
+                            loading={
+                              <div className="text-center py-4">
+                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+                                <p className="mt-2 text-sm text-gray-600">جاري تحميل الملف...</p>
+                              </div>
+                            }
+                            error={
+                              <div className="text-center py-4 text-red-600">
+                                <p>{pdfError || 'حدث خطأ في تحميل الملف'}</p>
+                              </div>
+                            }
+                          >
+                            <Page
+                              pageNumber={pageNumber}
+                              width={300}
+                              renderTextLayer={true}
+                              renderAnnotationLayer={true}
+                            />
+                          </Document>
+                          {numPages > 0 && (
+                            <div className="mt-2 flex justify-center items-center gap-4">
+                              <button
+                                onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
+                                disabled={pageNumber <= 1}
+                                className="px-2 py-1 text-sm bg-gray-100 rounded disabled:opacity-50"
+                              >
+                                السابق
+                              </button>
+                              <p className="text-sm text-gray-600">
+                                صفحة {pageNumber} من {numPages}
+                              </p>
+                              <button
+                                onClick={() => setPageNumber(Math.min(numPages, pageNumber + 1))}
+                                disabled={pageNumber >= numPages}
+                                className="px-2 py-1 text-sm bg-gray-100 rounded disabled:opacity-50"
+                              >
+                                التالي
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <button
+                        onClick={() => {
+                          setReportFile(null);
+                          setPdfUrl(null);
+                          setNumPages(null);
+                          setPageNumber(1);
+                          setPdfError(null);
+                        }}
+                        className="mt-4 text-sm text-red-600 hover:text-red-800"
+                      >
+                        إزالة الملف
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {uploadError && (
+                <p className="text-sm text-red-600 flex items-center justify-end mt-2">
+                  <ExclamationCircleIcon className="h-5 w-5 ml-1" />
+                  {uploadError}
+                </p>
+              )}
+              {isUploading && (
+                <div className="mt-2">
+                  <div className="bg-gray-200 rounded-full h-2.5">
+                    <div
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-sm text-gray-600 text-center mt-1">
+                    {uploadProgress}%
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => handleSubmitReport("failed")}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                disabled={isUploading}
+                className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                  isUploading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
               >
                 <XCircleIcon className="h-5 w-5 ml-2" />
-                القطعة غير صالحة
+                {isUploading ? "جاري الرفع..." : "القطعة غير صالحة"}
               </button>
               <button
                 onClick={() => handleSubmitReport("passed")}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700"
+                disabled={isUploading}
+                className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+                  isUploading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-green-600 hover:bg-green-700"
+                }`}
               >
                 <CheckCircleIcon className="h-5 w-5 ml-2" />
-                القطعة سليمة
+                {isUploading ? "جاري الرفع..." : "القطعة سليمة"}
               </button>
             </div>
           </div>

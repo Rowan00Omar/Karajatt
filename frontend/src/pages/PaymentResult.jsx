@@ -28,7 +28,6 @@ const PaymentResult = () => {
           setStatus("failed");
         }
       } catch (error) {
-        console.error("Payment verification failed:", error);
         setStatus("failed");
       }
     };

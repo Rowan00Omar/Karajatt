@@ -41,6 +41,7 @@ const Cart = ({ onClose }) => {
   }, []);
 
   const totalInspectionFees = cartItems.length * inspectionFee;
+  const finalTotal = cartTotal + totalInspectionFees;
 
   const handleCheckout = async () => {
     try {
@@ -61,11 +62,19 @@ const Cart = ({ onClose }) => {
 
       // Prepare billing data
       const billingData = {
-        firstName: userResponse.data.first_name || "NA",
-        lastName: userResponse.data.last_name || "NA",
-        email: userResponse.data.email || "NA",
-        phone: userResponse.data.phone_number || "NA",
+        first_name: userResponse.data.first_name || "Ali",
+        last_name: userResponse.data.last_name || "Mohamed",
+        email: userResponse.data.email || "alimohamed@gmail.com",
+        phone_number: userResponse.data.phone_number || "+966512345678",
+        apartment: "12",
+        floor: "1",
+        street: "King Fahad Rd",
+        building: "25B",
+        shipping_method: "PKG",
+        postal_code: "12345",
+        city: "Riyadh",
         country: "SA",
+        state: "Riyadh",
       };
 
       // Format items for PayMob
@@ -81,19 +90,30 @@ const Cart = ({ onClose }) => {
       }));
 
       // Initialize payment
-      const paymentResponse = await axios.post("/api/payments/checkout", {
-        cartItems: formattedItems,
-        userId,
-        billingData,
-        amount: finalTotal,
-        inspectionFees: totalInspectionFees,
-        appliedCoupon: appliedCoupon
-          ? {
-              code: appliedCoupon.code,
-              discount: discount,
-            }
-          : null,
-      });
+      const paymentResponse = await axios.post(
+        "/api/payments/checkout",
+        {
+          cartItems: formattedItems,
+          userId,
+          billingData,
+          amount: finalTotal,
+          inspectionFees: totalInspectionFees,
+          appliedCoupon: appliedCoupon
+            ? {
+                code: appliedCoupon.code,
+                discount: discount,
+              }
+            : null,
+        },
+        {
+          baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
 
       if (paymentResponse.data.success && paymentResponse.data.paymentUrl) {
         // Store order ID in localStorage for later reference
@@ -106,17 +126,18 @@ const Cart = ({ onClose }) => {
         );
       }
     } catch (error) {
-      console.error("Payment failed:", error);
-      console.error("Error details:", {
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers,
-      });
-      setPaymentError(
-        error.response?.data?.message ||
-          error.message ||
-          "فشلت عملية الدفع. يرجى المحاولة مرة أخرى."
-      );
+      if (error.code === "ERR_NETWORK") {
+        setPaymentError(
+          "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت الخاص بك والمحاولة مرة أخرى."
+        );
+      } else {
+        setPaymentError(
+          error.response?.data?.error ||
+            error.response?.data?.message ||
+            error.message ||
+            "فشلت عملية الدفع. يرجى المحاولة مرة أخرى."
+        );
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -136,8 +157,6 @@ const Cart = ({ onClose }) => {
       setCouponCode("");
     }
   };
-
-  const finalTotal = cartTotal + totalInspectionFees;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end p-4 pointer-events-none">
