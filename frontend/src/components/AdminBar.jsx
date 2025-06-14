@@ -138,7 +138,7 @@ export function AdminBar({ isOpen }) {
 
           <div className="px-3 mt-auto border-t pt-4">
             <Link
-              to={`/reset-password/${localStorage.getItem("token")}`}
+              to={`/reset-forgotten-password/${localStorage.getItem("token")}`}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-indigo-600 hover:bg-indigo-50 text-right mb-2"
             >
               <KeyRound className="h-5 w-5" />

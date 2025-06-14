@@ -294,29 +294,31 @@ const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const user = await pool.query(
+    const [user] = await pool.query(
       "SELECT id, email FROM users WHERE email = ?",
       [email]
     );
 
-    if (user.rows.length === 0) {
+    if (user.length === 0) {
       return res
         .status(404)
         .json({ message: "لم يتم العثور على مستخدم بهذا البريد الإلكتروني" });
     }
 
     const resetToken = jwt.sign(
-      { userId: user.rows[0].id },
+      { userId: user[0].id },
       process.env.JWT_RESET_SECRET,
       { expiresIn: "1h" }
     );
 
     await pool.query(
-      "UPDATE users SET reset_token = ?, reset_token_expires = NOW() + INTERVAL '1 hour' WHERE id = ?",
-      [resetToken, user.rows[0].id]
+      "UPDATE users SET reset_token = ?, reset_token_expires = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE id = ?",
+      [resetToken, user[0].id]
     );
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${
+      process.env.FRONTEND_URL || "http://localhost:5173"
+    }/reset-password/${resetToken}`;
     const mailOptions = {
       from: process.env.SMTP_FROM,
       to: email,
@@ -351,23 +353,31 @@ const resetPassword = async (req, res) => {
 
   try {
     let userId;
-    
+
     // If there's an auth token in the header, use it for logged-in users
     if (req.headers.authorization) {
-      const authToken = req.headers.authorization.split(' ')[1];
+      const authToken = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(authToken, process.env.JWT_SECRET);
       userId = decoded.id;
 
       // Verify current password
-      const [user] = await pool.query("SELECT password FROM users WHERE id = ?", [userId]);
-      
+      const [user] = await pool.query(
+        "SELECT password FROM users WHERE id = ?",
+        [userId]
+      );
+
       if (user.length === 0) {
         return res.status(404).json({ message: "المستخدم غير موجود" });
       }
 
-      const validPassword = await bcrypt.compare(currentPassword, user[0].password);
+      const validPassword = await bcrypt.compare(
+        currentPassword,
+        user[0].password
+      );
       if (!validPassword) {
-        return res.status(400).json({ message: "كلمة المرور الحالية غير صحيحة" });
+        return res
+          .status(400)
+          .json({ message: "كلمة المرور الحالية غير صحيحة" });
       }
     } else {
       // For password reset through email token
@@ -381,7 +391,7 @@ const resetPassword = async (req, res) => {
           message: "رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية",
         });
       }
-      
+
       userId = user[0].id;
     }
 
@@ -437,29 +447,30 @@ const getPassedOrdersHistory = async (req, res) => {
     );
 
     // Format dates and prices and create unique keys
-    const formattedOrders = orders.map(order => ({
+    const formattedOrders = orders.map((order) => ({
       ...order,
-      orderDate: new Date(order.orderDate).toLocaleDateString('ar-SA'),
+      orderDate: new Date(order.orderDate).toLocaleDateString("ar-SA"),
       price: `${order.price} ر.س`,
-      uniqueKey: `${order.id}-${order.orderItemId}`
+      uniqueKey: `${order.id}-${order.orderItemId}`,
     }));
 
     res.json(formattedOrders);
   } catch (error) {
-    console.error('Error fetching passed orders history:', error);
+    console.error("Error fetching passed orders history:", error);
     res.status(500).json({
-      message: 'فشل في جلب سجل الطلبات',
-      error: error.message
+      message: "فشل في جلب سجل الطلبات",
+      error: error.message,
     });
   }
 };
 
+const axios = require("axios");
+
 const downloadInspectionReport = async (req, res) => {
   try {
     const orderId = req.params.orderId;
-    const userId = req.user.id; // From JWT token
+    const userId = req.user.id;
 
-    // First verify that this order belongs to the user
     const [orders] = await pool.query(
       `SELECT o.id 
        FROM orders o
@@ -468,12 +479,11 @@ const downloadInspectionReport = async (req, res) => {
     );
 
     if (orders.length === 0) {
-      return res.status(404).json({ 
-        message: "التقرير غير موجود أو لا يمكنك الوصول إليه" 
+      return res.status(404).json({
+        message: "التقرير غير موجود أو لا يمكنك الوصول إليه",
       });
     }
 
-    // Get the report file path
     const [reports] = await pool.query(
       `SELECT report_file_path 
        FROM inspection_reports 
@@ -482,35 +492,30 @@ const downloadInspectionReport = async (req, res) => {
     );
 
     if (reports.length === 0) {
-      return res.status(404).json({ 
-        message: "تقرير الفحص غير موجود" 
+      return res.status(404).json({
+        message: "تقرير الفحص غير موجود",
       });
     }
 
-    const reportPath = path.join(
-      __dirname,
-      "..",
-      "uploads",
-      "reports",
-      reports[0].report_file_path
+    const pdfURL = reports[0].report_file_path;
+
+    // Assuming the file is hosted externally (e.g., Cloudinary), you fetch it first
+    const fileResponse = await axios.get(pdfURL, {
+      responseType: "stream",
+    });
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=inspection_report_${orderId}.pdf`
     );
+    res.setHeader("Content-Type", "application/pdf");
 
-    // Check if file exists
-    try {
-      await fs.access(reportPath);
-    } catch (error) {
-      return res.status(404).json({ 
-        message: "ملف التقرير غير موجود" 
-      });
-    }
-
-    // Send the file
-    res.sendFile(reportPath);
+    fileResponse.data.pipe(res); // Stream the PDF to the client
   } catch (error) {
     console.error("Error downloading report:", error);
     res.status(500).json({
       message: "فشل في تحميل التقرير",
-      error: error.message
+      error: error.message,
     });
   }
 };

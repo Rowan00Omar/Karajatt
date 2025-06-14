@@ -40,7 +40,7 @@ const {
 } = require("../controllers/inspectionController");
 
 // Configure multer storage
-const storage = multer.diskStorage({
+const storage = multer.memoryStorage({
   destination: async function (req, file, cb) {
     const uploadDir = path.join(__dirname, "..", "uploads", "reports");
     try {
@@ -54,10 +54,10 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const orderId = req.params.orderId;
     const timestamp = Date.now();
-    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, '_');
+    const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
     const safeFileName = `inspection_report_${orderId}_${timestamp}_${originalName}`;
     cb(null, safeFileName);
-  }
+  },
 });
 
 // Configure multer upload
@@ -70,15 +70,15 @@ const upload = multer({
     console.log("Processing file upload:", {
       fieldname: file.fieldname,
       originalname: file.originalname,
-      mimetype: file.mimetype
+      mimetype: file.mimetype,
     });
 
-    if (!file.mimetype.includes('pdf')) {
+    if (!file.mimetype.includes("pdf")) {
       console.error("Invalid file type:", file.mimetype);
-      return cb(new Error('Only PDF files are allowed'), false);
+      return cb(new Error("Only PDF files are allowed"), false);
     }
     cb(null, true);
-  }
+  },
 });
 
 // Dashboard statistics routes
@@ -119,22 +119,22 @@ router.post(
     console.log("Before upload - Body:", req.body);
     next();
   },
-  upload.single('report'),
+  upload.single("report"),
   (req, res, next) => {
     console.log("After upload - Body:", req.body);
     console.log("After upload - File:", req.file);
-    
+
     if (!req.file) {
       console.error("No file received");
       return res.status(400).json({
         message: "No file uploaded",
         debug: {
           headers: req.headers,
-          body: req.body
-        }
+          body: req.body,
+        },
       });
     }
-    
+
     next();
   },
   submitInspectionReport

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 import {
   DocumentCheckIcon,
   DocumentTextIcon,
@@ -178,7 +178,6 @@ const InspectionManagement = () => {
         }
       );
 
-      // Keep showing the order as pending even after starting inspection
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId ? { ...order, status: "pending" } : order
@@ -212,7 +211,7 @@ const InspectionManagement = () => {
       return false;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    if (file.size > 10 * 1024 * 1024) {
       setUploadError("حجم الملف يجب أن لا يتجاوز 10 ميجابايت");
       return false;
     }
@@ -221,7 +220,6 @@ const InspectionManagement = () => {
     return true;
   };
 
-  // Function to handle PDF document load success
   function onDocumentLoadSuccess({ numPages }) {
     setNumPages(numPages);
     setPdfError(null);
@@ -229,18 +227,18 @@ const InspectionManagement = () => {
 
   // Function to handle PDF loading error
   function onDocumentLoadError(error) {
-    console.error('Error while loading document:', error);
-    setPdfError('Failed to load PDF file');
+    console.error("Error while loading document:", error);
+    setPdfError("Failed to load PDF file");
   }
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (validatePdfFile(file)) {
       setReportFile(file);
-      // Create a preview URL
+
       const url = URL.createObjectURL(file);
       setPdfUrl(url);
-      // Reset error states
+
       setPdfError(null);
       setUploadError("");
     } else {
@@ -250,7 +248,6 @@ const InspectionManagement = () => {
     }
   };
 
-  // Cleanup function for the PDF URL
   useEffect(() => {
     return () => {
       if (pdfUrl) {
@@ -286,44 +283,12 @@ const InspectionManagement = () => {
 
       // Create FormData
       const formData = new FormData();
-      
-      // Add file first - ensure it's a File object
-      if (!(reportFile instanceof File)) {
-        setError("خطأ في تحميل الملف. الرجاء المحاولة مرة أخرى");
-        return;
-      }
-      
-      // Log file details before upload
-      console.log("File details:", {
-        name: reportFile.name,
-        type: reportFile.type,
-        size: reportFile.size,
-        lastModified: reportFile.lastModified
-      });
-
-      // Append form data in specific order
       formData.append("report", reportFile);
       formData.append("inspectionStatus", status);
       formData.append("inspectorPhone", inspectorPhone);
       if (inspectorNotes && inspectorNotes.trim()) {
         formData.append("inspectorNotes", inspectorNotes.trim());
       }
-
-      // Log FormData contents
-      console.log("FormData entries:", Array.from(formData.entries()));
-
-      // Log request details
-      console.log("Submitting report with:", {
-        orderId: selectedOrder.id,
-        status,
-        inspectorPhone,
-        hasNotes: !!inspectorNotes,
-        formDataEntries: Array.from(formData.entries()).map(([key, value]) => ({
-          key,
-          type: value instanceof File ? 'File' : 'string',
-          value: value instanceof File ? `${value.name} (${value.type})` : value
-        }))
-      });
 
       const response = await axios.post(
         `/api/admin/inspection/orders/${selectedOrder.id}/report`,
@@ -332,59 +297,38 @@ const InspectionManagement = () => {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
-            "Accept": "application/json"
           },
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total
             );
             setUploadProgress(percentCompleted);
-            console.log(`Upload progress: ${percentCompleted}%`);
           },
-          validateStatus: function (status) {
-            return status >= 200 && status < 500; // Handle all responses to get error details
-          }
         }
       );
 
-      console.log("Upload response:", response.data);
-
-      // Cleanup
-      setSelectedOrder(null);
-      setInspectorPhone("");
-      setInspectorNotes("");
-      setReportFile(null);
-      setPdfUrl(null);
-      setUploadProgress(0);
-      await fetchOrders();
+      if (response.data && response.data.reportUrl) {
+        // Cleanup
+        setSelectedOrder(null);
+        setInspectorPhone("");
+        setInspectorNotes("");
+        setReportFile(null);
+        setPdfUrl(null);
+        setUploadProgress(0);
+        await fetchOrders();
+      } else {
+        throw new Error("Invalid response format");
+      }
     } catch (error) {
-      console.error("Error submitting report:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        debug: error.response?.data?.debug
-      });
-
+      console.error("Error submitting report:", error);
       let errorMessage = "فشل في رفع التقرير. ";
-      
-      if (error.response?.data?.error) {
-        errorMessage += error.response.data.error;
-      } else if (error.response?.data?.message) {
+
+      if (error.response?.data?.message) {
         errorMessage += error.response.data.message;
       } else if (error.response?.status === 413) {
         errorMessage += "حجم الملف كبير جداً. الحد الأقصى هو 10 ميجابايت";
       } else if (error.response?.status === 415) {
         errorMessage += "نوع الملف غير مدعوم. يرجى رفع ملف PDF فقط";
-      } else if (error.response?.status === 401) {
-        errorMessage += "جلسة المستخدم منتهية. الرجاء تسجيل الدخول مرة أخرى";
-      } else if (error.response?.status === 404) {
-        errorMessage += "الطلب غير موجود";
-      } else if (error.response?.status === 500) {
-        errorMessage += "حدث خطأ في الخادم. الرجاء المحاولة مرة أخرى";
-        if (error.response?.data?.debug) {
-          console.error("Server debug info:", error.response.data.debug);
-        }
       } else {
         errorMessage += "الرجاء المحاولة مرة أخرى";
       }
@@ -406,33 +350,25 @@ const InspectionManagement = () => {
       setDownloadingOrderId(orderId);
       setError(null);
 
-      // First verify if the report exists
-      await axios.head(
-        `/api/admin/inspection/orders/${orderId}/report/verify`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
       const response = await axios.get(
-        `/api/admin/inspection/orders/${orderId}/report/download`,
+        `/api/admin/inspection/orders/${orderId}/report`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          responseType: "blob",
         }
       );
 
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `inspection_report_${orderId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      if (
+        response.data &&
+        response.data.report &&
+        response.data.report.report_file_path
+      ) {
+        // Open the Cloudinary URL in a new tab
+        window.open(response.data.report.report_file_path, "_blank");
+      } else {
+        setError("تقرير الفحص غير موجود");
+      }
     } catch (error) {
       console.error("Error downloading report:", error);
       if (error.response?.status === 404) {
@@ -627,7 +563,10 @@ const InspectionManagement = () => {
                     <>
                       <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
                       <div className="flex text-sm text-gray-600">
-                        <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                        <label
+                          htmlFor="file-upload"
+                          className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                        >
                           <span>اختر ملف PDF</span>
                           <input
                             id="file-upload"
@@ -640,7 +579,9 @@ const InspectionManagement = () => {
                           />
                         </label>
                       </div>
-                      <p className="text-xs text-gray-500">PDF حتى 10 ميجابايت</p>
+                      <p className="text-xs text-gray-500">
+                        PDF حتى 10 ميجابايت
+                      </p>
                     </>
                   ) : (
                     <div className="w-full">
@@ -656,12 +597,14 @@ const InspectionManagement = () => {
                             loading={
                               <div className="text-center py-4">
                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-                                <p className="mt-2 text-sm text-gray-600">جاري تحميل الملف...</p>
+                                <p className="mt-2 text-sm text-gray-600">
+                                  جاري تحميل الملف...
+                                </p>
                               </div>
                             }
                             error={
                               <div className="text-center py-4 text-red-600">
-                                <p>{pdfError || 'حدث خطأ في تحميل الملف'}</p>
+                                <p>{pdfError || "حدث خطأ في تحميل الملف"}</p>
                               </div>
                             }
                           >
@@ -675,7 +618,9 @@ const InspectionManagement = () => {
                           {numPages > 0 && (
                             <div className="mt-2 flex justify-center items-center gap-4">
                               <button
-                                onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
+                                onClick={() =>
+                                  setPageNumber(Math.max(1, pageNumber - 1))
+                                }
                                 disabled={pageNumber <= 1}
                                 className="px-2 py-1 text-sm bg-gray-100 rounded disabled:opacity-50"
                               >
@@ -685,7 +630,11 @@ const InspectionManagement = () => {
                                 صفحة {pageNumber} من {numPages}
                               </p>
                               <button
-                                onClick={() => setPageNumber(Math.min(numPages, pageNumber + 1))}
+                                onClick={() =>
+                                  setPageNumber(
+                                    Math.min(numPages, pageNumber + 1)
+                                  )
+                                }
                                 disabled={pageNumber >= numPages}
                                 className="px-2 py-1 text-sm bg-gray-100 rounded disabled:opacity-50"
                               >

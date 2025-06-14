@@ -122,7 +122,7 @@ const Profile = () => {
           </h2>
           <div className="flex gap-2">
             <Link
-              to={`/reset-password/${token}`}
+              to={`/reset-forgotten-password/${token}`}
               className="w-full sm:w-fit bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg transition flex items-center justify-center sm:justify-start gap-2 text-sm sm:text-base"
             >
               <KeyRound className="w-4 sm:w-5 h-4 sm:h-5" />

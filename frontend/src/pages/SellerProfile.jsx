@@ -51,7 +51,10 @@ const SellerProfile = () => {
     return <div className="text-center py-8">لم يتم العثور على البائع</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" dir="rtl">
+    <div
+      className="max-w-7xl mx-auto pt-30 px-4 sm:px-6 lg:px-8 py-8"
+      dir="rtl"
+    >
       {/* Seller Info Card */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-8">
         <div className="flex items-center gap-4 mb-6">

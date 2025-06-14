@@ -27,26 +27,30 @@ const UserProfile = () => {
     const fetchUserInfo = async () => {
       if (!token) return;
 
-      try {   
+      try {
         setLoading(true);
         setError(null);
-        
+
         // Get user info
         const userResponse = await axios.get("/api/auth/userInfo", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const userData = userResponse.data;
-        
+
         if (userData) {
           const fullName = userData.first_name + " " + userData.last_name;
           setUsername(fullName);
           setEmail(userData.email);
-          
+
           // Get passed orders
-          const ordersResponse = await axios.get(`/api/auth/orders/passed/${userData.id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const ordersResponse = await axios.get(
+            `/api/auth/orders/passed/${userData.id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
           setOrderHistory(ordersResponse.data);
+          console.log(ordersResponse.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -97,17 +101,23 @@ const UserProfile = () => {
 
           <div className="mb-3 sm:mb-4">
             <p className="text-xs sm:text-sm text-gray-500">الاسم الكامل</p>
-            <p className="text-base sm:text-lg font-medium text-gray-900">{username}</p>
+            <p className="text-base sm:text-lg font-medium text-gray-900">
+              {username}
+            </p>
           </div>
 
           <div className="mb-4 sm:mb-6">
-            <p className="text-xs sm:text-sm text-gray-500">البريد الإلكتروني</p>
-            <p className="text-base sm:text-lg font-medium text-gray-900 break-all">{email}</p>
+            <p className="text-xs sm:text-sm text-gray-500">
+              البريد الإلكتروني
+            </p>
+            <p className="text-base sm:text-lg font-medium text-gray-900 break-all">
+              {email}
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6">
             <Link
-              to={`/reset-password/${token}`}
+              to={`/reset-forgotten-password/${token}`}
               className="w-full sm:w-fit bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg transition flex items-center justify-center sm:justify-start gap-2 text-sm sm:text-base"
             >
               <KeyRound className="w-4 sm:w-5 h-4 sm:h-5" />
@@ -143,27 +153,51 @@ const UserProfile = () => {
               <table className="min-w-full text-sm text-right">
                 <thead className="text-gray-500 border-b">
                   <tr>
-                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">اسم القطعة</th>
-                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">تاريخ الطلب</th>
-                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">السعر</th>
-                    <th className="py-2 text-xs sm:text-sm font-medium">اسم البائع</th>
-                    <th className="py-2 text-xs sm:text-sm font-medium">الإجراءات</th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">
+                      اسم القطعة
+                    </th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">
+                      تاريخ الطلب
+                    </th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">
+                      السعر
+                    </th>
+                    <th className="py-2 text-xs sm:text-sm font-medium">
+                      اسم البائع
+                    </th>
+                    <th className="py-2 text-xs sm:text-sm font-medium">
+                      الإجراءات
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="text-gray-800">
                   {orderHistory.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="text-center py-4 text-gray-500">
+                      <td
+                        colSpan="5"
+                        className="text-center py-4 text-gray-500"
+                      >
                         لا توجد طلبات مفحوصة سليمة
                       </td>
                     </tr>
                   ) : (
                     orderHistory.map((order) => (
-                      <tr key={order.uniqueKey} className="border-b hover:bg-gray-50">
-                        <td className="py-3 pr-4 text-xs sm:text-sm">{order.partName}</td>
-                        <td className="py-3 pr-4 text-xs sm:text-sm">{order.orderDate}</td>
-                        <td className="py-3 pr-4 text-xs sm:text-sm">{order.price}</td>
-                        <td className="py-3 text-xs sm:text-sm">{order.seller}</td>
+                      <tr
+                        key={order.uniqueKey}
+                        className="border-b hover:bg-gray-50"
+                      >
+                        <td className="py-3 pr-4 text-xs sm:text-sm">
+                          {order.partName}
+                        </td>
+                        <td className="py-3 pr-4 text-xs sm:text-sm">
+                          {order.orderDate}
+                        </td>
+                        <td className="py-3 pr-4 text-xs sm:text-sm">
+                          {order.price}
+                        </td>
+                        <td className="py-3 text-xs sm:text-sm">
+                          {order.seller}
+                        </td>
                         <td className="py-3">
                           <div className="flex gap-2">
                             <button
@@ -172,35 +206,47 @@ const UserProfile = () => {
                                   const response = await axios.get(
                                     `/api/auth/orders/${order.id}/report/download`,
                                     {
-                                      headers: { Authorization: `Bearer ${token}` },
-                                      responseType: 'blob'
+                                      headers: {
+                                        Authorization: `Bearer ${token}`,
+                                      },
+                                      responseType: "blob",
                                     }
                                   );
-                                  
+
                                   // Create blob link to download
-                                  const url = window.URL.createObjectURL(new Blob([response.data]));
-                                  const link = document.createElement('a');
+                                  const url = window.URL.createObjectURL(
+                                    new Blob([response.data])
+                                  );
+                                  const link = document.createElement("a");
                                   link.href = url;
-                                  link.setAttribute('download', `inspection_report_${order.id}.pdf`);
+                                  link.setAttribute(
+                                    "download",
+                                    `inspection_report_${order.id}.pdf`
+                                  );
                                   document.body.appendChild(link);
                                   link.click();
-                                  
+
                                   // Clean up
                                   link.parentNode.removeChild(link);
                                   window.URL.revokeObjectURL(url);
                                 } catch (error) {
-                                  console.error('Error downloading report:', error);
-                                  const errorMessage = error.response?.data?.message || 'فشل في تحميل التقرير';
+                                  console.error(
+                                    "Error downloading report:",
+                                    error
+                                  );
+                                  const errorMessage =
+                                    error.response?.data?.message ||
+                                    "فشل في تحميل التقرير";
                                   setError(errorMessage);
                                 }
                               }}
                               className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 whitespace-nowrap"
                             >
                               <DocumentTextIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
-                               تقرير الفحص
+                              تقرير الفحص
                             </button>
-                            {order.inspectorPhone && (
-                              visiblePhoneOrderId === order.id ? (
+                            {order.inspectorPhone &&
+                              (visiblePhoneOrderId === order.id ? (
                                 <span className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-green-700 bg-green-100 whitespace-nowrap">
                                   <PhoneIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
                                   {order.inspectorPhone}
@@ -208,13 +254,14 @@ const UserProfile = () => {
                               ) : (
                                 <button
                                   type="button"
-                                  onClick={() => setVisiblePhoneOrderId(order.id)}
+                                  onClick={() =>
+                                    setVisiblePhoneOrderId(order.id)
+                                  }
                                   className="inline-flex items-center px-2 sm:px-3 py-1 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 whitespace-nowrap"
                                 >
                                   <PhoneIcon className="h-3 sm:h-4 w-3 sm:w-4 ml-1" />
                                 </button>
-                              )
-                            )}
+                              ))}
                           </div>
                         </td>
                       </tr>

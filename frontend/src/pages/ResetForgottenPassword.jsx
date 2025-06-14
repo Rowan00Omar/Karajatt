@@ -5,7 +5,8 @@ import { KeyRound, X } from "lucide-react";
 import Input from "../components/Input";
 import Button from "../components/Button";
 
-const ResetPassword = () => {
+const ResetForgottenPassword = () => {
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -14,9 +15,19 @@ const ResetPassword = () => {
 
   const { token } = useParams();
   const navigate = useNavigate();
+  const isLoggedIn = !!localStorage.getItem("token");
 
   const handleClose = () => {
-    navigate("/login");
+    const userRole = localStorage.getItem("userRole");
+    if (userRole === "seller") {
+      navigate("/seller");
+    } else if (userRole === "user") {
+      navigate("/user");
+    } else if (userRole === "admin") {
+      navigate("/admin");
+    } else {
+      navigate("/login");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -24,6 +35,12 @@ const ResetPassword = () => {
     setError("");
     setMessage("");
     setLoading(true);
+
+    if (isLoggedIn && !currentPassword) {
+      setError("يرجى إدخال كلمة المرور الحالية");
+      setLoading(false);
+      return;
+    }
 
     if (!password || !confirmPassword) {
       setError("يرجى تعبئة جميع الحقول");
@@ -44,14 +61,34 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await axios.post("/api/auth/reset-password", {
-        token,
-        password,
-      });
-
+      const authToken = localStorage.getItem("token");
+      const response = await axios.post(
+        "/api/auth/reset-password",
+        {
+          token: token || authToken,
+          password,
+          ...(isLoggedIn && { currentPassword }),
+        },
+        {
+          headers: authToken
+            ? {
+                Authorization: `Bearer ${authToken}`,
+              }
+            : {},
+        }
+      );
       setMessage(response.data.message || "تم تغيير كلمة المرور بنجاح");
       setTimeout(() => {
-        navigate("/login");
+        const userRole = localStorage.getItem("userRole");
+        if (userRole === "seller") {
+          navigate("/seller");
+        } else if (userRole === "user") {
+          navigate("/user");
+        } else if (userRole === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/login");
+        }
       }, 2000);
     } catch (err) {
       setError(
@@ -79,10 +116,12 @@ const ResetPassword = () => {
                 <KeyRound className="text-indigo-600" size={32} />
               </div>
               <h2 className="text-3xl font-bold text-gray-900">
-                إعادة تعيين كلمة المرور
+                {isLoggedIn ? "تغيير كلمة المرور" : "إعادة تعيين كلمة المرور"}
               </h2>
               <p className="text-gray-600 text-center">
-                أدخل كلمة المرور الجديدة
+                {isLoggedIn
+                  ? "قم بإدخال كلمة المرور الحالية والجديدة"
+                  : "أدخل كلمة المرور الجديدة"}
               </p>
             </div>
 
@@ -102,6 +141,18 @@ const ResetPassword = () => {
 
             {/* Form Fields */}
             <div className="space-y-4">
+              {isLoggedIn && (
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="كلمة المرور الحالية"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full"
+                    disabled={loading}
+                  />
+                </div>
+              )}
               <div>
                 <Input
                   type="password"
@@ -139,4 +190,4 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword;
+export default ResetForgottenPassword;

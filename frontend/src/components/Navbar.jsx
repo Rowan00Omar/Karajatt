@@ -30,17 +30,29 @@ const Navbar = () => {
       {/* Desktop Nav */}
       <nav className="hidden md:flex fixed justify-between bg-gradient-to-b from-gray-900 to-gray-800 items-center top-0 left-0 right-0 w-full px-6 py-4 z-40 border-b border-gray-700">
         <div className="w-[144px]"></div>
-
-        <Link
-          to="/"
-          className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-        >
-          <img
-            src={Logo}
-            alt="Khaliji Logo"
-            className="h-16 w-auto transition-all hover:scale-105 hover:brightness-110 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]"
-          />
-        </Link>
+        {userRole ? (
+          <Link
+            to="/user"
+            className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+          >
+            <img
+              src={Logo}
+              alt="Khaliji Logo"
+              className="h-16 w-auto transition-all hover:scale-105 hover:brightness-110 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]"
+            />
+          </Link>
+        ) : (
+          <Link
+            to="/"
+            className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+          >
+            <img
+              src={Logo}
+              alt="Khaliji Logo"
+              className="h-16 w-auto transition-all hover:scale-105 hover:brightness-110 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]"
+            />
+          </Link>
+        )}
 
         <div className="flex items-center space-x-4">
           <div className="text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">

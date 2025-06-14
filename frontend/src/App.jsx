@@ -27,10 +27,11 @@ import Profile from "./pages/seller/Profile";
 import UserProfile from "./pages/UserProfile";
 import CouponsPage from "./pages/admin/coupons";
 import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
+import ResetForgottenPassword from "./pages/ResetForgottenPassword";
 import SellersManagementPage from "./pages/admin/sellers";
 import PaymentResult from "./pages/PaymentResult";
-
+import ResetPassword from "./pages/ResetPassword";
+import BillingForm from "./pages/BillingForm";
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
   const shouldShowNavbar = showNavbar && currentRole !== "seller";
@@ -220,14 +221,22 @@ function App() {
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
-          path="/reset-password/:token"
+          path="/reset-forgotten-password/:token"
           element={
             <ProtectedRoute>
-              <ResetPassword />
+              <ResetForgottenPassword />
             </ProtectedRoute>
           }
         />
-
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute>
+              <BillingForm />
+            </ProtectedRoute>
+          }
+        />
         {/* Public Routes */}
         <Route
           path="/search"

@@ -3,6 +3,7 @@ import { useCart } from "../context/CartContext";
 import { X, Star } from "lucide-react";
 import Button from "./Button";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Cart = ({ onClose }) => {
   const {
@@ -22,6 +23,8 @@ const Cart = ({ onClose }) => {
   const [feeError, setFeeError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchInspectionFee = async () => {
@@ -48,34 +51,11 @@ const Cart = ({ onClose }) => {
       setIsProcessing(true);
       setPaymentError(null);
 
-      // Get user token and info
+      // Get user token
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("يرجى تسجيل الدخول للمتابعة");
       }
-
-      const userResponse = await axios.get("/api/auth/userInfo", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const userId = userResponse.data.id;
-
-      // Prepare billing data
-      const billingData = {
-        first_name: userResponse.data.first_name || "Ali",
-        last_name: userResponse.data.last_name || "Mohamed",
-        email: userResponse.data.email || "alimohamed@gmail.com",
-        phone_number: userResponse.data.phone_number || "+966512345678",
-        apartment: "12",
-        floor: "1",
-        street: "King Fahad Rd",
-        building: "25B",
-        shipping_method: "PKG",
-        postal_code: "12345",
-        city: "Riyadh",
-        country: "SA",
-        state: "Riyadh",
-      };
 
       // Format items for PayMob
       const formattedItems = cartItems.map((item) => ({
@@ -89,42 +69,22 @@ const Cart = ({ onClose }) => {
         quantity: item.quantity || 1,
       }));
 
-      // Initialize payment
-      const paymentResponse = await axios.post(
-        "/api/payments/checkout",
-        {
-          cartItems: formattedItems,
-          userId,
-          billingData,
-          amount: finalTotal,
-          inspectionFees: totalInspectionFees,
-          appliedCoupon: appliedCoupon
-            ? {
-                code: appliedCoupon.code,
-                discount: discount,
-              }
-            : null,
-        },
-        {
-          baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+      // Navigate to billing form with cart data
+      navigate("/billing", {
+        state: {
+          cartData: {
+            cartItems: formattedItems,
+            amount: finalTotal,
+            inspectionFees: totalInspectionFees,
+            appliedCoupon: appliedCoupon
+              ? {
+                  code: appliedCoupon.code,
+                  discount: discount,
+                }
+              : null,
           },
-          withCredentials: true,
-        }
-      );
-
-      if (paymentResponse.data.success && paymentResponse.data.paymentUrl) {
-        // Store order ID in localStorage for later reference
-        localStorage.setItem("currentOrderId", paymentResponse.data.orderId);
-        // Redirect to PayMob payment page
-        window.location.href = paymentResponse.data.paymentUrl;
-      } else {
-        throw new Error(
-          paymentResponse.data.error || "فشل في تهيئة عملية الدفع"
-        );
-      }
+        },
+      });
     } catch (error) {
       if (error.code === "ERR_NETWORK") {
         setPaymentError(

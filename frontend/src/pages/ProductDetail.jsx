@@ -45,7 +45,9 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(`/api/products/getSingleProduct/${id}`);
+        const response = await axios.get(
+          `/api/products/getSingleProduct/${id}`
+        );
         setProduct(response.data);
         // Create array of all available images
         const images = [
@@ -86,7 +88,7 @@ const ProductDetail = () => {
                   src={allImages[currentImageIndex] || "/placeholder.jpg"}
                   alt={product.title}
                   className="max-w-full max-h-full object-contain"
-                  style={{ backgroundColor: 'white' }}
+                  style={{ backgroundColor: "white" }}
                 />
               </div>
             </Zoom>
@@ -114,7 +116,9 @@ const ProductDetail = () => {
                   key={idx}
                   onClick={() => setCurrentImageIndex(idx)}
                   className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
-                    idx === currentImageIndex ? "bg-blue-600 scale-110" : "bg-gray-300 hover:bg-gray-400"
+                    idx === currentImageIndex
+                      ? "bg-blue-600 scale-110"
+                      : "bg-gray-300 hover:bg-gray-400"
                   }`}
                 />
               ))}
@@ -161,7 +165,7 @@ const ProductDetail = () => {
               البائع:{" "}
               <span
                 className="font-medium text-blue-600 cursor-pointer hover:underline"
-                onClick={() => navigate(`/seller-profile/${product.seller_id}`)}
+                onClick={() => navigate(`/seller/${product.seller_id}`)}
               >
                 {product.seller_name}
               </span>

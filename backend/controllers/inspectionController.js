@@ -2,51 +2,16 @@ const pool = require("../db");
 const path = require("path");
 const fs = require("fs").promises;
 const multer = require("multer");
+const { cloudinary } = require("../config/cloudinary");
 
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: async function (req, file, cb) {
-    try {
-      const uploadDir = path.join(__dirname, "..", "uploads", "reports");
-      // Ensure the directory exists
-      await fs.mkdir(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (error) {
-      console.error("Error creating upload directory:", error);
-      cb(new Error(`Failed to create upload directory: ${error.message}`));
-    }
-  },
-  filename: function (req, file, cb) {
-    try {
-      const orderId = req.params.orderId;
-      const timestamp = Date.now();
-      const originalName = file.originalname.replace(/[^a-zA-Z0-9.]/g, "_");
-      const safeFileName = `inspection_report_${orderId}_${timestamp}_${originalName}`;
-      cb(null, safeFileName);
-    } catch (error) {
-      console.error("Error generating filename:", error);
-      cb(new Error(`Failed to generate filename: ${error.message}`));
-    }
-  },
-});
-
-// Configure multer upload
+// Configure multer for memory storage
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: function (req, file, cb) {
-    console.log("Received file:", {
-      fieldname: file.fieldname,
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-    });
-
-    // Check file type
     if (!file.mimetype.includes("pdf")) {
-      console.error("Invalid file type:", file.mimetype);
       return cb(new Error("Only PDF files are allowed"), false);
     }
     cb(null, true);
@@ -55,16 +20,8 @@ const upload = multer({
 
 // Export the configured upload middleware
 exports.upload = (req, res, next) => {
-  console.log("Starting file upload process");
-
   upload(req, res, function (err) {
-    console.log("Multer processing complete");
-    console.log("Request body after multer:", req.body);
-    console.log("Request file after multer:", req.file);
-
     if (err instanceof multer.MulterError) {
-      console.error("Multer error:", err);
-      // A Multer error occurred when uploading
       if (err.code === "LIMIT_FILE_SIZE") {
         return res.status(413).json({
           message: "File is too large. Maximum size is 10MB",
@@ -74,8 +31,6 @@ exports.upload = (req, res, next) => {
         message: `Upload error: ${err.message}`,
       });
     } else if (err) {
-      console.error("Upload error:", err);
-      // An unknown error occurred
       if (err.message === "Only PDF files are allowed") {
         return res.status(415).json({
           message: err.message,
@@ -86,19 +41,11 @@ exports.upload = (req, res, next) => {
       });
     }
 
-    // Check if file exists
     if (!req.file) {
-      console.error("No file uploaded");
       return res.status(400).json({
         message: "No file uploaded",
       });
     }
-
-    console.log("File uploaded successfully:", {
-      filename: req.file.filename,
-      path: req.file.path,
-      size: req.file.size,
-    });
 
     next();
   });
@@ -222,101 +169,40 @@ exports.startInspection = async (req, res) => {
 exports.submitInspectionReport = async (req, res) => {
   let connection;
   try {
-    console.log("Starting report submission");
-    console.log("Request body:", req.body);
-    console.log("Request files:", req.files);
-    console.log("Content type:", req.headers["content-type"]);
-
-    // Validate file upload
-    if (!req.file) {
-      return res.status(400).json({
-        message: "No file uploaded",
-      });
-    }
-
     const { orderId } = req.params;
     const { inspectionStatus, inspectorPhone, inspectorNotes } = req.body;
 
-    console.log("Parsed values:", {
-      orderId,
-      inspectionStatus,
-      inspectorPhone,
-      hasNotes: !!inspectorNotes,
-      file: {
-        filename: req.file.filename,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
-      },
-    });
-
     // Validate required fields
     if (!inspectionStatus || !inspectorPhone) {
-      console.log("Missing required fields:", {
-        inspectionStatus,
-        inspectorPhone,
-      });
       return res.status(400).json({
         message:
           "Missing required fields: status and inspector phone number are required",
       });
     }
 
-    // Validate file
-    const reportFile = req.files.report;
-    console.log("Uploaded file details:", {
-      name: reportFile.name,
-      size: reportFile.size,
-      mimetype: reportFile.mimetype,
-      tempFilePath: reportFile.tempFilePath,
-    });
-
-    if (reportFile.mimetype !== "application/pdf") {
-      return res.status(400).json({
-        message: "Only PDF files are allowed",
-      });
-    }
-
-    const reportFileName = `inspection_report_${orderId}_${Date.now()}.pdf`;
-    const reportPath = path.join(
-      __dirname,
-      "..",
-      "uploads",
-      "reports",
-      reportFileName
-    );
-
-    // Ensure uploads directory exists
-    await fs.mkdir(path.join(__dirname, "..", "uploads", "reports"), {
-      recursive: true,
-    });
-
-    await fs
-      .unlink(req.file.path)
-      .catch((err) =>
-        console.error("Error deleting file after validation failure:", err)
-      );
-
     // Validate phone number format
     const phoneRegex = /^(05)[0-9]{8}$/;
     if (!phoneRegex.test(inspectorPhone)) {
-      console.error("Invalid phone number:", inspectorPhone);
-      await fs
-        .unlink(req.file.path)
-        .catch((err) =>
-          console.error("Error deleting file after validation failure:", err)
-        );
       return res.status(400).json({
         message: "Invalid phone number format",
       });
     }
 
+    // Upload file to Cloudinary
+    const b64 = Buffer.from(req.file.buffer).toString("base64");
+    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+    const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
+      resource_type: "raw",
+      folder: "inspection_reports",
+      public_id: `report_${orderId}_${Date.now()}`,
+    });
+
     // Get database connection
     connection = await pool.getConnection();
-    console.log("Database connection established");
 
     try {
       await connection.beginTransaction();
-      console.log("Transaction started");
 
       // First check if order exists and can be updated
       const [orderCheck] = await connection.query(
@@ -328,13 +214,10 @@ exports.submitInspectionReport = async (req, res) => {
         throw new Error(`Order ${orderId} not found`);
       }
 
+      // Update order status
       const [updateResult] = await connection.query(
         "UPDATE orders SET status = ? WHERE id = ?",
         [inspectionStatus, orderId]
-      );
-      console.log(
-        "Order status updated, affected rows:",
-        updateResult.affectedRows
       );
 
       if (updateResult.affectedRows === 0) {
@@ -350,59 +233,30 @@ exports.submitInspectionReport = async (req, res) => {
           orderId,
           inspectorPhone,
           inspectionStatus,
-          req.file.filename,
-          inspectorNotes,
+          cloudinaryResponse.secure_url,
+          inspectorNotes || null,
         ]
-      );
-      console.log(
-        "Inspection report record created, insertId:",
-        insertResult.insertId
       );
 
       await connection.commit();
-      console.log("Transaction committed");
 
       res.json({
         message: "Inspection report submitted successfully",
-        reportPath: `/uploads/reports/${req.file.filename}`,
+        reportUrl: cloudinaryResponse.secure_url,
       });
     } catch (error) {
-      console.error("Database error:", error);
       await connection.rollback();
-      await fs
-        .unlink(req.file.path)
-        .catch((err) =>
-          console.error("Error deleting file after database error:", err)
-        );
       throw error;
     }
   } catch (error) {
     console.error("Error in submitInspectionReport:", error);
-    if (req.file && req.file.path) {
-      try {
-        await fs.unlink(req.file.path);
-      } catch (unlinkError) {
-        console.error("Error cleaning up file:", unlinkError);
-      }
-    }
     res.status(500).json({
       message: "Failed to submit inspection report",
       error: error.message,
-      debug: {
-        body: req.body,
-        file: req.file
-          ? {
-              filename: req.file.filename,
-              size: req.file.size,
-              mimetype: req.file.mimetype,
-            }
-          : null,
-      },
     });
   } finally {
     if (connection) {
       connection.release();
-      console.log("Database connection released");
     }
   }
 };

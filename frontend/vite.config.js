@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+
 export default defineConfig({
   server: {
     proxy: {
@@ -16,6 +17,18 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  optimizeDeps: {
+    include: ["pdfjs-dist/build/pdf.worker.mjs"],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          pdfjs: ["pdfjs-dist/build/pdf.worker.mjs"],
+        },
+      },
     },
   },
 });
