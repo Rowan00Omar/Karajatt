@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Search, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { Search, Plus, Trash2 } from "lucide-react";
 
 const InventoryPage = () => {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [deletingId, setDeletingId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     fetchInventory();
@@ -17,45 +18,58 @@ const InventoryPage = () => {
 
   const fetchInventory = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/seller/inventory?sort=${sortBy}&order=${sortOrder}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `/api/seller/inventory?sort=${sortBy}&order=${sortOrder}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setInventory(response.data.products || []);
     } catch (err) {
-      console.error('Error fetching inventory:', err);
-      setError(err.response?.data?.message || 'Failed to fetch inventory');
+      console.error("Error fetching inventory:", err);
+      setError(err.response?.data?.message || "Failed to fetch inventory");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (productId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+    if (!window.confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
       return;
     }
 
     try {
       setDeletingId(productId);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       await axios.delete(`/api/seller/inventory/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       // Remove the deleted product from the state
-      setInventory(inventory.filter(item => item.product_id !== productId));
+      setInventory(inventory.filter((item) => item.product_id !== productId));
     } catch (err) {
-      console.error('Error deleting product:', err);
-      alert(err.response?.data?.message || 'Failed to delete product');
+      console.error("Error deleting product:", err);
+      alert(err.response?.data?.message || "Failed to delete product");
     } finally {
       setDeletingId(null);
     }
   };
 
-  const filteredInventory = inventory.filter(item =>
-    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.part_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredInventory = inventory.filter((item) => {
+    const matchesSearch =
+      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.part_name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "sold"
+        ? item.status === "sold"
+        : item.status !== "sold";
+
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) {
     return (
@@ -96,6 +110,15 @@ const InventoryPage = () => {
             </div>
             <div className="flex gap-4">
               <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all duration-200 bg-white"
+              >
+                <option value="all">جميع المنتجات</option>
+                <option value="available">المنتجات المتوفرة</option>
+                <option value="sold">المنتجات المباعة</option>
+              </select>
+              <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-all duration-200 bg-white"
@@ -119,16 +142,29 @@ const InventoryPage = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-50">
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">القطعة</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">السيارة</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">السعر</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">الحالة</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">حذف المنتج</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                  القطعة
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                  السيارة
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                  السعر
+                </th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900">
+                  الحالة
+                </th>
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                  حذف المنتج
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredInventory.map((item) => (
-                <tr key={item.product_id} className="hover:bg-gray-50 transition-colors duration-150">
+                <tr
+                  key={item.product_id}
+                  className="hover:bg-gray-50 transition-colors duration-150"
+                >
                   <td className="px-6 py-4 text-right">
                     <div>
                       <p className="font-medium text-gray-900">{item.title}</p>
@@ -142,26 +178,46 @@ const InventoryPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className="font-medium text-gray-900">{item.price} ر.س</span>
+                    <span className="font-medium text-gray-900">
+                      {item.price} ر.س
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      item.approval_status === 'approved'
-                        ? 'bg-green-100 text-green-800'
-                        : item.approval_status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {item.approval_status === 'approved' ? 'معتمد' :
-                       item.approval_status === 'pending' ? 'قيد المراجعة' : 'مرفوض'}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          item.approval_status === "approved"
+                            ? "bg-green-100 text-green-800"
+                            : item.approval_status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {item.approval_status === "approved"
+                          ? "معتمد"
+                          : item.approval_status === "pending"
+                          ? "قيد المراجعة"
+                          : "مرفوض"}
+                      </span>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          item.status === "sold"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {item.status === "sold" ? "مباع" : "متوفر"}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={() => handleDelete(item.product_id)}
                       disabled={deletingId === item.product_id}
                       className={`text-red-600 hover:text-red-800 transition-colors p-2 rounded-full hover:bg-red-50 ${
-                        deletingId === item.product_id ? 'opacity-50 cursor-not-allowed' : ''
+                        deletingId === item.product_id
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
                       }`}
                       title="حذف المنتج"
                     >
@@ -183,5 +239,6 @@ const InventoryPage = () => {
       </div>
     </div>
   );
-}
-export  {InventoryPage};
+};
+
+export { InventoryPage };

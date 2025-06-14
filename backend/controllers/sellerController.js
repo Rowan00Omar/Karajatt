@@ -6,6 +6,7 @@ const {
   cloudinaryUploadMultipleImages,
 } = require("../utils/cloudinary");
 const { handleDatabaseError } = require("../utils/errorHandlers");
+const { safeDeleteFile } = require("../utils/fileUtils");
 
 exports.getSellerProfile = async (req, res) => {
   try {
@@ -155,34 +156,44 @@ exports.sellerUpload = async (req, res) => {
 
   try {
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: "No images uploaded" });
+      return res.status(400).json({ message: "لم يتم رفع أي صور" });
     }
 
     // Get file paths and ensure they exist
     const filePaths = req.files.map((file) => {
       const filePath = path.join(__dirname, "../images", file.filename);
       if (!fs.existsSync(filePath)) {
-        throw new Error(`File not found: ${filePath}`);
+        throw new Error(`لم يتم العثور على الملف: ${filePath}`);
       }
       return filePath;
     });
 
     // Upload to cloudinary with better error handling
-    const uploadResults = await cloudinaryUploadMultipleImages(filePaths);
+    let uploadResults;
+    try {
+      uploadResults = await cloudinaryUploadMultipleImages(filePaths);
+    } catch (uploadError) {
+      throw new Error("فشل في رفع الصور إلى التخزين السحابي");
+    }
 
     if (
       !Array.isArray(uploadResults) ||
       uploadResults.some((result) => result instanceof Error)
     ) {
-      throw new Error("Failed to upload images to cloud storage");
+      throw new Error("فشل في رفع بعض الصور إلى التخزين السحابي");
     }
 
     // Clean up local files
     for (const filePath of filePaths) {
       try {
-        await fs.promises.unlink(filePath);
+        const deleteSuccess = await safeDeleteFile(filePath);
+        if (!deleteSuccess) {
+          console.error(
+            `Failed to delete file after multiple attempts: ${filePath}`
+          );
+        }
       } catch (err) {
-        console.error(`Failed to delete temporary file: ${filePath}`, err);
+        console.error(`Error during file cleanup: ${filePath}`, err);
       }
     }
 
@@ -200,7 +211,7 @@ exports.sellerUpload = async (req, res) => {
     );
 
     if (categoryRows.length === 0) {
-      return res.status(400).json({ message: "Invalid category name" });
+      return res.status(400).json({ message: "اسم الفئة غير صالح" });
     }
 
     const category_id = categoryRows[0].id;
@@ -234,10 +245,11 @@ exports.sellerUpload = async (req, res) => {
     );
 
     res.status(201).json({
-      message: "Product uploaded successfully and pending approval.",
+      message: "تم رفع المنتج بنجاح وانتظار الموافقة",
       images: uploadResults.map((r) => r.secure_url),
     });
   } catch (err) {
+    console.error("Upload error:", err);
     res.status(500).json({
       message: err.message || "حدث خطأ أثناء رفع القطعة",
       details: process.env.NODE_ENV === "development" ? err.stack : undefined,
@@ -282,6 +294,13 @@ exports.filterProducts = async (req, res) => {
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.approval_status = 'approved'
+      AND p.status != 'sold'
+      AND NOT EXISTS (
+        SELECT 1 FROM orders o 
+        JOIN order_items oi ON o.id = oi.order_id 
+        WHERE oi.product_id = p.product_id 
+        AND o.payment_status = 'paid'
+      )
     `;
 
     const params = [];
@@ -321,8 +340,12 @@ exports.filterProducts = async (req, res) => {
 
     const [products] = await pool.query(query, params);
     res.json(products);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error("Error in filterProducts:", error);
+    res.status(500).json({
+      message: "Failed to filter products",
+      error: error.message,
+    });
   }
 };
 

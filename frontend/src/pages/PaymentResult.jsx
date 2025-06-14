@@ -12,12 +12,19 @@ const PaymentResult = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        const success = searchParams.get("success") === "true";
         const orderId = searchParams.get("order_id");
+        const success = searchParams.get("success");
+        const transactionId = searchParams.get("transaction_id");
 
-        if (success && orderId) {
+        if (orderId) {
           // Verify payment status with backend
-          const response = await axios.get(`/api/payments/verify/${orderId}`);
+          const response = await axios.get(`/api/payments/verify/${orderId}`, {
+            params: {
+              success,
+              transaction_id: transactionId,
+            },
+          });
+
           if (response.data.success) {
             setStatus("success");
             setOrderDetails(response.data.order);
@@ -28,6 +35,7 @@ const PaymentResult = () => {
           setStatus("failed");
         }
       } catch (error) {
+        console.error("Payment verification error:", error);
         setStatus("failed");
       }
     };
@@ -40,7 +48,9 @@ const PaymentResult = () => {
   };
 
   const handleViewOrder = () => {
-    navigate(`/orders/${orderDetails?.id}`);
+    if (orderDetails?.id) {
+      navigate(`/orders/${orderDetails.id}`);
+    }
   };
 
   return (

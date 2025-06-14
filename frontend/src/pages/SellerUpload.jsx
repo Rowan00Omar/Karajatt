@@ -125,26 +125,48 @@ const SellerUpload = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("manufacturer", manufacturer);
-    formData.append("model", model);
-    formData.append("startYear", startYear);
-    formData.append("endYear", endYear);
-    formData.append("category", category);
-    formData.append("part", part);
-    formData.append("status", status);
-    formData.append("title", title);
-    formData.append("extraDetails", extraDetails);
-    formData.append("timeInStock", timeInStock);
-    formData.append("price", price);
-    formData.append("condition", condition);
-    formData.append("id", id);
-
-    for (let i = 0; i < images.length; i++) {
-      formData.append("images", images[i]);
-    }
-
     try {
+      setLoading(true);
+      setError("");
+      setMessage("");
+
+      const formData = new FormData();
+      formData.append("manufacturer", manufacturer);
+      formData.append("model", model);
+      formData.append("startYear", startYear);
+      formData.append("endYear", endYear);
+      formData.append("category", category);
+      formData.append("part", part);
+      formData.append("status", status);
+      formData.append("title", title);
+      formData.append("extraDetails", extraDetails);
+      formData.append("timeInStock", timeInStock);
+      formData.append("price", price);
+      formData.append("condition", condition);
+      formData.append("id", id);
+
+      // Log the form data for debugging
+      console.log("Form Data being sent:", {
+        manufacturer,
+        model,
+        startYear,
+        endYear,
+        category,
+        part,
+        status,
+        title,
+        extraDetails,
+        timeInStock,
+        price,
+        condition,
+        id,
+        imagesCount: images.length,
+      });
+
+      for (let i = 0; i < images.length; i++) {
+        formData.append("images", images[i]);
+      }
+
       const token = localStorage.getItem("token");
       if (!token) {
         setError("يرجى تسجيل الدخول أولاً");
@@ -165,17 +187,35 @@ const SellerUpload = () => {
         resetForm();
       }
     } catch (err) {
-      console.error("Upload failed:", err);
+      console.error("فشل في رفع المنتج:", err);
+
       if (err.response) {
-        console.error("Server error details:", err.response.data);
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("تفاصيل خطأ الخادم:", {
+          status: err.response.status,
+          data: err.response.data,
+          headers: err.response.headers,
+        });
+
         setError(
           `خطأ في الخادم: ${
-            err.response.data.message || "حدث خطأ أثناء رفع القطعة"
+            err.response.data?.message ||
+            err.response.data?.error ||
+            "حدث خطأ أثناء رفع القطعة"
           }`
         );
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error("لم يتم استلام رد من الخادم:", err.request);
+        setError("لم يتم استلام رد من الخادم. يرجى التحقق من اتصالك بالإنترنت");
       } else {
-        setError("حدث خطأ أثناء رفع القطعة");
+        // Something happened in setting up the request that triggered an Error
+        console.error("خطأ في إعداد الطلب:", err.message);
+        setError("حدث خطأ أثناء إعداد الطلب");
       }
+    } finally {
+      setLoading(false);
     }
   };
 

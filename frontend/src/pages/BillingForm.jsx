@@ -50,7 +50,6 @@ const BillingForm = () => {
           phone_number: response.data.phone_number || "",
         }));
       } catch (err) {
-        console.error("Error fetching user data:", err);
         navigate("/login");
       }
     };
@@ -60,10 +59,30 @@ const BillingForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    if (name === "phone_number") {
+      let formattedNumber = value.replace(/\D/g, "");
+
+      if (!formattedNumber.startsWith("966")) {
+        if (formattedNumber.startsWith("0")) {
+          formattedNumber = formattedNumber.substring(1);
+        }
+
+        if (!formattedNumber.startsWith("966")) {
+          formattedNumber = "+966" + formattedNumber;
+        }
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        [name]: formattedNumber,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -76,20 +95,21 @@ const BillingForm = () => {
       const cartData = location.state?.cartData;
 
       if (!cartData) {
-        throw new Error("No cart data found");
+        throw new Error("لم يتم العثور على بيانات السلة");
       }
 
-      console.log("Payment Request Data:", {
-        cartData,
-        billingData: formData,
-        timestamp: new Date().toISOString(),
-      });
+      const formattedData = {
+        ...formData,
+        phone_number: formData.phone_number.startsWith("+966")
+          ? formData.phone_number
+          : "+966" + formData.phone_number,
+      };
 
       const response = await axios.post(
         "/api/payments/checkout",
         {
           ...cartData,
-          billingData: formData,
+          billingData: formattedData,
         },
         {
           headers: {
@@ -100,25 +120,17 @@ const BillingForm = () => {
       );
 
       if (response.data.success && response.data.paymentUrl) {
-        // Log the PayMob response data
-        console.log("PayMob Response:", {
-          orderId: response.data.orderId,
-          paymentUrl: response.data.paymentUrl,
-          timestamp: new Date().toISOString(),
-        });
-
         localStorage.setItem("currentOrderId", response.data.orderId);
         window.location.href = response.data.paymentUrl;
       } else {
-        throw new Error(response.data.error || "Failed to initiate payment");
+        throw new Error(response.data.error || "فشل في بدء عملية الدفع");
       }
     } catch (err) {
-      // Log any errors that occur
-      console.error("Payment Error:", {
+      console.error("خطأ في الدفع:", {
         error: err.response?.data?.error || err.message,
         timestamp: new Date().toISOString(),
       });
-      setError(err.response?.data?.error || err.message || "An error occurred");
+      setError(err.response?.data?.error || err.message || "حدث خطأ");
     } finally {
       setLoading(false);
     }
@@ -195,6 +207,9 @@ const BillingForm = () => {
                   onChange={handleChange}
                   required
                 />
+                <p className="text-sm text-gray-500">
+                  سيتم إضافة رمز الدولة +966 تلقائياً
+                </p>
               </div>
 
               {/* Address Information */}
