@@ -67,12 +67,6 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: function (req, file, cb) {
-    console.log("Processing file upload:", {
-      fieldname: file.fieldname,
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-    });
-
     if (!file.mimetype.includes("pdf")) {
       console.error("Invalid file type:", file.mimetype);
       return cb(new Error("Only PDF files are allowed"), false);
@@ -115,15 +109,10 @@ router.post("/inspection/orders/:orderId/start", startInspection);
 router.post(
   "/inspection/orders/:orderId/report",
   (req, res, next) => {
-    console.log("Before upload - Headers:", req.headers);
-    console.log("Before upload - Body:", req.body);
     next();
   },
   upload.single("report"),
   (req, res, next) => {
-    console.log("After upload - Body:", req.body);
-    console.log("After upload - File:", req.file);
-
     if (!req.file) {
       console.error("No file received");
       return res.status(400).json({

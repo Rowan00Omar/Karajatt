@@ -4,7 +4,6 @@ const paymentController = require("../controllers/paymentController");
 const { validateCart } = require("../middleware/cartMiddleware");
 const { validateBillingData } = require("../middleware/paymentMiddleware");
 
-// Initialize payment
 router.post(
   "/initiate",
   validateCart,
@@ -12,15 +11,15 @@ router.post(
   paymentController.initiatePayment
 );
 
-// Handle PayMob webhook
 router.post("/webhook", paymentController.handleWebHook);
 
-// Checkout endpoint
 router.post(
   "/checkout",
   validateCart,
   validateBillingData,
   paymentController.checkout
 );
+
+router.get("/result", paymentController.verifyPayment);
 
 module.exports = router;

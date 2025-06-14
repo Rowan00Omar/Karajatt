@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const PaymobService = require("../services/paymobService");
+const db = require("../db");
 
 function fillBillingDefaults(billingData = {}) {
   // Default values for Saudi Arabia
@@ -119,10 +120,55 @@ exports.handleWebHook = async (req, res) => {
       return res.status(401).json({ error: "Invalid HMAC signature" });
     }
 
-    // TODO: Update database, mark order as paid, etc.
+    // Extract transaction details
+    const {
+      order: { id: orderId },
+      success,
+      is_refunded,
+      amount_cents,
+      id: transactionId,
+    } = obj;
 
-    res.status(200).json({ status: "Webhook processed" });
+    if (!orderId) {
+      return res.status(400).json({ error: "Order ID is missing" });
+    }
+
+    // Update order status in database
+    const updateQuery = `
+      UPDATE orders 
+      SET payment_status = ?, 
+          updated_at = CURRENT_TIMESTAMP,
+          transaction_id = ?,
+          payment_amount = ?,
+          payment_verified = ?
+      WHERE id = ?
+    `;
+
+    const status = success && !is_refunded ? "paid" : "failed";
+    const amount = amount_cents ? amount_cents / 100 : 0; // Convert cents to SAR
+    const paymentVerified = success && !is_refunded;
+
+    await db.query(updateQuery, [
+      status,
+      transactionId,
+      amount,
+      paymentVerified,
+      orderId,
+    ]);
+
+    // If payment is successful, you might want to trigger additional actions
+    if (paymentVerified) {
+      // TODO: Add any additional post-payment processing here
+      // For example: sending confirmation emails, updating inventory, etc.
+    }
+
+    res.status(200).json({
+      status: "Webhook processed successfully",
+      orderId,
+      paymentStatus: status,
+    });
   } catch (err) {
+    console.error("Webhook processing error:", err);
     res.status(500).json({
       error: "Failed to process webhook",
       details: err.message,
@@ -131,3 +177,79 @@ exports.handleWebHook = async (req, res) => {
 };
 
 exports.checkout = exports.initiatePayment;
+
+exports.verifyPayment = async (req, res) => {
+  try {
+    const {
+      id: transactionId,
+      order: orderId,
+      success,
+      is_refunded,
+      amount_cents,
+    } = req.query;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Order ID is required" });
+    }
+
+    // Verify transaction with PayMob
+    let paymentVerified = false;
+    if (transactionId) {
+      try {
+        const transaction = await PaymobService.verifyTransaction(
+          transactionId
+        );
+        paymentVerified =
+          transaction.success && transaction.is_refunded === false;
+      } catch (err) {
+        console.error("PayMob verification error:", err);
+        return res.status(500).json({
+          success: false,
+          error: "Failed to verify payment with PayMob",
+        });
+      }
+    }
+
+    // Update order status in database
+    const updateQuery = `
+      UPDATE orders 
+      SET payment_status = ?, 
+          updated_at = CURRENT_TIMESTAMP,
+          transaction_id = ?,
+          payment_amount = ?
+      WHERE id = ?
+    `;
+
+    const status = paymentVerified ? "paid" : "failed";
+    const amount = amount_cents ? amount_cents / 100 : 0; // Convert cents to SAR
+    await db.query(updateQuery, [status, transactionId, amount, orderId]);
+
+    if (paymentVerified) {
+      // Get order details
+      const [order] = await db.query(
+        "SELECT id, total FROM orders WHERE id = ?",
+        [orderId]
+      );
+
+      return res.json({
+        success: true,
+        order: {
+          id: orderId,
+          total: order.total,
+          status: status,
+        },
+      });
+    }
+
+    return res.json({
+      success: false,
+      error: "Payment verification failed",
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to verify payment",
+      details: err.message,
+    });
+  }
+};

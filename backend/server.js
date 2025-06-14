@@ -21,10 +21,12 @@ const couponRoutes = require("./routes/couponRoutes");
 const apiRoutes = require("./routes/api");
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -47,23 +49,23 @@ app.use("/api", apiRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Global error handler:", err);
-  
+
   // Handle multer errors
-  if (err.name === 'MulterError') {
-    if (err.code === 'LIMIT_FILE_SIZE') {
+  if (err.name === "MulterError") {
+    if (err.code === "LIMIT_FILE_SIZE") {
       return res.status(413).json({
-        message: 'File is too large. Maximum size is 10MB'
+        message: "File is too large. Maximum size is 10MB",
       });
     }
     return res.status(400).json({
-      message: `Upload error: ${err.message}`
+      message: `Upload error: ${err.message}`,
     });
   }
 
   // Handle other errors
   res.status(err.status || 500).json({
-    message: err.message || 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err : {}
+    message: err.message || "Internal Server Error",
+    error: process.env.NODE_ENV === "development" ? err : {},
   });
 });
 
@@ -71,13 +73,12 @@ app.use((err, req, res, next) => {
 async function createDirectories() {
   const dirs = [
     path.join(__dirname, "uploads"),
-    path.join(__dirname, "uploads", "reports")
+    path.join(__dirname, "uploads", "reports"),
   ];
 
   for (const dir of dirs) {
     try {
       await fs.mkdir(dir, { recursive: true });
-      console.log(`Directory created or exists: ${dir}`);
     } catch (error) {
       console.error(`Error creating directory ${dir}:`, error);
     }
@@ -88,7 +89,6 @@ async function createDirectories() {
 async function testConnection() {
   try {
     const connection = await pool.getConnection();
-    console.log("Database connection successful");
     connection.release();
   } catch (error) {
     console.error("Database connection error:", error);

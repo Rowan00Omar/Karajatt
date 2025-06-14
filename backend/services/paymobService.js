@@ -47,6 +47,7 @@ class PaymobService {
           currency: "SAR",
           integration_id: parseInt(config.integrationId),
           lock_order_when_paid: true,
+          return_url: `${process.env.FRONTEND_URL}/user/payment/result`,
         },
         {
           headers: { Authorization: `Bearer ${authToken}` },
@@ -61,6 +62,21 @@ class PaymobService {
 
   generatePaymentUrl(paymentToken) {
     return `${config.baseUrl}/acceptance/iframes/${config.iframeId}?payment_token=${paymentToken}`;
+  }
+
+  async verifyTransaction(transactionId) {
+    try {
+      const authToken = await this.getAuthToken();
+      const response = await axios.get(
+        `${config.baseUrl}/acceptance/transactions/${transactionId}`,
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      throw err;
+    }
   }
 }
 

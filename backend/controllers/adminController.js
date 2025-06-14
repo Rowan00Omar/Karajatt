@@ -222,11 +222,12 @@ exports.getUserStats = async (req, res) => {
       "SELECT COUNT(*) as count FROM users WHERE role = 'user'"
     );
 
-    // Get active users (users who placed orders in last 30 days)
+    // Get active users (users who logged in in last 30 days)
     const [activeUsers] = await pool.query(
-      `SELECT COUNT(DISTINCT user_id) as count 
-       FROM orders 
-       WHERE order_date >= DATE_SUB(NOW(), INTERVAL 30 DAY)`
+      `SELECT COUNT(*) as count 
+       FROM users 
+       WHERE role = 'user'
+       AND last_active >= DATE_SUB(NOW(), INTERVAL 30 DAY)`
     );
 
     // Get user registration data for the selected year
@@ -236,6 +237,7 @@ exports.getUserStats = async (req, res) => {
         COUNT(*) as count
        FROM users
        WHERE created_at BETWEEN ? AND ?
+       AND role = 'user'
        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
        ORDER BY date`,
       [startDate, endDate]
@@ -245,12 +247,14 @@ exports.getUserStats = async (req, res) => {
     const [lastMonthUsers] = await pool.query(
       `SELECT COUNT(*) as count 
        FROM users 
-       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+       AND role = 'user'`
     );
     const [previousMonthUsers] = await pool.query(
       `SELECT COUNT(*) as count 
        FROM users 
-       WHERE created_at BETWEEN DATE_SUB(NOW(), INTERVAL 2 MONTH) AND DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+       WHERE created_at BETWEEN DATE_SUB(NOW(), INTERVAL 2 MONTH) AND DATE_SUB(NOW(), INTERVAL 1 MONTH)
+       AND role = 'user'`
     );
 
     const userGrowth =
@@ -264,14 +268,16 @@ exports.getUserStats = async (req, res) => {
 
     // Calculate active users growth
     const [lastMonthActive] = await pool.query(
-      `SELECT COUNT(DISTINCT user_id) as count 
-       FROM orders 
-       WHERE order_date >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+      `SELECT COUNT(*) as count 
+       FROM users 
+       WHERE role = 'user'
+       AND last_active >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
     );
     const [previousMonthActive] = await pool.query(
-      `SELECT COUNT(DISTINCT user_id) as count 
-       FROM orders 
-       WHERE order_date BETWEEN DATE_SUB(NOW(), INTERVAL 2 MONTH) AND DATE_SUB(NOW(), INTERVAL 1 MONTH)`
+      `SELECT COUNT(*) as count 
+       FROM users 
+       WHERE role = 'user'
+       AND last_active BETWEEN DATE_SUB(NOW(), INTERVAL 2 MONTH) AND DATE_SUB(NOW(), INTERVAL 1 MONTH)`
     );
 
     const activeGrowth =
@@ -290,10 +296,13 @@ exports.getUserStats = async (req, res) => {
       const dateStr = `${year}-${monthStr}`;
       const monthData = registrationData.find((d) => d.date === dateStr);
       formattedRegistrationData.push({
-        name: dateStr,
+        name: `${dateStr}-01`, // Add day to match frontend format
         value: monthData ? monthData.count : 0,
       });
     }
+
+    // Get visit data (using registration data for now as per frontend)
+    const visitData = formattedRegistrationData;
 
     res.json({
       totalUsers: totalUsers[0].count,
@@ -301,7 +310,7 @@ exports.getUserStats = async (req, res) => {
       userGrowth,
       activeGrowth,
       registrationData: formattedRegistrationData,
-      visitData: formattedRegistrationData, // Using same data for visits for now
+      visitData: visitData,
     });
   } catch (error) {
     console.error("Error fetching user stats:", error);
@@ -463,7 +472,6 @@ exports.getInventoryStats = async (req, res) => {
 // Get all sellers with their statistics
 exports.getSellers = async (req, res) => {
   try {
-    // Get all sellers with their statistics
     const [sellers] = await pool.query(
       `SELECT 
         u.id,
@@ -478,7 +486,7 @@ exports.getSellers = async (req, res) => {
         COUNT(DISTINCT r.review_id) as total_reviews,
         COALESCE(AVG(r.rating), 0) as average_rating
       FROM users u
-      JOIN sellers s ON u.id = s.user_id
+      LEFT JOIN sellers s ON u.id = s.user_id
       LEFT JOIN products p ON u.id = p.seller_id
       LEFT JOIN reviews r ON p.product_id = r.product_id
       WHERE u.role = 'seller'
@@ -493,7 +501,7 @@ exports.getSellers = async (req, res) => {
         COUNT(DISTINCT p.product_id) as totalProducts,
         COALESCE(AVG(r.rating), 0) as averageRating
       FROM users u
-      JOIN sellers s ON u.id = s.user_id
+      LEFT JOIN sellers s ON u.id = s.user_id
       LEFT JOIN products p ON u.id = p.seller_id
       LEFT JOIN reviews r ON p.product_id = r.product_id
       WHERE u.role = 'seller'`
