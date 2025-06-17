@@ -20,7 +20,10 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ["pdfjs-dist/build/pdf.worker.mjs"],
+    include: [
+      "pdfjs-dist/build/pdf.worker.mjs",
+      "pdfjs-dist/build/pdf.worker.min.mjs",
+    ],
   },
   build: {
     rollupOptions: {

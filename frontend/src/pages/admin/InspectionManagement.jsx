@@ -16,7 +16,10 @@ import {
 } from "@heroicons/react/24/outline";
 
 // Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`,
+  import.meta.url
+).toString();
 
 const InspectionManagement = () => {
   const [orders, setOrders] = useState([]);
