@@ -20,18 +20,11 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: [
-      "pdfjs-dist/build/pdf.worker.mjs",
-      "pdfjs-dist/build/pdf.worker.min.mjs",
-    ],
+    include: [],
   },
   build: {
     rollupOptions: {
-      output: {
-        manualChunks: {
-          pdfjs: ["pdfjs-dist/build/pdf.worker.mjs"],
-        },
-      },
+      output: {},
     },
   },
 });
