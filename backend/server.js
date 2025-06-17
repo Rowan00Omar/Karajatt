@@ -21,9 +21,14 @@ const couponRoutes = require("./routes/couponRoutes");
 const apiRoutes = require("./routes/api");
 
 // Middleware
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://16.171.198.163",
+  "https://karajatt.com",
+];
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
