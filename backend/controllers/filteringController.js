@@ -1,5 +1,7 @@
 const db = require("../db");
+let unifiedData = null;
 exports.unifiedData = async (req, res) => {
+  if (unifiedData !== null) res.json(unifiedData);
   try {
     const [categories, manufacturers, parts] = await Promise.all([
       db.query("SELECT DISTINCT category_name FROM categories"),
@@ -45,8 +47,8 @@ exports.unifiedData = async (req, res) => {
         });
       return acc;
     }, {});
-
-    res.json(processedData);
+    unifiedData = processedData;
+    res.json(unifiedData);
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");

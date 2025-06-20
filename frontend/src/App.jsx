@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
-import AdminLayout from "./pages/admin/layout";
-import AdminPage from "./pages/admin/page";
+import React from "react";
+const AdminLayout = React.lazy(() => import("./pages/admin/layout"));
 import SalesPage from "./pages/admin/sales";
 import InventoryPage from "./pages/admin/inventory";
 import { InventoryPage as SellerInventory } from "./pages/seller/inventory";

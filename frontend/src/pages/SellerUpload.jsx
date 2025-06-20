@@ -81,11 +81,11 @@ const SellerUpload = () => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length > 4) {
+    if (files.length + images.length > 4) {
       alert("لا تستطيع رفع اكثر من 4 صور");
       return;
     }
-    setImages(files);
+    setImages([...images, ...files]);
   };
 
   const handleSubmit = async (e) => {
@@ -144,24 +144,6 @@ const SellerUpload = () => {
       formData.append("price", price);
       formData.append("condition", condition);
       formData.append("id", id);
-
-      // Log the form data for debugging
-      console.log("Form Data being sent:", {
-        manufacturer,
-        model,
-        startYear,
-        endYear,
-        category,
-        part,
-        status,
-        title,
-        extraDetails,
-        timeInStock,
-        price,
-        condition,
-        id,
-        imagesCount: images.length,
-      });
 
       for (let i = 0; i < images.length; i++) {
         formData.append("images", images[i]);
