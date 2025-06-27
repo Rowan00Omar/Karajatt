@@ -69,6 +69,10 @@ export default function SellersManagementPage() {
   }
 
   return (
+    <>
+    <Helmet>
+        <title>إدارة البائعين</title>
+      </Helmet>
     <div className="space-y-6">
       {/* Search and Filter Area */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -313,5 +317,6 @@ export default function SellersManagementPage() {
         </div>
       )}
     </div>
+    </>
   );
 } 

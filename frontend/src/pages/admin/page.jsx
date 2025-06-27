@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { BadgeDollarSign, Warehouse, User, Users } from "lucide-react";
+import { Helmet } from "react-helmet";
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -32,20 +33,25 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {sections.map((section) => (
-        <button
-          key={section.path}
-          onClick={() => navigate(section.path)}
-          className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 text-right"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <section.icon className="h-8 w-8 text-indigo-600" />
-            <h3 className="text-xl font-bold">{section.title}</h3>
-          </div>
-          <p className="text-gray-600">{section.description}</p>
-        </button>
-      ))}
-    </div>
+    <>
+      <Helmet>
+        <title>لوحة تحكم المشرف</title>
+      </Helmet>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {sections.map((section) => (
+          <button
+            key={section.path}
+            onClick={() => navigate(section.path)}
+            className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 text-right"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <section.icon className="h-8 w-8 text-indigo-600" />
+              <h3 className="text-xl font-bold">{section.title}</h3>
+            </div>
+            <p className="text-gray-600">{section.description}</p>
+          </button>
+        ))}
+      </div>
+    </>
   );
 } 

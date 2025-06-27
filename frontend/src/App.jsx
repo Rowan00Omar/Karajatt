@@ -1,37 +1,40 @@
-import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
-import React from "react";
-const AdminLayout = React.lazy(() => import("./pages/admin/layout"));
-import SalesPage from "./pages/admin/sales";
-import InventoryPage from "./pages/admin/inventory";
-import { InventoryPage as SellerInventory } from "./pages/seller/inventory";
-import UsersPage from "./pages/admin/users";
-import ManageUsersPage from "./pages/admin/manage";
-import PendingRequestsPage from "./pages/admin/pending";
-import InspectionManagement from "./pages/admin/InspectionManagement";
-import SellerLayout from "./pages/seller/layout";
-import SellerUpload from "./pages/SellerUpload";
-import SearchForm from "./components/SearchForm";
-import Navbar from "./components/Navbar";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Footer from "./components/Footer";
-import LandingPage from "./pages/LandingPage";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { CartProvider } from "./context/CartContext";
+import { Route,Routes,Router,Navigate } from "react-router-dom";
 import "./App.css";
 import axios from "axios";
-import ProductDetail from "./pages/ProductDetail";
-import SellerProfile from "./pages/SellerProfile";
-import SalesReportPage from "./pages/seller/sales-report";
-import Profile from "./pages/seller/Profile";
-import UserProfile from "./pages/UserProfile";
-import CouponsPage from "./pages/admin/coupons";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetForgottenPassword from "./pages/ResetForgottenPassword";
-import SellersManagementPage from "./pages/admin/sellers";
-import PaymentResult from "./pages/PaymentResult";
-import ResetPassword from "./pages/ResetPassword";
-import BillingForm from "./pages/BillingForm";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+const AdminLayout = React.lazy(() => import("./pages/admin/layout"));
+const SalesPage = React.lazy(() => import("./pages/admin/sales"));
+const InventoryPage = React.lazy(() => import("./pages/admin/inventory"));
+const SellerInventory = React.lazy(() => import("./pages/seller/inventory"));
+const UsersPage = React.lazy(() => import("./pages/admin/users"));
+const ManageUsersPage = React.lazy(() => import("./pages/admin/manage"));
+const PendingRequestsPage = React.lazy(() => import("./pages/admin/pending"));
+const InspectionManagement = React.lazy(() => import("./pages/admin/InspectionManagement"));
+const SellerLayout = React.lazy(() => import("./pages/seller/layout"));
+const SellerUpload = React.lazy(() => import("./pages/SellerUpload"));
+const SearchForm = React.lazy(() => import("./components/SearchForm"));
+const Navbar = React.lazy(() => import("./components/Navbar"));
+const Login = React.lazy(() => import("./pages/Login"));
+const Signup = React.lazy(() => import("./pages/Signup"));
+const Footer = React.lazy(() => import("./components/Footer"));
+const LandingPage = React.lazy(() => import("./pages/LandingPage"));
+const ProductDetail = React.lazy(() => import("./pages/ProductDetail"));
+const SellerProfile = React.lazy(() => import("./pages/SellerProfile"));
+const SalesReportPage = React.lazy(() => import("./pages/seller/sales-report"));
+const Profile = React.lazy(() => import("./pages/seller/Profile"));
+const UserProfile = React.lazy(() => import("./pages/UserProfile"));
+const CouponsPage = React.lazy(() => import("./pages/admin/coupons"));
+const ForgotPassword = React.lazy(() => import("./pages/ForgotPassword"));
+const ResetForgottenPassword = React.lazy(() => import("./pages/ResetForgottenPassword"));
+const SellersManagementPage = React.lazy(() => import("./pages/admin/sellers"));
+const PaymentResult = React.lazy(() => import("./pages/PaymentResult"));
+const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
+const BillingForm = React.lazy(() => import("./pages/BillingForm"));
+
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
   const shouldShowNavbar = showNavbar && currentRole !== "seller";
@@ -261,6 +264,7 @@ function App() {
 
         <Route path="*" element={<RoleBasedRedirect />} />
       </Routes>
+      <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl pauseOnFocusLoss draggable pauseOnHover />
     </CartProvider>
   );
 }

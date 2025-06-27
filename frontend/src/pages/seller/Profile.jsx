@@ -6,6 +6,8 @@ import { Star, User, Building, CreditCard, KeyRound } from "lucide-react";
 import Reviews from "../../components/Reviews";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
+import { Helmet } from "react-helmet";
+import { toast } from "react-toastify";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -80,15 +82,11 @@ const Profile = () => {
         }
       );
 
-      if (response.data.message) {
-        alert("تم تحديث المعلومات بنجاح");
-        setEditMode(false);
-        // Refresh data
-        window.location.reload();
-      }
+      toast.success("تم تحديث المعلومات بنجاح");
+      setEditMode(false);
+      window.location.reload();
     } catch (err) {
-      console.error("Error updating information:", err);
-      alert(err.response?.data?.message || "Failed to update information");
+      toast.error(err.response?.data?.message || "Failed to update information");
     }
   };
 
@@ -101,8 +99,7 @@ const Profile = () => {
       localStorage.removeItem("token");
       window.location.href = "/";
     } catch (err) {
-      console.error("Error deleting account:", err);
-      alert(err.response?.data?.message || "Failed to delete account");
+      toast.error(err.response?.data?.message || "Failed to delete account");
     }
   };
 
@@ -113,6 +110,10 @@ const Profile = () => {
     return <div className="text-center py-8">لم يتم العثور على البائع</div>;
 
   return (
+    <>
+    <Helmet>
+        <title>الملف الشخصي</title>
+      </Helmet>
     <div className="space-y-6" dir="rtl">
       {/* Profile and Bank Info Section */}
       <div className="bg-white rounded-xl shadow-md p-6">
@@ -328,6 +329,7 @@ const Profile = () => {
         </div>
       </Dialog>
     </div>
+    </>
   );
 };
 

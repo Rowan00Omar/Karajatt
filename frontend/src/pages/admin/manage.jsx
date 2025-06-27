@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { UserPlus, Trash2, Phone } from "lucide-react";
 import Signup from "../Signup";
+import { toast } from "react-toastify";
+import { Helmet } from "react-helmet";
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState([]);
@@ -10,11 +12,28 @@ export default function ManageUsersPage() {
   const [error, setError] = useState(null);
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [selectedRole, setSelectedRole] = useState("all");
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [userIdToDelete, setUserIdToDelete] = useState(null);
   const usersPerPage = 8;
 
   useEffect(() => {
     fetchUsers();
+    fetchCurrentUserId();
   }, []);
+
+  const fetchCurrentUserId = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const response = await axios.get("/api/auth/userInfo", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCurrentUserId(response.data.id);
+    } catch (err) {
+      console.error("Error fetching current user ID:", err);
+    }
+  };
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
@@ -42,19 +61,33 @@ export default function ManageUsersPage() {
     }
   };
 
-  const handleDelete = async (userIdToDelete) => {
+  const handleDelete = (userId) => {
+    if (userId === currentUserId) {
+      toast.error("لا يمكنك حذف حسابك الخاص.");
+      return;
+    }
+    setUserIdToDelete(userId);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    setShowConfirm(false);
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`/api/auth/users/${userIdToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      // Refresh the users list after deletion
+      toast.success("تم حذف المستخدم بنجاح.");
       fetchUsers();
     } catch (err) {
       console.error("Delete failed:", err);
-      alert(err.response?.data?.message || "Failed to delete user");
+      toast.error(err.response?.data?.message || "Failed to delete user");
     }
+  };
+
+  const cancelDelete = () => {
+    setShowConfirm(false);
+    setUserIdToDelete(null);
   };
 
   const handleAddUser = () => {
@@ -106,6 +139,9 @@ export default function ManageUsersPage() {
 
   return (
     <>
+      <Helmet>
+        <title>إدارة المستخدمين</title>
+      </Helmet>
       <section className="w-full animate-fadeIn">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -173,12 +209,14 @@ export default function ManageUsersPage() {
                         ? "بائع"
                         : "مستخدم"}
                     </span>
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="text-red-500 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+                    {user.id !== currentUserId && (
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-500 hover:text-red-600 transition-colors"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -187,20 +225,42 @@ export default function ManageUsersPage() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-6">
+          <div className="flex justify-center items-center gap-2 mt-6">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-lg transition-colors font-bold ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+              }`}
+            >
+              السابق
+            </button>
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   currentPage === i + 1
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
+                    ? "bg-indigo-600 text-white font-bold"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                 }`}
               >
                 {i + 1}
               </button>
             ))}
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-lg transition-colors font-bold ${
+                currentPage === totalPages
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+              }`}
+            >
+              التالي
+            </button>
           </div>
         )}
       </section>
@@ -237,11 +297,25 @@ export default function ManageUsersPage() {
                     </button>
                   </div>
                 </div>
-                <Signup onSuccess={() => {
+                <Signup flag={true} onSuccess={() => {
                   setIsAddingUser(false);
                   fetchUsers();
                 }} />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full text-center">
+            <h3 className="text-lg font-bold mb-4">تأكيد حذف المستخدم</h3>
+            <p className="mb-6">هل أنت متأكد أنك تريد حذف هذا المستخدم؟ لا يمكن التراجع عن هذا الإجراء.</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">حذف</button>
+              <button onClick={cancelDelete} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">إلغاء</button>
             </div>
           </div>
         </div>

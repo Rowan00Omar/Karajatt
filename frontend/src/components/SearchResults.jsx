@@ -80,7 +80,7 @@ const SearchResults = ({ results }) => {
 
               {/* Content Section */}
               <div className="p-6 space-y-4">
-                <h3 className="text-xl font-bold text-gray-900 line-clamp-2 min-h-[3.5rem] group-hover:text-blue-600 transition-colors">
+                <h3 className="text-xl font-bold text-gray-900 line-clamp-2 overflow-ellipsis min-h-[3.5rem] group-hover:text-blue-600 transition-colors">
                   {result.title}
                 </h3>
 

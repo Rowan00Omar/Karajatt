@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Users, UserCheck, Search, Calendar } from "lucide-react";
 import axios from "axios";
+import { Helmet } from "react-helmet";
 
 export default function UsersPage() {
   const [dashboardData, setDashboardData] = useState({
@@ -145,6 +146,10 @@ export default function UsersPage() {
   }
 
   return (
+    <>
+    <Helmet>
+        <title>المستخدمون والسلوك</title>
+      </Helmet>
     <div className="animate-fadeIn p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -370,5 +375,6 @@ export default function UsersPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

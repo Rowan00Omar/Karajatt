@@ -4,10 +4,14 @@ import Navbar from "../components/Navbar";
 import Features from "../components/Features";
 import Cta from "../components/Cta";
 import Footer from "../components/Footer";
+import { Helmet } from "react-helmet";
 
 const LandingPage = () => {
   return (
     <>
+      <Helmet>
+        <title>الصفحة الرئيسية</title>
+      </Helmet>
       {/*Navbar*/}
       <Navbar />
       {/* Hero Section */}

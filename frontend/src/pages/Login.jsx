@@ -5,6 +5,7 @@ import { LogIn } from "lucide-react";
 import Input from "../components/Input";
 import Button from "../components/Button";
 import Footer from "@/components/Footer";
+import { Helmet } from "react-helmet";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -69,82 +70,87 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
-        <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit} dir="rtl">
-            {/* Header */}
-            <div className="flex flex-col items-center space-y-4">
-              <div className="bg-indigo-100 p-3 rounded-full">
-                <LogIn className="text-indigo-600" size={32} />
+    <>
+      <Helmet>
+        <title>تسجيل الدخول</title>
+      </Helmet>
+      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
+          <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
+            <form className="space-y-6" onSubmit={handleSubmit} dir="rtl">
+              {/* Header */}
+              <div className="flex flex-col items-center space-y-4">
+                <div className="bg-indigo-100 p-3 rounded-full">
+                  <LogIn className="text-indigo-600" size={32} />
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900">تسجيل الدخول</h2>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900">تسجيل الدخول</h2>
-            </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
-                {error}
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+                  {error}
+                </div>
+              )}
+
+              {/* Form Fields */}
+              <div className="space-y-4">
+                <div>
+                  <Input
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                    type="email"
+                    placeholder="البريد الألكتروني"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Input
+                    className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                    type="password"
+                    placeholder="كلمة السر"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
               </div>
-            )}
 
-            {/* Form Fields */}
-            <div className="space-y-4">
-              <div>
-                <Input
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                  type="email"
-                  placeholder="البريد الألكتروني"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <Link
+                    to="/forgot-password"
+                    className="font-medium text-indigo-600 hover:text-indigo-500"
+                  >
+                    نسيت كلمة المرور؟
+                  </Link>
+                </div>
               </div>
-              <div>
-                <Input
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
-                  type="password"
-                  placeholder="كلمة السر"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+
+              {/* Submit Button */}
+              <Button
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                type="submit"
+              >
+                تسجيل الدخول
+              </Button>
+
+              {/* Sign Up Link */}
+              <div className="text-center">
+                <p className="text-sm text-gray-600">
+                  ليس لديك حساب؟{" "}
+                  <Link
+                    className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+                    to="/signup"
+                  >
+                    انشاء حساب
+                  </Link>
+                </p>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <Link
-                  to="/forgot-password"
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  نسيت كلمة المرور؟
-                </Link>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-              type="submit"
-            >
-              تسجيل الدخول
-            </Button>
-
-            {/* Sign Up Link */}
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                ليس لديك حساب؟{" "}
-                <Link
-                  className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
-                  to="/signup"
-                >
-                  انشاء حساب
-                </Link>
-              </p>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

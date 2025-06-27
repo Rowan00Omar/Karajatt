@@ -5,6 +5,7 @@ import { LogIn, Phone, UserPlus } from "lucide-react";
 import Input from "../components/Input";
 import Button from "../components/Button";
 import { Select, SelectItem } from "@/components/Select";
+import { Helmet } from "react-helmet";
 
 const Signup = ({ flag = false, onSuccess }) => {
   const [firstName, setFirstName] = useState("");
@@ -253,17 +254,35 @@ const Signup = ({ flag = false, onSuccess }) => {
   );
 
   if (flag) {
-    return formContent;
+    return (
+      <>
+        <Helmet>
+          <title>إنشاء حساب</title>
+        </Helmet>
+        <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+          <div className="w-full max-w-md">
+            <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
+              {formContent}
+            </div>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
-        <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
-          {formContent}
+    <>
+      <Helmet>
+        <title>إنشاء حساب - Karajatt</title>
+      </Helmet>
+      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
+          <div className="bg-white py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10">
+            {formContent}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -13,7 +13,7 @@ import {
   Calendar,
   Tag,
 } from "lucide-react";
-
+import { Helmet } from "react-helmet";
 const SearchForm = () => {
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [manufacturer, setManufacturer] = useState("");
@@ -40,6 +40,8 @@ const SearchForm = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalResults, setTotalResults] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsPerPage = 12;
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -230,7 +232,19 @@ const SearchForm = () => {
     }
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [results]);
+
+  const indexOfLast = currentPage * resultsPerPage;
+  const currentResults = results.slice(indexOfLast - resultsPerPage, indexOfLast);
+  const totalPages = Math.ceil(results.length / resultsPerPage);
+
   return (
+    <>
+    <Helmet>
+        <title>البحث</title>
+      </Helmet>
     <div className="min-h-screen bg-gray-50">
       <main className="pt-16 md:pt-20">
         <div
@@ -519,7 +533,46 @@ const SearchForm = () => {
 
               {results.length > 0 ? (
                 <>
-                  <SearchResults results={results} />
+                  <SearchResults results={currentResults} />
+                  {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-8">
+                      <button
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className={`px-4 py-2 rounded-lg transition-colors font-bold ${
+                          currentPage === 1
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        السابق
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setCurrentPage(i + 1)}
+                          className={`px-4 py-2 rounded-lg transition-colors ${
+                            currentPage === i + 1
+                              ? "bg-indigo-600 text-white font-bold"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className={`px-4 py-2 rounded-lg transition-colors font-bold ${
+                          currentPage === totalPages
+                            ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        التالي
+                      </button>
+                    </div>
+                  )}
                 </>
               ) : (
                 !loading && (
@@ -542,6 +595,7 @@ const SearchForm = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };
 

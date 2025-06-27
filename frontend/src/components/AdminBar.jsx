@@ -105,7 +105,7 @@ export function AdminBar({ isOpen }) {
             : "translate-x-full sm:translate-x-0"
         }`}
       >
-        <div className="flex flex-col h-full py-4" dir="rtl">
+        <div className="flex flex-col h-full py-4 overflow-y-auto" dir="rtl">
           <div className="px-6 mb-6">
             <Link to="/" className="flex items-center mb-6">
               <img src={Logo} alt="Khaliji Logo" className="h-8 w-auto" />

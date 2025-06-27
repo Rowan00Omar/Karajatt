@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Helmet } from "react-helmet";
 
 export default function BestSellingPage() {
   const [bestSellers, setBestSellers] = useState([]);
@@ -43,39 +44,44 @@ export default function BestSellingPage() {
   }
 
   return (
-    <div className="animate-fadeIn">
-      <h2 className="text-2xl font-bold mb-6">القطع الأكثر مبيعاً</h2>
+    <>
+      <Helmet>
+        <title>الأكثر مبيعاً (بائع)</title>
+      </Helmet>
+      <div className="animate-fadeIn">
+        <h2 className="text-2xl font-bold mb-6">القطع الأكثر مبيعاً</h2>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {bestSellers.map((product) => (
-          <div
-            key={product.product_id}
-            className="bg-white rounded-lg shadow-sm p-4 border border-gray-100"
-          >
-            <div className="aspect-w-16 aspect-h-9 mb-4">
-              <img
-                src={product.image_url}
-                alt={product.title}
-                className="rounded-lg object-cover w-full h-full"
-              />
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {bestSellers.map((product) => (
+            <div
+              key={product.product_id}
+              className="bg-white rounded-lg shadow-sm p-4 border border-gray-100"
+            >
+              <div className="aspect-w-16 aspect-h-9 mb-4">
+                <img
+                  src={product.image_url}
+                  alt={product.title}
+                  className="rounded-lg object-cover w-full h-full"
+                />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">{product.title}</h3>
+              <div className="flex justify-between items-center text-sm text-gray-600">
+                <span>المبيعات: {product.total_sales}</span>
+                <span>الإيرادات: {product.revenue} ر.س</span>
+              </div>
+              <div className="mt-2 text-sm text-gray-500">
+                المتبقي في المخزون: {product.stock}
+              </div>
             </div>
-            <h3 className="font-semibold text-lg mb-2">{product.title}</h3>
-            <div className="flex justify-between items-center text-sm text-gray-600">
-              <span>المبيعات: {product.total_sales}</span>
-              <span>الإيرادات: {product.revenue} ر.س</span>
-            </div>
-            <div className="mt-2 text-sm text-gray-500">
-              المتبقي في المخزون: {product.stock}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {bestSellers.length === 0 && (
-        <div className="text-center text-gray-500 mt-8">
-          لا توجد بيانات مبيعات حتى الآن
+          ))}
         </div>
-      )}
-    </div>
+
+        {bestSellers.length === 0 && (
+          <div className="text-center text-gray-500 mt-8">
+            لا توجد بيانات مبيعات حتى الآن
+          </div>
+        )}
+      </div>
+    </>
   );
 } 
