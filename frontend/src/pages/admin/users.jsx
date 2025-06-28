@@ -48,10 +48,6 @@ export default function UsersPage() {
       }
 
       const apiUrl = `/api/admin/stats/users?year=${selectedYear}`;
-      console.log("Fetching data for year:", selectedYear);
-      console.log("API URL:", apiUrl);
-      console.log("Token:", token ? "Present" : "Missing");
-
       const response = await axios.get(apiUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -59,7 +55,6 @@ export default function UsersPage() {
         },
       });
 
-      console.log("API Response:", response.data);
 
       if (response.data) {
         const validRegistrationData = [];
@@ -114,10 +109,6 @@ export default function UsersPage() {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
-      if (err.response) {
-        console.log("Error Response:", err.response.data);
-        console.log("Error Status:", err.response.status);
-      }
       setError(
         err.response?.data?.message ||
           "Failed to fetch dashboard data. Please check your connection and try again."

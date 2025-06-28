@@ -65,8 +65,6 @@ export default function SalesPage() {
           });
         }
 
-        console.log("Monthly Sales Data:", validSalesData);
-
         setDashboardData({
           totalOrders: response.data.totalOrders || 0,
           orderGrowth: response.data.orderGrowth || "0%",
