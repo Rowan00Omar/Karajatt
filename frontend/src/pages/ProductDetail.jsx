@@ -6,8 +6,6 @@ import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 import { useCart } from "../context/CartContext";
 import Reviews from "../components/Reviews";
-import Navbar from "../components/Navbar";
-import SellerChat from "../components/SellerChat";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
