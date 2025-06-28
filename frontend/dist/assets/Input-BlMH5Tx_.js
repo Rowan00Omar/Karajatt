@@ -1,1 +1,0 @@
-import{j as r}from"./index-diZV0YSE.js";const u=({className:n="",...o})=>r.jsx("input",{className:`w-full p-2 border rounded focus:outline-none focus:ring-1 focus:ring-babyJanaBlue ${n}`,...o});export{u as I};
