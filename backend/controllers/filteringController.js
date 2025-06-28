@@ -1,7 +1,10 @@
 const db = require("../db");
 let unifiedData = null;
 exports.unifiedData = async (req, res) => {
-  if (unifiedData !== null) res.json(unifiedData);
+  if (unifiedData !== null) {
+    res.json(unifiedData);
+    return;
+  }
   try {
     const [categories, manufacturers, parts] = await Promise.all([
       db.query("SELECT DISTINCT category_name FROM categories"),

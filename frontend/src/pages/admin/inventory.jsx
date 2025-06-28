@@ -40,8 +40,6 @@ export default function InventoryPage() {
       }
 
       const apiUrl = `/api/admin/stats/inventory`;
-      console.log("API URL:", apiUrl);
-      console.log("Token:", token ? "Present" : "Missing");
 
       const response = await axios.get(apiUrl, {
         headers: {
@@ -50,8 +48,6 @@ export default function InventoryPage() {
         },
       });
 
-      console.log("Raw API Response:", response.data);
-      console.log("Inventory Movement Data:", response.data.inventoryMovement);
 
       if (response.data) {
         // Create data for all months of the selected year
@@ -71,7 +67,6 @@ export default function InventoryPage() {
           });
         }
 
-        console.log("Monthly Inventory Data:", validInventoryData);
 
         setDashboardData({
           totalStock: response.data.totalStock || 0,
@@ -84,10 +79,6 @@ export default function InventoryPage() {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching inventory data:", err);
-      if (err.response) {
-        console.log("Error Response:", err.response.data);
-        console.log("Error Status:", err.response.status);
-      }
       setError(
         err.response?.data?.message ||
           "Failed to fetch inventory data. Please check your connection and try again."
@@ -225,19 +216,16 @@ export default function InventoryPage() {
                     dataKey="name"
                     tickFormatter={(value) => {
                       try {
-                        console.log("XAxis formatting value:", value);
                         // Handle YYYY-MM format
                         const [year, month] = value.split("-");
                         const date = new Date(year, parseInt(month) - 1);
                         if (isNaN(date.getTime())) {
-                          console.log("Invalid date detected:", value);
                           return value;
                         }
                         const formatted = new Intl.DateTimeFormat("ar", {
                           month: "long",
                           calendar: "gregory",
                         }).format(date);
-                        console.log("Formatted date:", formatted);
                         return formatted;
                       } catch (e) {
                         console.error("Date parsing error:", e);

@@ -3,7 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 @theme {
-  --color-babyJanaBlue: #4f39f6;
+  --color-babyJanaBlue: #4d64e9;
   --color-darkerJanaBlue: #3f53d3;
   --color-brightSupBlue: #e1e5fc;
   --color-lightGray: #cccccc;

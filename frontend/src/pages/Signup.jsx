@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { LogIn, Phone, UserPlus } from "lucide-react";
@@ -21,6 +21,12 @@ const Signup = ({ flag = false, onSuccess }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Clear any existing authentication data when accessing signup page
+    localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -79,8 +85,12 @@ const Signup = ({ flag = false, onSuccess }) => {
       }
 
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("userRole", role);
-      navigate(`/${role}`);
+      localStorage.setItem("userRole", response.data.user.role);
+      
+      // Dispatch custom event to notify App component
+      window.dispatchEvent(new Event('authChange'));
+      
+      navigate(`/${response.data.user.role}`);
     } catch (err) {
       setError(err.response?.data?.message || "حدث خطأ أثناء التسجيل");
     } finally {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Search, Info } from "lucide-react";
-
+import { Helmet } from "react-helmet";
 export default function SellersManagementPage() {
   const [sellers, setSellers] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -57,9 +57,9 @@ function App() {
   useEffect(() => {
     const fetchUserInfo = async () => {
       const token = localStorage.getItem("token");
-      const cachedRole = localStorage.getItem("userRole");
 
       if (!token) {
+        setRole(null);
         setIsLoading(false);
         return;
       }
@@ -70,9 +70,8 @@ function App() {
         });
         const newRole = res.data.role;
         setRole(newRole);
-        if (newRole !== cachedRole) {
-          localStorage.setItem("userRole", newRole);
-        }
+        // Always update localStorage with the server response
+        localStorage.setItem("userRole", newRole);
       } catch (err) {
         console.error("Failed to fetch user role:", err);
         localStorage.removeItem("token");
@@ -83,7 +82,30 @@ function App() {
       }
     };
 
+    // Listen for authentication changes
+    const handleAuthChange = () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setRole(null);
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+        fetchUserInfo();
+      }
+    };
+
+    // Add event listener for storage changes
+    window.addEventListener('storage', handleAuthChange);
+    
+    // Also listen for custom auth change events
+    window.addEventListener('authChange', handleAuthChange);
+
     fetchUserInfo();
+
+    return () => {
+      window.removeEventListener('storage', handleAuthChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
 
   const RoleBasedRedirect = () => {

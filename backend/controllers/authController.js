@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const register = async (req, res) => {
-  const { first_name, last_name, email, password, role, phone_number } =
+  const { first_name, last_name, email, password, role, phone_number, seller_info } =
     req.body;
 
   try {
@@ -41,7 +41,6 @@ const register = async (req, res) => {
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Insert into users table with phone number
       const [result] = await connection.query(
         `INSERT INTO users (first_name, last_name, email, password, role, phone_number) 
          VALUES (?, ?, ?, ?, ?, ?)`,
@@ -50,12 +49,11 @@ const register = async (req, res) => {
 
       const userId = result.insertId;
 
-      // If user is a seller, create seller record
       if (role === "seller" && seller_info) {
         await connection.query(
           "INSERT INTO sellers (user_id, bank_name, account_number, address, phone_number) VALUES (?, ?, ?, ?, ?)",
           [
-            userResult.insertId,
+            userId,
             seller_info.bank_name.trim(),
             seller_info.account_number.trim(),
             seller_info.address.trim(),
@@ -520,6 +518,24 @@ const downloadInspectionReport = async (req, res) => {
   }
 };
 
+const deleteOwnAccount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await pool.query("SET FOREIGN_KEY_CHECKS = 0");
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [userId]);
+    await pool.query("SET FOREIGN_KEY_CHECKS = 1");
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "User not found or already deleted" });
+    }
+
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -532,4 +548,5 @@ module.exports = {
   resetPassword,
   getPassedOrdersHistory,
   downloadInspectionReport,
+  deleteOwnAccount,
 };

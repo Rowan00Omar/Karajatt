@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 const Hero = () => {
   return (
     <section id="Hero">
-      <div className="container flex flex-col-reverse items-center px-6 mx-auto mt-10 space-y-0 md:flex-row">
+      <div className="container flex flex-col-reverse items-center px-6 mx-auto mt-0 md:mt-10 space-y-0 md:flex-row">
         {/* Image */}
         <div className="md:w-1/2">
           <img src={HeroImage} alt="" />

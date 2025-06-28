@@ -21,6 +21,7 @@ const UserProfile = () => {
   const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
   const [visiblePhoneOrderId, setVisiblePhoneOrderId] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -38,6 +39,7 @@ const UserProfile = () => {
         const userData = userResponse.data;
 
         if (userData) {
+          setUserId(userData.id);
           const fullName = userData.first_name + " " + userData.last_name;
           setUsername(fullName);
           setEmail(userData.email);
@@ -50,7 +52,6 @@ const UserProfile = () => {
             }
           );
           setOrderHistory(ordersResponse.data);
-          console.log(ordersResponse.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -319,9 +320,24 @@ const UserProfile = () => {
                     </button>
                     <button
                       className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
-                      onClick={() => {
+                      onClick={async () => {
                         setIsModalOpen(false);
-                        // perform actual delete here
+                        try {
+                          setLoading(true);
+                          setError(null);
+                          await axios.delete("/api/auth/me", {
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          localStorage.removeItem("token");
+                          localStorage.removeItem("userRole");
+                          window.location.href = "/";
+                        } catch (err) {
+                          setError(
+                            err.response?.data?.message || "فشل في حذف الحساب. حاول مرة أخرى."
+                          );
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                     >
                       نعم، احذف

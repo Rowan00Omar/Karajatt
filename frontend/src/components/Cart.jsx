@@ -190,7 +190,7 @@ const Cart = ({ onClose }) => {
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   placeholder="أدخل رمز الكوبون"
-                  className="flex-1 border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="flex-1 border rounded-lg p-2.5 text-sm text-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                 />
                 <button
                   onClick={handleApplyCoupon}

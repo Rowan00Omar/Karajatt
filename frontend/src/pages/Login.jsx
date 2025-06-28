@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { LogIn } from "lucide-react";
@@ -12,6 +12,12 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Clear any existing authentication data when accessing login page
+    localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,7 +52,10 @@ const Login = () => {
 
         localStorage.setItem("userRole", role);
 
-        window.location.href = getRedirectPath(role);
+        // Dispatch custom event to notify App component
+        window.dispatchEvent(new Event('authChange'));
+
+        navigate(getRedirectPath(role), { replace: true });
       }
     } catch (err) {
       setError(

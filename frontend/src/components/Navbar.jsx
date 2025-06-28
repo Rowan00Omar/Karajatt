@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Home, User, ChevronDown, LogOut } from "lucide-react";
+import { Home, User, ChevronDown, LogOut, ShoppingBag } from "lucide-react";
 import CartButton from "./CartButton";
-import useLogout from "@/hooks/useLogout";
+import useLogout from "@/hooks/useLogout.jsx";
 import Logo from "@/assets/LogoNoBack.png";
 
 const Navbar = () => {
@@ -55,6 +55,9 @@ const Navbar = () => {
         )}
 
         <div className="flex items-center space-x-4">
+          <button onClick={() => navigate("/search")} className="text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">
+            <ShoppingBag className="w-6 h-6" />
+          </button>
           <div className="text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">
             <CartButton />
           </div>
@@ -83,6 +86,10 @@ const Navbar = () => {
             <Home className="w-6 h-6" />
             <span className="text-xs mt-1">الرئيسية</span>
           </Link>
+          <button onClick={() => navigate("/search")} className="flex flex-col items-center text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">
+            <ShoppingBag className="w-6 h-6" />
+            <span className="text-xs mt-1">المنتجات</span>
+          </button>
           <div className="flex flex-col items-center text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">
             <CartButton />
             <span className="text-xs mt-1">السلة</span>
@@ -93,6 +100,13 @@ const Navbar = () => {
           >
             <User className="w-6 h-6" />
             <span className="text-xs mt-1">حسابي</span>
+          </button>
+          <button
+            onClick={logout}
+            className="flex flex-col items-center text-gray-400 hover:text-white transition-colors p-2 cursor-pointer"
+          >
+            <LogOut className="w-6 h-6" />
+            <span className="text-xs mt-1">تسجيل خروج</span>
           </button>
         </div>
       </nav>

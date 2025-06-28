@@ -11,7 +11,8 @@ const {
   forgotPassword,
   resetPassword,
   getPassedOrdersHistory,
-  downloadInspectionReport
+  downloadInspectionReport,
+  deleteOwnAccount,
 } = require("../controllers/authController");
 const {
   authenticateToken,
@@ -34,5 +35,7 @@ router.get("/orders/:orderId/report/download", authenticateToken, downloadInspec
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+
+router.delete("/me", authenticateToken, deleteOwnAccount);
 
 module.exports = router;
