@@ -3,7 +3,7 @@ const PaymobService = require("../services/paymobService");
 const db = require("../db");
 
 function fillBillingDefaults(billingData = {}) {
-  // Default values for Saudi Arabia
+
   const defaults = {
     first_name: "Ali",
     last_name: "Mohamed",
@@ -251,5 +251,63 @@ exports.verifyPayment = async (req, res) => {
       error: "Failed to verify payment",
       details: err.message,
     });
+  }
+};
+
+exports.paymobCallback = async (req, res) => {
+  try {
+    const { id: transactionId, order: orderId, amount_cents } = req.query;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, error: "Order ID is required" });
+    }
+
+    // Verify with Paymob API
+    let paymentVerified = false;
+    let transactionStatus = "failed";
+    let isRefunded = false;
+    let amount = amount_cents ? amount_cents / 100 : 0;
+    if (transactionId) {
+      try {
+        const transaction = await PaymobService.verifyTransaction(transactionId);
+        paymentVerified = transaction.success && transaction.is_refunded === false;
+        transactionStatus = paymentVerified ? "paid" : "failed";
+        isRefunded = transaction.is_refunded;
+        amount = transaction.amount_cents ? transaction.amount_cents / 100 : amount;
+      } catch (err) {
+        paymentVerified = false;
+        transactionStatus = "failed";
+      }
+    }
+
+    // Update orders table
+    await db.query(
+      `UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP, transaction_id = ?, payment_amount = ?, payment_verified = ? WHERE id = ?`,
+      [transactionStatus, transactionId, amount, paymentVerified, orderId]
+    );
+
+    // Update payment_transactions table
+    // Find the latest payment_transaction for this order
+    const [rows] = await db.query(
+      `SELECT id FROM payment_transactions WHERE order_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [orderId]
+    );
+    if (rows.length > 0) {
+      await db.query(
+        `UPDATE payment_transactions SET transaction_id = ?, amount = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [transactionId, amount, transactionStatus, rows[0].id]
+      );
+    }
+
+    return res.json({
+      success: paymentVerified,
+      orderId,
+      transactionId,
+      status: transactionStatus,
+      isRefunded,
+      amount
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: "حدث خطأ أثناء معالجة الدفع.", details: err.message });
   }
 };

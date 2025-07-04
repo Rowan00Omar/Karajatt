@@ -22,4 +22,6 @@ router.post(
 
 router.get("/result", paymentController.verifyPayment);
 
+router.get("/paymob-callback", paymentController.paymobCallback);
+
 module.exports = router;
