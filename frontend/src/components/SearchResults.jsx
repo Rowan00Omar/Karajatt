@@ -107,7 +107,7 @@ const SearchResults = ({ results }) => {
                       <div className="flex">
                         {[...Array(5)].map((_, i) => (
                           <Star
-                            key={i}
+                            key={`star-${result.id}-${i}`}
                             className={`w-4 h-4 ${
                               i < Math.round(result.rating)
                                 ? "text-yellow-400 fill-yellow-400"

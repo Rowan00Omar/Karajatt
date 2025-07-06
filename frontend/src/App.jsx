@@ -163,129 +163,131 @@ function App() {
 
   return (
     <CartProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route
-          path="/part/:id"
-          element={
-            <UserLayout>
-              <ProductDetail />
-            </UserLayout>
-          }
-        />
-        <Route
-          path="/seller"
-          element={
-            <ProtectedRoute allowedRole="seller">
-              <SellerLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="profile" />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="upload" element={<SellerUpload />} />
-          <Route path="inventory" element={<SellerInventory />} />
-          <Route path="sales-report" element={<SalesReportPage />} />
-        </Route>
-
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRole="admin">
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="sales" replace />} />
-          <Route path="sales" element={<SalesPage />} />
-          <Route path="inventory" element={<InventoryPage />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="manage" element={<ManageUsersPage />} />
-          <Route path="sellers" element={<SellersManagementPage />} />
-          <Route path="pending" element={<PendingRequestsPage />} />
-          <Route path="coupons" element={<CouponsPage />} />
-          <Route path="inspection" element={<InspectionManagement />} />
-        </Route>
-
-        <Route
-          path="/user/*"
-          element={
-            <ProtectedRoute allowedRole="user">
-              <UserLayout>
-                <div className="min-h-screen bg-gray-50">
-                  <main>
-                    <Routes>
-                      <Route index element={<SearchForm />} />
-                      <Route path="orders" element={<div>My Orders</div>} />
-                      <Route path="part/:id" element={<ProductDetail />} />
-                      <Route path="profile" element={<UserProfile />} />
-                      <Route
-                        path="payment/result"
-                        element={<PaymentResult />}
-                      />
-                    </Routes>
-                  </main>
-                </div>
-              </UserLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="/" element={<LandingPage />} />
-
-        {/* Public seller profile route */}
-        <Route
-          path="/seller/:id"
-          element={
-            <UserLayout>
-              <SellerProfile />
-            </UserLayout>
-          }
-        />
-
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route
-          path="/reset-forgotten-password/:token"
-          element={
-            <ProtectedRoute>
-              <ResetForgottenPassword />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route
-          path="/billing"
-          element={
-            <ProtectedRoute>
-              <BillingForm />
-            </ProtectedRoute>
-          }
-        />
-        {/* Public Routes */}
-        <Route
-          path="/search"
-          element={
-            <UserLayout>
-              <SearchForm />
-            </UserLayout>
-          }
-        />
-
-        {/* Protected Product Routes */}
-        <Route
-          path="/part/:id"
-          element={
-            <ProtectedRoute>
+      <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/part/:id"
+            element={
               <UserLayout>
                 <ProductDetail />
               </UserLayout>
-            </ProtectedRoute>
-          }
-        />
+            }
+          />
+          <Route
+            path="/seller"
+            element={
+              <ProtectedRoute allowedRole="seller">
+                <SellerLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="profile" />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="upload" element={<SellerUpload />} />
+            <Route path="inventory" element={<SellerInventory />} />
+            <Route path="sales-report" element={<SalesReportPage />} />
+          </Route>
 
-        <Route path="*" element={<RoleBasedRedirect />} />
-      </Routes>
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="sales" replace />} />
+            <Route path="sales" element={<SalesPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="manage" element={<ManageUsersPage />} />
+            <Route path="sellers" element={<SellersManagementPage />} />
+            <Route path="pending" element={<PendingRequestsPage />} />
+            <Route path="coupons" element={<CouponsPage />} />
+            <Route path="inspection" element={<InspectionManagement />} />
+          </Route>
+
+          <Route
+            path="/user/*"
+            element={
+              <ProtectedRoute allowedRole="user">
+                <UserLayout>
+                  <div className="min-h-screen bg-gray-50">
+                    <main>
+                      <Routes>
+                        <Route index element={<SearchForm />} />
+                        <Route path="orders" element={<div>My Orders</div>} />
+                        <Route path="part/:id" element={<ProductDetail />} />
+                        <Route path="profile" element={<UserProfile />} />
+                        <Route
+                          path="payment/result"
+                          element={<PaymentResult />}
+                        />
+                      </Routes>
+                    </main>
+                  </div>
+                </UserLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Public seller profile route */}
+          <Route
+            path="/seller/:id"
+            element={
+              <UserLayout>
+                <SellerProfile />
+              </UserLayout>
+            }
+          />
+
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route
+            path="/reset-forgotten-password/:token"
+            element={
+              <ProtectedRoute>
+                <ResetForgottenPassword />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route
+            path="/billing"
+            element={
+              <ProtectedRoute>
+                <BillingForm />
+              </ProtectedRoute>
+            }
+          />
+          {/* Public Routes */}
+          <Route
+            path="/search"
+            element={
+              <UserLayout>
+                <SearchForm />
+              </UserLayout>
+            }
+          />
+
+          {/* Protected Product Routes */}
+          <Route
+            path="/part/:id"
+            element={
+              <ProtectedRoute>
+                <UserLayout>
+                  <ProductDetail />
+                </UserLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<RoleBasedRedirect />} />
+        </Routes>
+      </Suspense>
       <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick rtl pauseOnFocusLoss draggable pauseOnHover />
     </CartProvider>
   );

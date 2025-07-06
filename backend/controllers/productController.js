@@ -10,7 +10,7 @@ const getSingleProduct = async (req, res) => {
        FROM products p 
        JOIN users u ON p.seller_id = u.id 
        JOIN categories c ON p.category_id = c.id 
-       WHERE p.product_id = ? AND u.role = 'seller'`,
+       WHERE p.product_id = ?`,
       [id]
     );
 

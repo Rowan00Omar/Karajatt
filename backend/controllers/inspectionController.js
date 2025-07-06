@@ -61,6 +61,7 @@ exports.getOrdersForInspection = async (req, res) => {
         o.status,
         o.order_date,
         o.total_price,
+        o.payment_status,
         u.first_name as buyer_first_name,
         u.last_name as buyer_last_name,
         GROUP_CONCAT(DISTINCT s.email) as seller_emails,
@@ -82,6 +83,7 @@ exports.getOrdersForInspection = async (req, res) => {
         o.status,
         o.order_date,
         o.total_price,
+        o.payment_status,
         u.first_name,
         u.last_name
       ORDER BY o.order_date DESC`
@@ -100,6 +102,7 @@ exports.getOrdersForInspection = async (req, res) => {
         status: order.status,
         created_at: order.order_date,
         total_price: order.total_price,
+        payment_status: order.payment_status,
         buyer_first_name: order.buyer_first_name,
         buyer_last_name: order.buyer_last_name,
         seller_emails: [...new Set(sellerEmails)], // Remove duplicates
@@ -114,6 +117,7 @@ exports.getOrdersForInspection = async (req, res) => {
           })) || [],
       };
     });
+
 
     res.json({ orders: transformedOrders });
   } catch (error) {
@@ -206,12 +210,18 @@ exports.submitInspectionReport = async (req, res) => {
 
       // First check if order exists and can be updated
       const [orderCheck] = await connection.query(
-        "SELECT status FROM orders WHERE id = ?",
+        "SELECT status, payment_status FROM orders WHERE id = ?",
         [orderId]
       );
 
       if (!orderCheck.length) {
         throw new Error(`Order ${orderId} not found`);
+      }
+
+      // Check if payment_status is 'paid'
+      if (orderCheck[0].payment_status !== 'paid') {
+        await connection.rollback();
+        return res.status(400).json({ message: "Cannot submit inspection report: order is not paid." });
       }
 
       // Update order status
@@ -286,7 +296,7 @@ exports.getInspectionReport = async (req, res) => {
 exports.verifyReport = async (req, res) => {
   try {
     const { orderId } = req.params;
-    console.log("Verifying report existence for order:", orderId);
+
 
     // Get the report details from the database
     const [reports] = await pool.query(

@@ -59,6 +59,7 @@ const Cart = ({ onClose }) => {
 
       // Format items for PayMob
       const formattedItems = cartItems.map((item) => ({
+        product_id: item.product_id || item.id,
         name: item.title || item.part_name || "Product",
         amount_cents: Math.round(parseFloat(item.price) * 100),
         description:
@@ -67,6 +68,7 @@ const Cart = ({ onClose }) => {
           item.part_name ||
           "Product Description",
         quantity: item.quantity || 1,
+        price: item.price,
       }));
 
       // Navigate to billing form with cart data

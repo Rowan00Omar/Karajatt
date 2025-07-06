@@ -60,8 +60,8 @@ const InventoryPage = () => {
 
   const filteredInventory = inventory.filter((item) => {
     const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.part_name.toLowerCase().includes(searchTerm.toLowerCase());
+      (item.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (item.part_name?.toLowerCase() || '').includes(searchTerm.toLowerCase());
 
     const matchesStatus =
       statusFilter === "all"
@@ -173,19 +173,19 @@ const InventoryPage = () => {
                   >
                     <td className="px-6 py-4 text-right">
                       <div>
-                        <p className="font-medium text-gray-900">{item.title}</p>
-                        <p className="text-sm text-gray-500">{item.part_name}</p>
+                        <p className="font-medium text-gray-900">{item.title || 'غير محدد'}</p>
+                        <p className="text-sm text-gray-500">{item.part_name || 'غير محدد'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div>
-                        <p className="text-gray-900">{item.company_name}</p>
-                        <p className="text-sm text-gray-500">{item.car_name}</p>
+                        <p className="text-gray-900">{item.company_name || 'غير محدد'}</p>
+                        <p className="text-sm text-gray-500">{item.car_name || 'غير محدد'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <span className="font-medium text-gray-900">
-                        {item.price} ر.س
+                        {item.price ? `${item.price} ر.س` : 'غير محدد'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -248,4 +248,4 @@ const InventoryPage = () => {
   );
 };
 
-export { InventoryPage };
+export default InventoryPage;

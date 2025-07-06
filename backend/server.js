@@ -1,4 +1,8 @@
 const express = require("express");
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
@@ -6,7 +10,6 @@ const pool = require("./db");
 const fs = require("fs").promises;
 require("dotenv").config();
 
-const app = express();
 
 // Import routes
 const authRoutes = require("./routes/authRoutes");
@@ -20,12 +23,12 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const couponRoutes = require("./routes/couponRoutes");
 const apiRoutes = require("./routes/api");
 
-// Middleware
 const allowedOrigins = [
   "http://localhost:5173",
   "http://16.171.198.163",
   "https://karajatt.com",
 ];
+
 app.use(
   cors({
     origin: allowedOrigins,

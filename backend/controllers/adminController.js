@@ -397,7 +397,7 @@ exports.getInventoryStats = async (req, res) => {
 
     // Get total available products
     const [totalProducts] = await pool.query(
-      "SELECT COUNT(*) as count FROM products WHERE approval_status = 'approved'"
+      "SELECT COUNT(*) as count FROM products WHERE approval_status = 'approved' AND status != 'sold'"
     );
 
     // Get new products added this month
@@ -407,16 +407,22 @@ exports.getInventoryStats = async (req, res) => {
        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)`
     );
 
-    // Get inventory movement data for selected year
+    // Get inventory at the end of each month (persistent stock)
     const [inventoryMovement] = await pool.query(
-      `SELECT 
-        DATE_FORMAT(created_at, '%Y-%m') as date,
-        COUNT(*) as stock_count
-       FROM products
-       WHERE created_at BETWEEN ? AND ?
-       GROUP BY DATE_FORMAT(created_at, '%Y-%m')
-       ORDER BY date`,
-      [startDate, endDate]
+      `WITH months AS (
+        SELECT 1 AS m UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL
+        SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11 UNION ALL SELECT 12
+      )
+      SELECT 
+        DATE_FORMAT(LAST_DAY(CONCAT(?, '-', LPAD(m, 2, '0'), '-01')), '%Y-%m') AS date,
+        (
+          SELECT COUNT(*) FROM products p
+          WHERE p.created_at <= LAST_DAY(CONCAT(?, '-', LPAD(m, 2, '0'), '-01'))
+            AND (p.status != 'sold' OR p.status IS NULL)
+            AND p.approval_status = 'approved'
+        ) AS stock_count
+      FROM months`,
+      [year, year]
     );
 
     // Calculate trends
@@ -445,16 +451,10 @@ exports.getInventoryStats = async (req, res) => {
       newProducts[0].count === 0 ? "0%" : `+${newProducts[0].count}%`;
 
     // Format inventory data to include all months
-    const formattedInventoryData = [];
-    for (let month = 1; month <= 12; month++) {
-      const monthStr = month.toString().padStart(2, "0");
-      const dateStr = `${year}-${monthStr}`;
-      const monthData = inventoryMovement.find((d) => d.date === dateStr);
-      formattedInventoryData.push({
-        name: dateStr,
-        value: monthData ? monthData.stock_count : 0,
-      });
-    }
+    const formattedInventoryData = inventoryMovement.map((row) => ({
+      name: row.date,
+      value: row.stock_count,
+    }));
 
     res.json({
       totalStock: totalProducts[0].count || 0,

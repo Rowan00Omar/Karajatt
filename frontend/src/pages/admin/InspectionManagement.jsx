@@ -382,13 +382,16 @@ const InspectionManagement = () => {
     }
   };
 
-  // Filter orders based on the toggle state
+  // Filter orders based on the toggle state and payment_status === 'paid' (case-insensitive)
   const filteredOrders = React.useMemo(() => {
+    const paidOrders = orders.filter(
+      (order) => String(order.payment_status).toLowerCase() === 'paid'
+    );
     return showInspectedOnly
-      ? orders.filter(
+      ? paidOrders.filter(
           (order) => order.status === "passed" || order.status === "failed"
         )
-      : orders.filter((order) => order.status === "pending");
+      : paidOrders.filter((order) => order.status === "pending");
   }, [orders, showInspectedOnly]);
 
   const getStatusDisplay = (status) => {

@@ -1,30 +1,124 @@
-import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import Button from "../components/Button";
+import React, { useEffect, useState } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { CheckCircle, XCircle } from "lucide-react";
+import axios from "axios";
 
 const PaymentResult = () => {
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const params = new URLSearchParams(location.search);
+  const [status, setStatus] = useState("loading");
+  const [orderDetails, setOrderDetails] = useState(null);
 
-  const success = params.get("success") === "true";
-  const amountCents = params.get("amount_cents");
-  const message = params.get("data.message") || params.get("txn_response_code") || "";
-  const orderId = params.get("order");
-  const currency = params.get("currency") || "SAR";
+  useEffect(() => {
+    const verifyPayment = async () => {
+      try {
+        const orderId = searchParams.get("order_id");
+        const success = searchParams.get("success");
+        const transactionId = searchParams.get("transaction_id");
+
+        if (orderId) {
+          const response = await axios.get(`/api/payments/result/`, {
+            params: {
+              order: orderId,
+              success,
+              transaction_id: transactionId,
+            },
+          });
+
+          if (response.data.success) {
+            setStatus("success");
+            setOrderDetails(response.data.order);
+          } else {
+            setStatus("failed");
+          }
+        } else {
+          setStatus("failed");
+        }
+      } catch (error) {
+        console.error("Payment verification error:", error);
+        setStatus("failed");
+      }
+    };
+
+    verifyPayment();
+  }, [searchParams]);
+
+  const handleContinueShopping = () => {
+    navigate("/");
+  };
+
+  const handleViewOrder = () => {
+    if (orderDetails?.id) {
+      navigate(`/orders/${orderDetails.id}`);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-        <h2 className={`text-2xl font-bold mb-4 ${success ? "text-green-600" : "text-red-600"}`}>
-          {success ? "تم الدفع بنجاح" : "فشل الدفع"}
-        </h2>
-        <div className="mb-4">
-          <p className="text-lg font-semibold">رقم الطلب: {orderId}</p>
-          <p className="text-lg">المبلغ: {(amountCents / 100).toFixed(2)} {currency}</p>
-          <p className="text-gray-600 mt-2">{message}</p>
-        </div>
-        <Button className="w-full mt-4" onClick={() => navigate("/user")}>العودة للوحة المستخدم</Button>
+    <div
+      className="min-h-screen flex items-center justify-center bg-gray-50 p-4"
+      dir="rtl"
+    >
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+        {status === "loading" && (
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-babyJanaBlue mx-auto"></div>
+            <p className="mt-4 text-gray-600">جاري التحقق من حالة الدفع...</p>
+          </div>
+        )}
+
+        {status === "success" && (
+          <div className="text-center">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+            <h2 className="mt-4 text-2xl font-bold text-gray-900">
+              تم الدفع بنجاح!
+            </h2>
+            <p className="mt-2 text-gray-600">
+              شكراً لك على طلبك. تم استلام طلبك وسيتم معالجته قريباً.
+            </p>
+            {orderDetails && (
+              <div className="mt-6 bg-gray-50 rounded-lg p-4 text-right">
+                <p className="text-gray-700">رقم الطلب: {orderDetails.id}</p>
+                <p className="text-gray-700">
+                  المبلغ الإجمالي: {orderDetails.total} ر.س
+                </p>
+              </div>
+            )}
+            <div className="mt-8 space-y-3">
+              <button
+                onClick={handleViewOrder}
+                className="w-full bg-babyJanaBlue text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                عرض تفاصيل الطلب
+              </button>
+              <button
+                onClick={handleContinueShopping}
+                className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                متابعة التسوق
+              </button>
+            </div>
+          </div>
+        )}
+
+        {status === "failed" && (
+          <div className="text-center">
+            <XCircle className="h-16 w-16 text-red-500 mx-auto" />
+            <h2 className="mt-4 text-2xl font-bold text-gray-900">
+              فشلت عملية الدفع
+            </h2>
+            <p className="mt-2 text-gray-600">
+              عذراً، حدث خطأ أثناء معالجة الدفع. يرجى المحاولة مرة أخرى.
+            </p>
+            <div className="mt-8">
+              <button
+                onClick={handleContinueShopping}
+                className="w-full bg-babyJanaBlue text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                العودة للتسوق
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -144,7 +144,12 @@ export default function SalesReportPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                   <XAxis 
                     dataKey="month" 
-                    tickFormatter={(value) => arabicMonths[value - 1]}
+                    tickFormatter={(value) => {
+                      const monthIndex = value - 1;
+                      return monthIndex >= 0 && monthIndex < arabicMonths.length 
+                        ? arabicMonths[monthIndex] 
+                        : String(value);
+                    }}
                     stroke="#6B7280"
                   />
                   <YAxis 
@@ -152,8 +157,16 @@ export default function SalesReportPage() {
                     tickFormatter={(value) => `${value.toLocaleString()} ر.س`}
                   />
                   <Tooltip 
-                    formatter={(value) => [`${value.toLocaleString()} ر.س`, 'الإيرادات']}
-                    labelFormatter={(label) => arabicMonths[label - 1]}
+                    formatter={(value) => {
+                      console.log('Tooltip value:', value);
+                      return [`${value.toLocaleString()} ر.س`, 'الإيرادات'];
+                    }}
+                    labelFormatter={(label) => {
+                      const monthIndex = label - 1;
+                      return monthIndex >= 0 && monthIndex < arabicMonths.length 
+                        ? arabicMonths[monthIndex] 
+                        : String(label);
+                    }}
                     contentStyle={{ textAlign: 'right', direction: 'rtl' }}
                   />
                   <Line 
@@ -177,7 +190,12 @@ export default function SalesReportPage() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                   <XAxis 
                     dataKey="month" 
-                    tickFormatter={(value) => arabicMonths[value - 1]}
+                    tickFormatter={(value) => {
+                      const monthIndex = value - 1;
+                      return monthIndex >= 0 && monthIndex < arabicMonths.length 
+                        ? arabicMonths[monthIndex] 
+                        : String(value);
+                    }}
                     stroke="#6B7280"
                   />
                   <YAxis 
@@ -186,7 +204,12 @@ export default function SalesReportPage() {
                   />
                   <Tooltip 
                     formatter={(value) => [`${value} قطعة`, 'المبيعات']}
-                    labelFormatter={(label) => arabicMonths[label - 1]}
+                    labelFormatter={(label) => {
+                      const monthIndex = label - 1;
+                      return monthIndex >= 0 && monthIndex < arabicMonths.length 
+                        ? arabicMonths[monthIndex] 
+                        : String(label);
+                    }}
                     contentStyle={{ textAlign: 'right', direction: 'rtl' }}
                   />
                   <Bar 

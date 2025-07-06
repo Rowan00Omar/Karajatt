@@ -35,6 +35,7 @@ function fillBillingDefaults(billingData = {}) {
 exports.initiatePayment = async (req, res) => {
   try {
     const { cartItems, billingData, amount, inspectionFees } = req.body;
+    const userId = req.user?.id; // Get userId from JWT token
 
     // Validate cart items
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
@@ -74,6 +75,63 @@ exports.initiatePayment = async (req, res) => {
 
     const orderResp = await PaymobService.createOrder(authToken, orderData);
 
+    // Create order in local database
+    try {
+      const [orderResult] = await db.query(
+        `
+        INSERT INTO orders (
+          id, 
+          user_id, 
+          total_price, 
+          payment_status, 
+          payment_verified,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, 'pending', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+        [orderResp.id, userId || null, parseFloat(amount)]
+      );
+
+      
+    } catch (error) {
+      console.error("❌ Error creating order in database:", error);
+      throw new Error(`Failed to create order in database: ${error.message}`);
+    }
+
+    // Create order_items in local database
+    try {
+      for (const item of cartItems) {
+        const productId = item.product_id || item.id;
+        if (!productId) {
+          console.error('❌ Cart item missing product_id or id:', item);
+          throw new Error(`Cart item is missing product_id or id: ${JSON.stringify(item)}`);
+        }
+        await db.query(
+          `
+          INSERT INTO order_items (
+            order_id,
+            product_id,
+            quantity,
+            price,
+            created_at,
+            updated_at
+          ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `,
+          [
+            orderResp.id,
+            productId,
+            parseInt(item.quantity) || 1,
+            parseFloat(item.price || item.amount_cents || 0)
+          ]
+        );
+      }
+
+
+    } catch (error) {
+      console.error("❌ Error creating order_items in database:", error);
+      throw new Error(`Failed to create order items in database: ${error.message}`);
+    }
+
     // Get payment key
     const paymentKeyData = {
       amount_cents: amountCents,
@@ -86,11 +144,34 @@ exports.initiatePayment = async (req, res) => {
       paymentKeyData
     );
 
+    // Insert payment_token into payment_transactions, truncated to 1024 chars
+    try {
+      await db.query(
+        `
+        INSERT INTO payment_transactions (
+          order_id,
+          amount,
+          status,
+          payment_token,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, 'pending', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+        [orderResp.id, parseFloat(amount), paymentToken.slice(0, 1024)]
+      );
+
+    } catch (error) {
+      console.error("❌ Error creating payment_transactions in database:", error);
+      throw new Error(`Failed to create payment transaction in database: ${error.message}`);
+    }
+
     // Generate payment URL
     const paymentUrl = PaymobService.generatePaymentUrl(paymentToken);
 
     res.json({ success: true, paymentUrl, orderId: orderResp.id });
   } catch (err) {
+    console.error("❌ Error in initiatePayment:", err);
+    console.error("Error details:", err.message);
     res.status(500).json({
       success: false,
       error: "Failed to initiate payment",
@@ -100,81 +181,257 @@ exports.initiatePayment = async (req, res) => {
 };
 
 exports.handleWebHook = async (req, res) => {
+
+
   try {
-    const hmacSecret = process.env.PAYMOB_HMAC_SECRET;
-    const receivedHmac = req.headers.hmac;
+    let paymentData = req.body;
 
-    const { obj } = req.body;
+    // If using the new format with `success` in the top-level object
+    if (paymentData.success !== undefined) {
 
-    // Step 1: Sort the keys alphabetically
-    const sortedKeys = Object.keys(obj).sort();
-    const concatenatedValues = sortedKeys.map((key) => obj[key]).join("");
+      
+      const {
+        success,
+        orderId,
+        transactionId,
+        isRefunded,
+        amount
+      } = paymentData;
 
-    // Step 2: Calculate HMAC SHA512
-    const calculatedHmac = crypto
-      .createHmac("sha512", hmacSecret)
-      .update(concatenatedValues)
-      .digest("hex");
 
-    if (receivedHmac !== calculatedHmac) {
-      return res.status(401).json({ error: "Invalid HMAC signature" });
+
+      if (!orderId) {
+        console.error("❌ Order ID is missing in webhook payload");
+        return res.status(400).json({ error: "Order ID is missing" });
+      }
+
+      const paymentStatus = (success && !isRefunded ? "paid" : "failed").toLowerCase();
+      const paymentVerified = success && !isRefunded;
+
+
+
+      // Update orders table
+      await db.query(
+        `
+        UPDATE orders
+        SET payment_status = ?,
+            updated_at = CURRENT_TIMESTAMP,
+            transaction_id = ?,
+            payment_amount = ?,
+            payment_verified = ?
+        WHERE id = ?
+        `,
+        [paymentStatus, transactionId, amount, paymentVerified, orderId]
+      );
+
+
+
+      // Update payment_transactions table
+      const [rows] = await db.query(
+        `SELECT id FROM payment_transactions WHERE order_id = ? ORDER BY created_at DESC LIMIT 1`,
+        [orderId]
+      );
+
+      if (rows.length > 0) {
+        await db.query(
+          `
+          UPDATE payment_transactions
+          SET transaction_id = ?,
+              amount = ?,
+              status = ?,
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+          `,
+          [transactionId, amount, paymentStatus, rows[0].id]
+        );
+
+      } else {
+        console.warn(`⚠️ No payment_transactions record found for order ${orderId}`);
+      }
+
+      // If payment is successful, you might want to trigger additional actions
+      if (paymentVerified) {
+
+        
+        // Remove products from the products table when payment is successful
+        try {
+          // Get all products in this order
+          const [orderItems] = await db.query(
+            `SELECT product_id FROM order_items WHERE order_id = ?`,
+            [orderId]
+          );
+
+          if (orderItems.length === 0) {
+            console.warn(`⚠️ No order_items found for order_id=${orderId}`);
+            console.warn(`This means the order was created in Paymob but not in your local database`);
+            console.warn(`Check your checkout flow to ensure order_items are created before payment`);
+          } else {
+            // Update each product status to 'sold' or remove them
+            for (const item of orderItems) {
+              // Option 1: Update status to 'sold' (recommended for keeping history)
+              await db.query(
+                `UPDATE products SET status = 'sold', updated_at = CURRENT_TIMESTAMP WHERE product_id = ?`,
+                [item.product_id]
+              );
+
+              // Option 2: Delete the product (uncomment if you want to completely remove)
+              // await db.query(
+              //   `DELETE FROM products WHERE product_id = ?`,
+              //   [item.product_id]
+              // );
+            }
+
+          }
+        } catch (error) {
+          console.error("Error updating products status:", error);
+          console.error("Order ID:", orderId);
+          console.error("Error details:", error.message);
+          // Don't fail the webhook if product update fails
+        }
+
+        // TODO: Add any additional post-payment processing here
+        // For example: sending confirmation emails, updating inventory, etc.
+      }
+
+      return res.status(200).json({
+        status: "Webhook processed successfully",
+        orderId,
+        paymentStatus,
+        success: paymentVerified
+      });
     }
 
-    // Extract transaction details
+    // If using the old format with `obj` payload
+
+    
+    const { obj } = paymentData;
+
+    if (!obj) {
+      console.error("❌ Invalid payload: no 'obj' found");
+      return res.status(400).json({ error: "Invalid payload: no 'obj' found" });
+    }
+
     const {
       order: { id: orderId },
       success,
       is_refunded,
       amount_cents,
-      id: transactionId,
+      id: transactionId
     } = obj;
 
+
+
     if (!orderId) {
+      console.error("❌ Order ID is missing in Paymob payload");
       return res.status(400).json({ error: "Order ID is missing" });
     }
 
-    // Update order status in database
-    const updateQuery = `
-      UPDATE orders 
-      SET payment_status = ?, 
+    const paymentStatus = (success && !is_refunded ? "paid" : "failed").toLowerCase();
+    const paymentVerified = success && !is_refunded;
+    const amount = amount_cents ? amount_cents / 100 : 0;
+
+
+
+    // Update orders table
+    await db.query(
+      `
+      UPDATE orders
+      SET payment_status = ?,
           updated_at = CURRENT_TIMESTAMP,
           transaction_id = ?,
           payment_amount = ?,
           payment_verified = ?
       WHERE id = ?
-    `;
+      `,
+      [paymentStatus, transactionId, amount, paymentVerified, orderId]
+    );
 
-    const status = success && !is_refunded ? "paid" : "failed";
-    const amount = amount_cents ? amount_cents / 100 : 0; // Convert cents to SAR
-    const paymentVerified = success && !is_refunded;
 
-    await db.query(updateQuery, [
-      status,
-      transactionId,
-      amount,
-      paymentVerified,
-      orderId,
-    ]);
+
+    // Update payment_transactions table
+    const [rows] = await db.query(
+      `SELECT id FROM payment_transactions WHERE order_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [orderId]
+    );
+
+    if (rows.length > 0) {
+      await db.query(
+        `
+        UPDATE payment_transactions
+        SET transaction_id = ?,
+            amount = ?,
+            status = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        `,
+        [transactionId, amount, paymentStatus, rows[0].id]
+      );
+
+    } else {
+      console.warn(`⚠️ No payment_transactions record found for order ${orderId}`);
+    }
 
     // If payment is successful, you might want to trigger additional actions
     if (paymentVerified) {
+
+      
+      // Remove products from the products table when payment is successful
+      try {
+        // Get all products in this order
+        const [orderItems] = await db.query(
+          `SELECT product_id FROM order_items WHERE order_id = ?`,
+          [orderId]
+        );
+
+        if (orderItems.length === 0) {
+          console.warn(`⚠️ No order_items found for order_id=${orderId}`);
+          console.warn(`This means the order was created in Paymob but not in your local database`);
+          console.warn(`Check your checkout flow to ensure order_items are created before payment`);
+        } else {
+          // Update each product status to 'sold' or remove them
+          for (const item of orderItems) {
+            // Option 1: Update status to 'sold' (recommended for keeping history)
+            await db.query(
+              `UPDATE products SET status = 'sold', updated_at = CURRENT_TIMESTAMP WHERE product_id = ?`,
+              [item.product_id]
+            );
+
+            // Option 2: Delete the product (uncomment if you want to completely remove)
+            // await db.query(
+            //   `DELETE FROM products WHERE product_id = ?`,
+            //   [item.product_id]
+            // );
+          }
+
+    
+        }
+      } catch (error) {
+        console.error("Error updating products status:", error);
+        console.error("Order ID:", orderId);
+        console.error("Error details:", error.message);
+        // Don't fail the webhook if product update fails
+      }
+
       // TODO: Add any additional post-payment processing here
       // For example: sending confirmation emails, updating inventory, etc.
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       status: "Webhook processed successfully",
       orderId,
-      paymentStatus: status,
+      paymentStatus
     });
   } catch (err) {
-    console.error("Webhook processing error:", err);
+    console.error("❌ Webhook processing error:", err);
+    console.error("Error details:", err.message);
+    console.error("Stack trace:", err.stack);
     res.status(500).json({
       error: "Failed to process webhook",
-      details: err.message,
+      details: err.message
     });
   }
 };
+
 
 exports.checkout = exports.initiatePayment;
 
@@ -262,7 +519,6 @@ exports.paymobCallback = async (req, res) => {
       return res.status(400).json({ success: false, error: "Order ID is required" });
     }
 
-    // Verify with Paymob API
     let paymentVerified = false;
     let transactionStatus = "failed";
     let isRefunded = false;
@@ -280,14 +536,12 @@ exports.paymobCallback = async (req, res) => {
       }
     }
 
-    // Update orders table
     await db.query(
       `UPDATE orders SET payment_status = ?, updated_at = CURRENT_TIMESTAMP, transaction_id = ?, payment_amount = ?, payment_verified = ? WHERE id = ?`,
       [transactionStatus, transactionId, amount, paymentVerified, orderId]
     );
 
-    // Update payment_transactions table
-    // Find the latest payment_transaction for this order
+
     const [rows] = await db.query(
       `SELECT id FROM payment_transactions WHERE order_id = ? ORDER BY created_at DESC LIMIT 1`,
       [orderId]

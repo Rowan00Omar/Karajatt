@@ -86,8 +86,7 @@ const Signup = ({ flag = false, onSuccess }) => {
 
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("userRole", response.data.user.role);
-      
-      // Dispatch custom event to notify App component
+
       window.dispatchEvent(new Event('authChange'));
       
       navigate(`/${response.data.user.role}`);
