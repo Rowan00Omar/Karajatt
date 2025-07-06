@@ -35,7 +35,11 @@ function fillBillingDefaults(billingData = {}) {
 exports.initiatePayment = async (req, res) => {
   try {
     const { cartItems, billingData, amount, inspectionFees } = req.body;
-    const userId = req.user?.id; // Get userId from JWT token
+    const userId = req.user?.id; 
+
+    // Debug logging to see what data is being received
+    console.log("🔍 Received cart data:", JSON.stringify(req.body, null, 2));
+    console.log("🔍 Cart items:", JSON.stringify(cartItems, null, 2));
 
     // Validate cart items
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
@@ -249,13 +253,10 @@ exports.handleWebHook = async (req, res) => {
         console.warn(`⚠️ No payment_transactions record found for order ${orderId}`);
       }
 
-      // If payment is successful, you might want to trigger additional actions
       if (paymentVerified) {
 
-        
-        // Remove products from the products table when payment is successful
         try {
-          // Get all products in this order
+
           const [orderItems] = await db.query(
             `SELECT product_id FROM order_items WHERE order_id = ?`,
             [orderId]
@@ -266,19 +267,14 @@ exports.handleWebHook = async (req, res) => {
             console.warn(`This means the order was created in Paymob but not in your local database`);
             console.warn(`Check your checkout flow to ensure order_items are created before payment`);
           } else {
-            // Update each product status to 'sold' or remove them
             for (const item of orderItems) {
-              // Option 1: Update status to 'sold' (recommended for keeping history)
+
               await db.query(
                 `UPDATE products SET status = 'sold', updated_at = CURRENT_TIMESTAMP WHERE product_id = ?`,
                 [item.product_id]
               );
 
-              // Option 2: Delete the product (uncomment if you want to completely remove)
-              // await db.query(
-              //   `DELETE FROM products WHERE product_id = ?`,
-              //   [item.product_id]
-              // );
+
             }
 
           }
