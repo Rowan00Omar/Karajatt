@@ -9,7 +9,9 @@ export function CartProvider({ children }) {
 
   const addToCart = (product) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id);
+      // Use product_id as the unique identifier, fallback to id
+      const productId = product.product_id || product.id;
+      const existingItem = prevItems.find((item) => (item.product_id || item.id) === productId);
       if (existingItem) {
         return prevItems;
       }
@@ -40,6 +42,8 @@ export function CartProvider({ children }) {
         ...prevItems,
         {
           ...product,
+          id: productId, // Ensure id is set to product_id
+          product_id: productId, // Also keep product_id for consistency
           quantity: 1,
           price: price,
           image_url: image_url,
@@ -49,7 +53,7 @@ export function CartProvider({ children }) {
   };
 
   const removeFromCart = (id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    setCartItems((prevItems) => prevItems.filter((item) => (item.product_id || item.id) !== id));
   };
 
   const updateQuantity = (id, newQuantity) => {
@@ -57,7 +61,7 @@ export function CartProvider({ children }) {
 
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
+        (item.product_id || item.id) === id ? { ...item, quantity: newQuantity } : item
       )
     );
   };
