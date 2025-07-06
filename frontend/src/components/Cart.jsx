@@ -50,13 +50,13 @@ const Cart = ({ onClose }) => {
     try {
       setIsProcessing(true);
       setPaymentError(null);
-
+  
       // Get user token
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("يرجى تسجيل الدخول للمتابعة");
       }
-
+  
       // Format items for PayMob
       const formattedItems = cartItems.map((item) => ({
         product_id: item.product_id || item.id,
@@ -71,22 +71,18 @@ const Cart = ({ onClose }) => {
         price: item.price,
       }));
 
+      const checkoutData = {
+        cartItems: formattedItems,
+        amount: finalTotal,
+        inspectionFees: totalInspectionFees,
+        appliedCoupon: appliedCoupon
+          ? { code: appliedCoupon.code, discount: discount }
+          : null,
+      };
+      localStorage.setItem("checkoutCartData", JSON.stringify(checkoutData));
+  
       // Navigate to billing form with cart data
-      navigate("/billing", {
-        state: {
-          cartData: {
-            cartItems: formattedItems,
-            amount: finalTotal,
-            inspectionFees: totalInspectionFees,
-            appliedCoupon: appliedCoupon
-              ? {
-                  code: appliedCoupon.code,
-                  discount: discount,
-                }
-              : null,
-          },
-        },
-      });
+      navigate("/billing", { state: { cartData: checkoutData } });
     } catch (error) {
       if (error.code === "ERR_NETWORK") {
         setPaymentError(
@@ -104,6 +100,7 @@ const Cart = ({ onClose }) => {
       setIsProcessing(false);
     }
   };
+  
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {

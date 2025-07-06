@@ -93,7 +93,14 @@ const BillingForm = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const cartData = location.state?.cartData;
+      let cartData = location.state?.cartData;
+
+      if (!cartData) {
+        const saved = localStorage.getItem("checkoutCartData");
+        if (saved) {
+          cartData = JSON.parse(saved);
+        }
+      }
 
       if (!cartData) {
         throw new Error("لم يتم العثور على بيانات السلة");
