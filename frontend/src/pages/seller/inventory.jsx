@@ -4,7 +4,7 @@ import { Search, Plus, Trash2 } from "lucide-react";
 import { Helmet } from "react-helmet";
 import { toast } from "react-toastify";
 
-const InventoryPage = () => {
+const SellerInventory = () => {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -248,4 +248,4 @@ const InventoryPage = () => {
   );
 };
 
-export default InventoryPage;
+export default SellerInventory;

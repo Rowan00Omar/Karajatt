@@ -37,7 +37,7 @@ const Navbar = () => {
           >
             <img
               src={Logo}
-              alt="Khaliji Logo"
+              alt=""
               className="h-16 w-auto transition-all hover:scale-105 hover:brightness-110 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]"
             />
           </Link>
@@ -48,7 +48,7 @@ const Navbar = () => {
           >
             <img
               src={Logo}
-              alt="Khaliji Logo"
+              alt=""
               className="h-16 w-auto transition-all hover:scale-105 hover:brightness-110 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]"
             />
           </Link>
