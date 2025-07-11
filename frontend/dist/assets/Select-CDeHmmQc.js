@@ -1,0 +1,1 @@
+import{j as o}from"./index-0uQ4Kv7o.js";function u({value:e,onValueChange:t,children:r,className:n="",...a}){return o.jsx("select",{value:e,onChange:s=>t(s.target.value),className:`p-2 border rounded ${n} `,children:r})}function c({children:e,value:t,disabled:r}){return o.jsx("option",{value:t,disabled:r,children:e})}export{u as S,c as a};
