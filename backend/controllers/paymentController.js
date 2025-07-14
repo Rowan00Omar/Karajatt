@@ -485,7 +485,7 @@ exports.verifyPayment = async (req, res) => {
     if (paymentVerified) {
       // Get order details
       const [order] = await db.query(
-        "SELECT id, total FROM orders WHERE id = ?",
+        "SELECT id, total_price FROM orders WHERE id = ?",
         [orderId]
       );
 
@@ -494,7 +494,7 @@ exports.verifyPayment = async (req, res) => {
         success: true,
         order: {
           id: orderId,
-          total: order[0]?.total,
+          total: order[0]?.total_price,
           status: status,
         },
       });
