@@ -37,10 +37,6 @@ exports.initiatePayment = async (req, res) => {
     const { cartItems, billingData, amount, inspectionFees } = req.body;
     const userId = req.user?.id; 
 
-    // Debug logging to see what data is being received
-    console.log("🔍 Received cart data:", JSON.stringify(req.body, null, 2));
-    console.log("🔍 Cart items:", JSON.stringify(cartItems, null, 2));
-
     // Validate cart items
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       return res.status(400).json({ error: "Invalid cart items" });
@@ -132,7 +128,6 @@ exports.initiatePayment = async (req, res) => {
 
 
     } catch (error) {
-      console.error("❌ Error creating order_items in database:", error);
       throw new Error(`Failed to create order items in database: ${error.message}`);
     }
 
@@ -165,7 +160,6 @@ exports.initiatePayment = async (req, res) => {
       );
 
     } catch (error) {
-      console.error("❌ Error creating payment_transactions in database:", error);
       throw new Error(`Failed to create payment transaction in database: ${error.message}`);
     }
 
@@ -174,8 +168,6 @@ exports.initiatePayment = async (req, res) => {
 
     res.json({ success: true, paymentUrl, orderId: orderResp.id });
   } catch (err) {
-    console.error("❌ Error in initiatePayment:", err);
-    console.error("Error details:", err.message);
     res.status(500).json({
       success: false,
       error: "Failed to initiate payment",
@@ -205,7 +197,6 @@ exports.handleWebHook = async (req, res) => {
 
 
       if (!orderId) {
-        console.error("❌ Order ID is missing in webhook payload");
         return res.status(400).json({ error: "Order ID is missing" });
       }
 
@@ -303,7 +294,6 @@ exports.handleWebHook = async (req, res) => {
     const { obj } = paymentData;
 
     if (!obj) {
-      console.error("❌ Invalid payload: no 'obj' found");
       return res.status(400).json({ error: "Invalid payload: no 'obj' found" });
     }
 
@@ -318,7 +308,6 @@ exports.handleWebHook = async (req, res) => {
 
 
     if (!orderId) {
-      console.error("❌ Order ID is missing in Paymob payload");
       return res.status(400).json({ error: "Order ID is missing" });
     }
 
