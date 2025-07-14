@@ -433,13 +433,10 @@ exports.checkout = exports.initiatePayment;
 
 exports.verifyPayment = async (req, res) => {
   try {
-    const {
-      id: transactionId,
-      order: orderId,
-      success,
-      is_refunded,
-      amount_cents,
-    } = req.query;
+    // Accept both 'transaction_id' and 'id' as transactionId
+    const orderId = req.query.order;
+    const transactionId = req.query.transaction_id || req.query.id;
+    const { success, is_refunded, amount_cents } = req.query;
 
     // Log incoming query params
     console.log("[verifyPayment] Incoming query params:", JSON.stringify(req.query, null, 2));
