@@ -441,26 +441,34 @@ exports.verifyPayment = async (req, res) => {
       amount_cents,
     } = req.query;
 
+    // Log incoming query params
+    console.log("[verifyPayment] Incoming query params:", JSON.stringify(req.query, null, 2));
+
     if (!orderId) {
+      console.log("[verifyPayment] Missing orderId");
       return res.status(400).json({ error: "Order ID is required" });
     }
 
     // Verify transaction with PayMob
     let paymentVerified = false;
+    let paymobTransaction = null;
     if (transactionId) {
       try {
-        const transaction = await PaymobService.verifyTransaction(
+        paymobTransaction = await PaymobService.verifyTransaction(
           transactionId
         );
+        console.log("[verifyPayment] PaymobService.verifyTransaction response:", JSON.stringify(paymobTransaction, null, 2));
         paymentVerified =
-          transaction.success && transaction.is_refunded === false;
+          paymobTransaction.success && paymobTransaction.is_refunded === false;
       } catch (err) {
-        console.error("PayMob verification error:", err);
+        console.error("[verifyPayment] PayMob verification error:", err);
         return res.status(500).json({
           success: false,
           error: "Failed to verify payment with PayMob",
         });
       }
+    } else {
+      console.log("[verifyPayment] No transactionId provided, skipping Paymob verification");
     }
 
     // Update order status in database
@@ -484,21 +492,24 @@ exports.verifyPayment = async (req, res) => {
         [orderId]
       );
 
+      console.log("[verifyPayment] Payment verified, sending success response for order:", orderId);
       return res.json({
         success: true,
         order: {
           id: orderId,
-          total: order.total,
+          total: order[0]?.total,
           status: status,
         },
       });
     }
 
+    console.log("[verifyPayment] Payment not verified, sending failure response for order:", orderId);
     return res.json({
       success: false,
       error: "Payment verification failed",
     });
   } catch (err) {
+    console.error("[verifyPayment] Exception:", err);
     res.status(500).json({
       success: false,
       error: "Failed to verify payment",
