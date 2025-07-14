@@ -48,11 +48,7 @@ const PaymentResult = () => {
     navigate("/");
   };
 
-  const handleViewOrder = () => {
-    if (orderDetails?.id) {
-      navigate(`/orders/${orderDetails.id}`);
-    }
-  };
+
 
   return (
     <div
@@ -85,12 +81,7 @@ const PaymentResult = () => {
               </div>
             )}
             <div className="mt-8 space-y-3">
-              <button
-                onClick={handleViewOrder}
-                className="w-full bg-babyJanaBlue text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                عرض تفاصيل الطلب
-              </button>
+            
               <button
                 onClick={handleContinueShopping}
                 className="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors"
