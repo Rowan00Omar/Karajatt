@@ -12,9 +12,10 @@ const PaymentResult = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        const orderId = searchParams.get("order_id");
+        const orderId = searchParams.get("order") || searchParams.get("order_id");
+        // Handle both 'transaction_id' and 'id' (Paymob sometimes uses 'id' for transaction ID)
+        const transactionId = searchParams.get("transaction_id") || searchParams.get("id");
         const success = searchParams.get("success");
-        const transactionId = searchParams.get("transaction_id");
 
         if (orderId) {
           const response = await axios.get(`/api/payments/result/`, {
