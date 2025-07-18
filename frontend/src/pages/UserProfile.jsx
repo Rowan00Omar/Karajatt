@@ -17,11 +17,23 @@ const UserProfile = () => {
   const [email, setEmail] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [orderHistory, setOrderHistory] = useState([]);
+  const [pendingOrders, setPendingOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
   const [visiblePhoneOrderId, setVisiblePhoneOrderId] = useState(null);
   const [userId, setUserId] = useState(null);
+
+  // Pagination state
+  const [pendingPage, setPendingPage] = useState(1);
+  const [finishedPage, setFinishedPage] = useState(1);
+  const rowsPerPage = 5;
+
+  // Pagination logic
+  const paginatedPending = pendingOrders.slice((pendingPage - 1) * rowsPerPage, pendingPage * rowsPerPage);
+  const paginatedFinished = orderHistory.slice((finishedPage - 1) * rowsPerPage, finishedPage * rowsPerPage);
+  const pendingTotalPages = Math.ceil(pendingOrders.length / rowsPerPage);
+  const finishedTotalPages = Math.ceil(orderHistory.length / rowsPerPage);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -52,6 +64,15 @@ const UserProfile = () => {
             }
           );
           setOrderHistory(ordersResponse.data);
+
+          // Get pending inspection orders
+          const pendingResponse = await axios.get(
+            `/api/auth/orders/pending/${userData.id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setPendingOrders(pendingResponse.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -134,6 +155,72 @@ const UserProfile = () => {
           </div>
         </div>
 
+        {/* Pending Inspection Orders */}
+        <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-4 sm:p-6 overflow-x-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <MagnifyingGlassIcon className="w-5 sm:w-6 h-5 sm:h-6 text-yellow-500" />
+            <h2 className="text-lg sm:text-xl font-semibold text-yellow-600">
+              الطلبات قيد الفحص
+            </h2>
+          </div>
+          {pendingOrders.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              لا توجد طلبات قيد الفحص
+            </div>
+          ) : (
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <div className="inline-block min-w-full align-middle">
+                <table className="min-w-full text-sm text-right">
+                  <thead className="text-gray-500 border-b">
+                    <tr>
+                      <th className="py-2 pr-4 text-xs sm:text-sm font-medium">رقم الطلب</th>
+                      <th className="py-2 pr-4 text-xs sm:text-sm font-medium">اسم القطعة</th>
+                      <th className="py-2 pr-4 text-xs sm:text-sm font-medium">تاريخ الطلب</th>
+                      <th className="py-2 pr-4 text-xs sm:text-sm font-medium">السعر</th>
+                      <th className="py-2 text-xs sm:text-sm font-medium">اسم البائع</th>
+                      <th className="py-2 text-xs sm:text-sm font-medium">الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-800">
+                    {paginatedPending.map((order) => (
+                      <tr key={order.uniqueKey} className="border-b hover:bg-gray-50">
+                        <td className="py-3 pr-4 text-xs sm:text-sm">{order.id}</td>
+                        <td className="py-3 pr-4 text-xs sm:text-sm">{order.partName}</td>
+                        <td className="py-3 pr-4 text-xs sm:text-sm">{order.orderDate}</td>
+                        <td className="py-3 pr-4 text-xs sm:text-sm">{order.price}</td>
+                        <td className="py-3 text-xs sm:text-sm">{order.seller}</td>
+                        <td className="py-3 text-xs sm:text-sm text-yellow-600">بانتظار الفحص</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {/* Pagination Controls */}
+                {pendingTotalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-4">
+                    <button
+                      onClick={() => setPendingPage((p) => Math.max(1, p - 1))}
+                      disabled={pendingPage === 1}
+                      className="px-3 py-1 rounded bg-gray-100 text-gray-700 disabled:opacity-50"
+                    >
+                      السابق
+                    </button>
+                    <span className="text-sm">
+                      صفحة {pendingPage} من {pendingTotalPages}
+                    </span>
+                    <button
+                      onClick={() => setPendingPage((p) => Math.min(pendingTotalPages, p + 1))}
+                      disabled={pendingPage === pendingTotalPages}
+                      className="px-3 py-1 rounded bg-gray-100 text-gray-700 disabled:opacity-50"
+                    >
+                      التالي
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Order History */}
         <div className="bg-white border border-gray-200 shadow-lg rounded-xl p-4 sm:p-6 overflow-x-auto">
           <div className="flex items-center gap-2 mb-4">
@@ -154,39 +241,31 @@ const UserProfile = () => {
               <table className="min-w-full text-sm text-right">
                 <thead className="text-gray-500 border-b">
                   <tr>
-                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">
-                      اسم القطعة
-                    </th>
-                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">
-                      تاريخ الطلب
-                    </th>
-                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">
-                      السعر
-                    </th>
-                    <th className="py-2 text-xs sm:text-sm font-medium">
-                      اسم البائع
-                    </th>
-                    <th className="py-2 text-xs sm:text-sm font-medium">
-                      الإجراءات
-                    </th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">رقم الطلب</th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">اسم القطعة</th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">تاريخ الطلب</th>
+                    <th className="py-2 pr-4 text-xs sm:text-sm font-medium">السعر</th>
+                    <th className="py-2 text-xs sm:text-sm font-medium">اسم البائع</th>
+                    <th className="py-2 text-xs sm:text-sm font-medium">الإجراءات</th>
                   </tr>
                 </thead>
                 <tbody className="text-gray-800">
                   {orderHistory.length === 0 ? (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="6"
                         className="text-center py-4 text-gray-500"
                       >
                         لا توجد طلبات مفحوصة سليمة
                       </td>
                     </tr>
                   ) : (
-                    orderHistory.map((order) => (
+                    paginatedFinished.map((order) => (
                       <tr
                         key={order.uniqueKey}
                         className="border-b hover:bg-gray-50"
                       >
+                        <td className="py-3 pr-4 text-xs sm:text-sm">{order.id}</td>
                         <td className="py-3 pr-4 text-xs sm:text-sm">
                           {order.partName}
                         </td>
@@ -270,6 +349,28 @@ const UserProfile = () => {
                   )}
                 </tbody>
               </table>
+              {/* Pagination Controls */}
+              {finishedTotalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-4">
+                  <button
+                    onClick={() => setFinishedPage((p) => Math.max(1, p - 1))}
+                    disabled={finishedPage === 1}
+                    className="px-3 py-1 rounded bg-gray-100 text-gray-700 disabled:opacity-50"
+                  >
+                    السابق
+                  </button>
+                  <span className="text-sm">
+                    صفحة {finishedPage} من {finishedTotalPages}
+                  </span>
+                  <button
+                    onClick={() => setFinishedPage((p) => Math.min(finishedTotalPages, p + 1))}
+                    disabled={finishedPage === finishedTotalPages}
+                    className="px-3 py-1 rounded bg-gray-100 text-gray-700 disabled:opacity-50"
+                  >
+                    التالي
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

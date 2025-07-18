@@ -11,6 +11,7 @@ const {
   forgotPassword,
   resetPassword,
   getPassedOrdersHistory,
+  getPendingOrdersHistory,
   downloadInspectionReport,
   deleteOwnAccount,
 } = require("../controllers/authController");
@@ -30,6 +31,7 @@ router.delete("/users/:id", authenticateToken, checkRole("admin"), deleteUser);
 router.get("/orders/:userId", authenticateToken, getOrderHistory);
 
 router.get("/orders/passed/:userId", authenticateToken, getPassedOrdersHistory);
+router.get("/orders/pending/:userId", authenticateToken, getPendingOrdersHistory);
 
 router.get("/orders/:orderId/report/download", authenticateToken, downloadInspectionReport);
 

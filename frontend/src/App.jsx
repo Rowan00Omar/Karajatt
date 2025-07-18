@@ -34,7 +34,8 @@ const SellersManagementPage = React.lazy(() => import("./pages/admin/sellers"));
 const PaymentResult = React.lazy(() => import("./pages/PaymentResult"));
 const ResetPassword = React.lazy(() => import("./pages/ResetPassword"));
 const BillingForm = React.lazy(() => import("./pages/BillingForm"));
-
+const SellerPolicy = React.lazy(()=> import('./components/SellerPolicy'));
+const DeliveryPolicy = React.lazy(()=> import('./components/DeliveryPolicy'));
 const UserLayout = ({ children, showNavbar = true }) => {
   const currentRole = localStorage.getItem("userRole");
   const shouldShowNavbar = showNavbar && currentRole !== "seller";
@@ -234,7 +235,8 @@ function App() {
           />
 
           <Route path="/" element={<LandingPage />} />
-
+          <Route path="/seller-policy" element={<SellerPolicy/>}/>
+          <Route path="/delivery-policy" element={<DeliveryPolicy/>}/>
           {/* Public seller profile route */}
           <Route
             path="/seller/:id"

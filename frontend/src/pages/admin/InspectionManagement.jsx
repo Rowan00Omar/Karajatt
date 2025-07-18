@@ -39,6 +39,8 @@ const InspectionManagement = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [pdfError, setPdfError] = useState(null);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     fetchOrders();
@@ -382,17 +384,39 @@ const InspectionManagement = () => {
     }
   };
 
-  // Filter orders based on the toggle state and payment_status === 'paid' (case-insensitive)
+  // Filter orders based on the toggle state, payment_status, status, and search text
   const filteredOrders = React.useMemo(() => {
     const paidOrders = orders.filter(
       (order) => String(order.payment_status).toLowerCase() === 'paid'
     );
-    return showInspectedOnly
+    let filtered = showInspectedOnly
       ? paidOrders.filter(
           (order) => order.status === "passed" || order.status === "failed"
         )
       : paidOrders.filter((order) => order.status === "pending");
-  }, [orders, showInspectedOnly]);
+
+    // Filter by status
+    if (filterStatus !== "all") {
+      filtered = filtered.filter((order) => order.status === filterStatus);
+    }
+
+    // Filter by search text (order ID or buyer name)
+    if (searchText.trim() !== "") {
+      const lowerSearch = searchText.trim().toLowerCase();
+      filtered = filtered.filter((order) => {
+        const orderIdMatch = String(order.id).includes(lowerSearch);
+        const buyerName = `${order.buyer_first_name || ''} ${order.buyer_last_name || ''}`.toLowerCase();
+        const buyerPhone = (order.buyer_phone || '').toLowerCase();
+        return (
+          orderIdMatch ||
+          buyerName.includes(lowerSearch) ||
+          buyerPhone.includes(lowerSearch)
+        );
+      });
+    }
+
+    return filtered;
+  }, [orders, showInspectedOnly, filterStatus, searchText]);
 
   const getStatusDisplay = (status) => {
     switch (status) {
@@ -719,6 +743,34 @@ const InspectionManagement = () => {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            {/* Filter UI */}
+            <div className="flex flex-wrap gap-4 mb-4 items-center justify-between">
+              <div className="flex gap-2 items-center">
+                <label htmlFor="status-filter" className="text-sm font-medium text-gray-700">الحالة:</label>
+                <select
+                  id="status-filter"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="border rounded-md p-2 text-sm"
+                >
+                  <option value="all">الكل</option>
+                  <option value="pending">بانتظار الفحص</option>
+                  <option value="passed">تم الفحص - القطعة سليمة</option>
+                  <option value="failed">تم الفحص - القطعة غير صالحة</option>
+                </select>
+              </div>
+              <div className="flex gap-2 items-center">
+                <label htmlFor="search-text" className="text-sm font-medium text-gray-700">بحث:</label>
+                <input
+                  id="search-text"
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="رقم الطلب أو اسم المشتري أو رقم الهاتف"
+                  className="border rounded-md p-2 text-sm w-64"
+                />
+              </div>
+            </div>
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>

@@ -462,6 +462,56 @@ const getPassedOrdersHistory = async (req, res) => {
   }
 };
 
+const getPendingOrdersHistory = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const [orders] = await pool.query(
+      `SELECT DISTINCT
+        o.id,
+        o.order_date as orderDate,
+        o.total_price as price,
+        o.status,
+        p.title as partName,
+        p.part_name,
+        CONCAT(u.first_name, ' ', u.last_name) as seller,
+        oi.id as orderItemId
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      JOIN products p ON oi.product_id = p.product_id
+      JOIN users u ON p.seller_id = u.id
+      WHERE o.user_id = ? AND o.status = 'pending'
+      GROUP BY 
+        o.id,
+        o.order_date,
+        o.total_price,
+        o.status,
+        p.title,
+        p.part_name,
+        u.first_name,
+        u.last_name,
+        oi.id
+      ORDER BY o.order_date DESC`,
+      [userId]
+    );
+
+    // Format dates and prices and create unique keys
+    const formattedOrders = orders.map((order) => ({
+      ...order,
+      orderDate: new Date(order.orderDate).toLocaleDateString("ar-SA"),
+      price: `${order.price} ر.س`,
+      uniqueKey: `${order.id}-${order.orderItemId}`,
+    }));
+
+    res.json(formattedOrders);
+  } catch (error) {
+    console.error("Error fetching pending orders history:", error);
+    res.status(500).json({
+      message: "فشل في جلب سجل الطلبات قيد الفحص",
+      error: error.message,
+    });
+  }
+};
+
 const axios = require("axios");
 
 const downloadInspectionReport = async (req, res) => {
@@ -547,6 +597,7 @@ module.exports = {
   forgotPassword,
   resetPassword,
   getPassedOrdersHistory,
+  getPendingOrdersHistory,
   downloadInspectionReport,
   deleteOwnAccount,
 };

@@ -21,7 +21,7 @@ const Signup = ({ flag = false, onSuccess }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-
+  const [agreedToPolicy,setAgreedToPolicy] = useState(false);
   useEffect(() => {
     // Clear any existing authentication data when accessing signup page
     localStorage.removeItem("token");
@@ -45,7 +45,11 @@ const Signup = ({ flag = false, onSuccess }) => {
     if (role === "seller") {
       requiredFields.push(bankName, accountNumber, address, phoneNumber);
     }
-
+    if (role === "seller" && !agreedToPolicy){
+      setError("يجب الموافقة على سياسة البائع اولا");
+      setLoading(false);
+      return;
+    }
     if (requiredFields.some((field) => !field)) {
       setError("يجب ملأ جميع البيانات!");
       setLoading(false);
@@ -234,6 +238,16 @@ const Signup = ({ flag = false, onSuccess }) => {
               onChange={(e) => setAddress(e.target.value)}
               className="w-full rounded-lg"
             />
+          </div>
+          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+            <input type="checkbox" id="sellerPolicy" checked={agreedToPolicy} onChange={(e) => setAgreedToPolicy(e.target.checked)}
+            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"/>
+            <label htmlFor="sellerPolicy" className="text-sm text-gray-700">
+              أوافق على {" "}
+              <Link to="/seller-policy" className="text-indigo-600 underline hover:text-indigo-800">
+              سياسة البائع
+              </Link>
+            </label>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Mail, Home, ShoppingBag } from "lucide-react";
+import { Mail, Home, ShoppingBag ,Book} from "lucide-react";
+
 import { FaTiktok, FaTwitter, FaInstagram } from "react-icons/fa";
 import Logo from "@/assets/LogoNoBack.png";
 
@@ -63,6 +64,24 @@ const Footer = () => {
               <ShoppingBag className="w-5 h-5" />
               المنتجات
             </Link>
+            
+          </div>
+          <div className="flex flex-col space-y-4 text-gray-300">
+            <Link
+              to="/seller-policy"
+              className="hover:text-babyJanaBlue transition-colors flex items-center gap-2"
+            >
+              <Book className="w-5 h-5" />
+              سياسات البائع
+            </Link>
+            <Link
+              to="/delivery-policy"
+              className="hover:text-babyJanaBlue transition-colors flex items-center gap-2"
+            >
+              <Book className="w-5 h-5" />
+              سياسات التوصيل
+            </Link>
+            
           </div>
         </div>
 
