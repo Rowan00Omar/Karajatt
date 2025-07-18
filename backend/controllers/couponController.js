@@ -80,7 +80,8 @@ const validateCoupon = async (req, res) => {
 
     res.json({
       valid: true,
-      discount_percentage: coupon.discount_percentage
+      discount_percentage: coupon.discount_percentage,
+      type: coupon.type
     });
   } catch (error) {
     console.error("Error validating coupon:", error);

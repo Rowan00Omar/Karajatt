@@ -83,8 +83,9 @@ export function CartProvider({ children }) {
   if (appliedCoupon) {
     if (appliedCoupon.type === "inspection_fee") {
       discountOnInspection = (totalInspectionFees * appliedCoupon.discount_percentage) / 100;
-    } else {
+    } else if (appliedCoupon.type === "total") {
       discountOnSubtotal = (subtotal * appliedCoupon.discount_percentage) / 100;
+      discountOnInspection = (totalInspectionFees * appliedCoupon.discount_percentage) / 100;
     }
   }
 

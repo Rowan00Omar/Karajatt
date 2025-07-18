@@ -158,7 +158,6 @@ export default function SalesReportPage() {
                   />
                   <Tooltip 
                     formatter={(value) => {
-                      console.log('Tooltip value:', value);
                       return [`${value.toLocaleString()} ر.س`, 'الإيرادات'];
                     }}
                     labelFormatter={(label) => {
