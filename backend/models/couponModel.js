@@ -1,10 +1,10 @@
 const pool = require("../db");
 
 class Coupon {
-  static async create(code, discount_percentage, expiry_date, is_active = true) {
+  static async create(code, discount_percentage, expiry_date, is_active = true, type = 'total') {
     const [result] = await pool.query(
-      "INSERT INTO coupons (code, discount_percentage, expiry_date, is_active) VALUES (?, ?, ?, ?)",
-      [code, discount_percentage, expiry_date, is_active]
+      "INSERT INTO coupons (code, discount_percentage, expiry_date, is_active, type) VALUES (?, ?, ?, ?, ?)",
+      [code, discount_percentage, expiry_date, is_active, type]
     );
     return result.insertId;
   }
@@ -19,10 +19,10 @@ class Coupon {
     return coupons[0];
   }
 
-  static async update(id, { code, discount_percentage, expiry_date, is_active }) {
+  static async update(id, { code, discount_percentage, expiry_date, is_active, type }) {
     await pool.query(
-      "UPDATE coupons SET code = ?, discount_percentage = ?, expiry_date = ?, is_active = ? WHERE id = ?",
-      [code, discount_percentage, expiry_date, is_active, id]
+      "UPDATE coupons SET code = ?, discount_percentage = ?, expiry_date = ?, is_active = ?, type = ? WHERE id = ?",
+      [code, discount_percentage, expiry_date, is_active, type, id]
     );
   }
 

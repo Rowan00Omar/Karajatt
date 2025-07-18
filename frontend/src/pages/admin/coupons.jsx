@@ -15,6 +15,7 @@ export default function CouponsPage() {
     discount_percentage: "",
     expiry_date: "",
     is_active: true,
+    type: "total", // New field: 'total' or 'inspection_fee'
   });
 
   useEffect(() => {
@@ -78,6 +79,7 @@ export default function CouponsPage() {
       discount_percentage: coupon.discount_percentage,
       expiry_date: new Date(coupon.expiry_date).toISOString().split("T")[0],
       is_active: coupon.is_active,
+      type: coupon.type || "total", // Default to 'total' if not set
     });
     setIsModalOpen(true);
   };
@@ -88,6 +90,7 @@ export default function CouponsPage() {
       discount_percentage: "",
       expiry_date: "",
       is_active: true,
+      type: "total",
     });
     setEditingCoupon(null);
   };
@@ -170,13 +173,15 @@ export default function CouponsPage() {
                     خصم {coupon.discount_percentage}%
                   </p>
                   <p className="text-gray-500 text-sm">
-                    ينتهي في:{" "}
-                    {new Date(coupon.expiry_date).toLocaleDateString("ar", {
+                    ينتهي في: {new Date(coupon.expiry_date).toLocaleDateString("ar", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
                       calendar: "gregory",
                     })}
+                  </p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    نوع الكوبون: {coupon.type === "inspection_fee" ? "رسوم الفحص" : "إجمالي الفاتورة"}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -270,6 +275,22 @@ export default function CouponsPage() {
                     className="w-full p-2 border rounded-lg"
                     required
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    نوع الكوبون
+                  </label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) =>
+                      setFormData({ ...formData, type: e.target.value })
+                    }
+                    className="w-full p-2 border rounded-lg"
+                    required
+                  >
+                    <option value="total">إجمالي الفاتورة</option>
+                    <option value="inspection_fee">رسوم الفحص</option>
+                  </select>
                 </div>
                 <div className="flex items-center gap-2">
                   <input

@@ -6,6 +6,9 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [inspectionFee, setInspectionFee] = useState(49); // Default, can be updated from API
+
+  // Optionally, fetch inspection fee from API here if needed
 
   const addToCart = (product) => {
     setCartItems((prevItems) => {
@@ -66,10 +69,26 @@ export function CartProvider({ children }) {
     );
   };
 
+  // Calculate discounts based on coupon type
   const subtotal = cartItems.reduce((total, item) => {
     const itemPrice = parseFloat(item.price) || 0;
     return total + itemPrice;
   }, 0);
+
+  const totalInspectionFees = cartItems.length * inspectionFee;
+
+  let discountOnSubtotal = 0;
+  let discountOnInspection = 0;
+
+  if (appliedCoupon) {
+    if (appliedCoupon.type === "inspection_fee") {
+      discountOnInspection = (totalInspectionFees * appliedCoupon.discount_percentage) / 100;
+    } else {
+      discountOnSubtotal = (subtotal * appliedCoupon.discount_percentage) / 100;
+    }
+  }
+
+  const cartTotal = subtotal - discountOnSubtotal + totalInspectionFees - discountOnInspection;
 
   const applyCoupon = async (code) => {
     try {
@@ -78,6 +97,7 @@ export function CartProvider({ children }) {
         setAppliedCoupon({
           code,
           discount_percentage: response.data.discount_percentage,
+          type: response.data.type || "total",
         });
         return { success: true };
       }
@@ -95,12 +115,6 @@ export function CartProvider({ children }) {
     setAppliedCoupon(null);
   };
 
-  const discount = appliedCoupon
-    ? (subtotal * appliedCoupon.discount_percentage) / 100
-    : 0;
-
-  const cartTotal = subtotal - discount;
-
   return (
     <CartContext.Provider
       value={{
@@ -110,10 +124,15 @@ export function CartProvider({ children }) {
         updateQuantity,
         subtotal,
         cartTotal,
-        discount,
+        discount: discountOnSubtotal + discountOnInspection,
+        discountOnSubtotal,
+        discountOnInspection,
+        totalInspectionFees,
         appliedCoupon,
         applyCoupon,
         removeCoupon,
+        inspectionFee,
+        setInspectionFee,
       }}
     >
       {children}

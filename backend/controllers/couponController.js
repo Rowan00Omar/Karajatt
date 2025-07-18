@@ -3,9 +3,9 @@ const Coupon = require("../models/couponModel");
 // Create a new coupon (Admin only)
 const createCoupon = async (req, res) => {
   try {
-    const { code, discount_percentage, expiry_date } = req.body;
+    const { code, discount_percentage, expiry_date, is_active = true, type = 'total' } = req.body;
 
-    if (!code || !discount_percentage || !expiry_date) {
+    if (!code || !discount_percentage || !expiry_date || !type) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -14,7 +14,7 @@ const createCoupon = async (req, res) => {
       return res.status(400).json({ message: "Coupon code already exists" });
     }
 
-    const couponId = await Coupon.create(code, discount_percentage, expiry_date);
+    const couponId = await Coupon.create(code, discount_percentage, expiry_date, is_active, type);
     res.status(201).json({ message: "Coupon created successfully", couponId });
   } catch (error) {
     console.error("Error creating coupon:", error);
@@ -37,9 +37,9 @@ const getAllCoupons = async (req, res) => {
 const updateCoupon = async (req, res) => {
   try {
     const { id } = req.params;
-    const { code, discount_percentage, expiry_date, is_active } = req.body;
+    const { code, discount_percentage, expiry_date, is_active, type = 'total' } = req.body;
 
-    if (!code || !discount_percentage || !expiry_date) {
+    if (!code || !discount_percentage || !expiry_date || !type) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -48,7 +48,7 @@ const updateCoupon = async (req, res) => {
       return res.status(400).json({ message: "Coupon code already exists" });
     }
 
-    await Coupon.update(id, { code, discount_percentage, expiry_date, is_active });
+    await Coupon.update(id, { code, discount_percentage, expiry_date, is_active, type });
     res.json({ message: "Coupon updated successfully" });
   } catch (error) {
     console.error("Error updating coupon:", error);

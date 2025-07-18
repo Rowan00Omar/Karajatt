@@ -12,14 +12,18 @@ const Cart = ({ onClose }) => {
     subtotal,
     cartTotal,
     discount,
+    discountOnSubtotal,
+    discountOnInspection,
     appliedCoupon,
     applyCoupon,
     removeCoupon,
+    totalInspectionFees,
+    inspectionFee,
+    setInspectionFee,
   } = useCart();
 
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
-  const [inspectionFee, setInspectionFee] = useState(49);
   const [feeError, setFeeError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState(null);
@@ -43,8 +47,7 @@ const Cart = ({ onClose }) => {
     fetchInspectionFee();
   }, []);
 
-  const totalInspectionFees = cartItems.length * inspectionFee;
-  const finalTotal = cartTotal + totalInspectionFees;
+  const finalTotal = cartTotal;
 
   const handleCheckout = async () => {
     try {
@@ -222,16 +225,22 @@ const Cart = ({ onClose }) => {
                 <span>المجموع الفرعي:</span>
                 <span>{subtotal.toFixed(2)} ر.س</span>
               </div>
-              {discount > 0 && (
+              {discountOnSubtotal > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
-                  <span>الخصم:</span>
-                  <span>- {discount.toFixed(2)} ر.س</span>
+                  <span>خصم على المنتجات:</span>
+                  <span>- {discountOnSubtotal.toFixed(2)} ر.س</span>
                 </div>
               )}
               <div className="flex justify-between text-sm text-gray-600">
                 <span>رسوم الفحص:</span>
                 <span>{totalInspectionFees.toFixed(2)} ر.س</span>
               </div>
+              {discountOnInspection > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>خصم على رسوم الفحص:</span>
+                  <span>- {discountOnInspection.toFixed(2)} ر.س</span>
+                </div>
+              )}
               {feeError && (
                 <p className="text-red-500 text-xs text-right">{feeError}</p>
               )}
