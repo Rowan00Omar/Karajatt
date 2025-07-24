@@ -320,7 +320,7 @@ const forgotPassword = async (req, res) => {
     const mailOptions = {
       from: process.env.SMTP_FROM,
       to: email,
-      subject: "إعادة تعيين كلمة المرور  - خليجي",
+      subject: "إعادة تعيين كلمة المرور - كراجات",
       html: `
         <div dir="rtl" style="font-family: Arial, sans-serif;">
           <h2>إعادة تعيين كلمة المرور</h2>
@@ -479,7 +479,7 @@ const getPendingOrdersHistory = async (req, res) => {
       JOIN order_items oi ON o.id = oi.order_id
       JOIN products p ON oi.product_id = p.product_id
       JOIN users u ON p.seller_id = u.id
-      WHERE o.user_id = ? AND o.status = 'pending'
+      WHERE o.user_id = ? AND o.status = 'pending' AND o.payment_status = 'paid'
       GROUP BY 
         o.id,
         o.order_date,
