@@ -320,7 +320,7 @@ const forgotPassword = async (req, res) => {
     const mailOptions = {
       from: process.env.SMTP_FROM,
       to: email,
-      subject: "إعادة تعيين كلمة المرور - خليجي",
+      subject: "إعادة تعيين كلمة المرور - كراجات",
       html: `
         <div dir="rtl" style="font-family: Arial, sans-serif;">
           <h2>إعادة تعيين كلمة المرور</h2>
