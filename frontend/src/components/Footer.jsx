@@ -1,8 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Mail, Home, ShoppingBag ,Book} from "lucide-react";
+import { Mail,Phone, Home, ShoppingBag ,Book} from "lucide-react";
 
-import { FaTiktok, FaTwitter, FaInstagram } from "react-icons/fa";
+import { FaTiktok, FaTwitter, FaInstagram,FaWhatsapp } from "react-icons/fa";
 import Logo from "@/assets/LogoNoBack.png";
 
 const Footer = () => {
@@ -93,13 +93,18 @@ const Footer = () => {
           >
             <span>للاستفسارات أو المشاكل، راسلنا على</span>
             <a
-              href="mailto:Karjattoffical@gmail.com"
+              href="mailto:Karjattofficial1@gmail.com"
               dir="ltr"
               className="text-babyJanaBlue hover:text-blue-400 transition-colors flex items-center gap-2 justify-center md:justify-start mt-2"
             >
               <Mail className="w-5 h-5" />
-              Karjattoffical@gmail.com
+              Karjattofficial1@gmail.com
             </a>
+            <p className="text-babyJanaBlue hover:text-blue-400 transition-colors flex items-center gap-2 justify-center md:justify-start mt-2" dir="ltr">
+            <FaWhatsapp className="w-5 h-5" />
+            0503270803
+            </p>
+
           </div>
           <div className="hidden md:block text-sm text-gray-400">
             حقوق الملكية &copy; 2025, كل الحقوق محفوظة
