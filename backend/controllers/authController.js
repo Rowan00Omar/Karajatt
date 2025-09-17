@@ -25,6 +25,8 @@ const register = async (req, res) => {
     await connection.beginTransaction();
 
     try {
+      console.log(await bcrypt.hash(password, 10))
+      
       // Check if email already exists
       const [existingUser] = await connection.query(
         "SELECT id FROM users WHERE email = ?",
@@ -40,6 +42,7 @@ const register = async (req, res) => {
 
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
+      
 
       const [result] = await connection.query(
         `INSERT INTO users (first_name, last_name, email, password, role, phone_number) 
@@ -99,7 +102,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
-
+  console
   try {
     const [userRows] = await pool.query("SELECT * FROM users WHERE email = ?", [
       email.toLowerCase(),
@@ -237,6 +240,8 @@ const deleteUser = async (req, res) => {
 
 const getOrderHistory = async (req, res) => {
   const { userId } = req.params;
+  console.log('userId', userId)
+
   try {
     const [orderItems] = await pool.query(
       `

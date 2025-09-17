@@ -38,6 +38,7 @@ const UserProfile = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchUserInfo = async () => {
+        console.log('fetching')
       if (!token) return;
 
       try {
@@ -49,13 +50,12 @@ const UserProfile = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const userData = userResponse.data;
-
         if (userData) {
           setUserId(userData.id);
           const fullName = userData.first_name + " " + userData.last_name;
           setUsername(fullName);
           setEmail(userData.email);
-
+          
           // Get passed orders
           const ordersResponse = await axios.get(
             `/api/auth/orders/passed/${userData.id}`,
@@ -63,6 +63,7 @@ const UserProfile = () => {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
+          console.log('fetchin1', ordersResponse)
           setOrderHistory(ordersResponse.data);
 
           // Get pending inspection orders
@@ -72,6 +73,8 @@ const UserProfile = () => {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
+          console.log('fetchin2', pendingResponse)
+
           setPendingOrders(pendingResponse.data);
         }
       } catch (error) {

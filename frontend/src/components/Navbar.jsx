@@ -1,6 +1,7 @@
+// Navbar.js
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Home, User, ChevronDown, LogOut, ShoppingBag } from "lucide-react";
+import { Home, User, ChevronDown, LogOut, ShoppingBag, Menu, X } from "lucide-react";
 import CartButton from "./CartButton";
 import useLogout from "@/hooks/useLogout.jsx";
 import Logo from "@/assets/LogoNoBack.png";
@@ -9,6 +10,7 @@ const Navbar = () => {
   const logout = useLogout();
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
@@ -28,87 +30,156 @@ const Navbar = () => {
   return (
     <>
       {/* Desktop Nav */}
-      <nav className="hidden md:flex fixed justify-between bg-gradient-to-b from-gray-900 to-gray-800 items-center top-0 left-0 right-0 w-full px-6 py-4 z-40 border-b border-gray-700">
-        <div className="w-[144px]"></div>
-        {userRole ? (
-          <Link
-            to="/user"
-            className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
-          >
-            <img
-              src={Logo}
-              alt=""
-              className="h-16 w-auto transition-all hover:scale-105 hover:brightness-110 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]"
-            />
-          </Link>
-        ) : (
+      <nav className="hidden md:flex fixed justify-between bg-gray-900 items-center top-0 left-0 right-0 w-full px-6 py-3 z-40 border-b border-gray-800">
+        {/* اللوجو على اليمين */}
+        <div className="flex items-center">
+          {userRole ? (
+            <Link to="/user">
+              <img
+                src={Logo}
+                alt="Logo"
+                className="h-14 w-auto transition-all hover:scale-105"
+              />
+            </Link>
+          ) : (
+            <Link to="/">
+              <img
+                src={Logo}
+                alt="Logo"
+                className="h-14 w-auto transition-all hover:scale-105"
+              />
+            </Link>
+          )}
+        </div>
+        
+        {/* الروابط في المنتصف */}
+        <div className="hidden md:flex items-center space-x-8">
           <Link
             to="/"
-            className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2"
+            className="text-gray-300 hover:text-white font-medium transition-colors"
           >
-            <img
-              src={Logo}
-              alt=""
-              className="h-16 w-auto transition-all hover:scale-105 hover:brightness-110 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]"
-            />
+            الرئيسية
           </Link>
-        )}
-
+          <Link
+            to="/search"
+            className="text-gray-300 hover:text-white font-medium transition-colors"
+          >
+            المنتجات
+          </Link>
+        
+        </div>
+        
+        {/* الأيقونات على الشمال */}
         <div className="flex items-center space-x-4">
-          <button onClick={() => navigate("/search")} className="text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">
-            <ShoppingBag className="w-6 h-6" />
+          <button
+            onClick={() => navigate("/search")}
+            className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer"
+          >
+            <ShoppingBag className="w-5 h-5" />
           </button>
-          <div className="text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">
+          <div className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer">
             <CartButton />
           </div>
           <button
             onClick={handleProfileClick}
-            className="text-gray-400 hover:text-white transition-colors p-2 cursor-pointer"
+            className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer"
           >
-            <User className="w-6 h-6" />
+            <User className="w-5 h-5" />
           </button>
           <button
             onClick={logout}
-            className="text-gray-400 hover:text-white transition-colors p-2 cursor-pointer"
+            className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer"
           >
-            <LogOut className="w-6 h-6" />
+            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </nav>
 
-      {/* Mobile Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full shadow-lg border-t border-gray-700 z-50 bg-gradient-to-t from-gray-900 to-gray-800">
-        <div className="flex justify-around items-center h-16">
-          <Link
-            to="/"
-            className="flex flex-col items-center text-gray-400 hover:text-white transition-colors p-2 cursor-pointer"
-          >
-            <Home className="w-6 h-6" />
-            <span className="text-xs mt-1">الرئيسية</span>
+      {/* Mobile Header */}
+      <nav className="md:hidden fixed top-0 left-0 right-0 w-full bg-gray-900 z-50">
+        <div className="flex justify-between items-center px-4 py-3">
+          <Link to="/">
+            <img
+              src={Logo}
+              alt="Logo"
+              className="h-10 w-auto transition-all hover:scale-105"
+            />
           </Link>
-          <button onClick={() => navigate("/search")} className="flex flex-col items-center text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">
-            <ShoppingBag className="w-6 h-6" />
-            <span className="text-xs mt-1">المنتجات</span>
-          </button>
-          <div className="flex flex-col items-center text-gray-400 hover:text-white transition-colors p-2 cursor-pointer">
-            <CartButton />
-            <span className="text-xs mt-1">السلة</span>
-          </div>
           <button
-            onClick={handleProfileClick}
-            className="flex flex-col items-center text-gray-400 hover:text-white transition-colors p-2 cursor-pointer"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-gray-300 hover:text-white"
           >
-            <User className="w-6 h-6" />
-            <span className="text-xs mt-1">حسابي</span>
-          </button>
-          <button
-            onClick={logout}
-            className="flex flex-col items-center text-gray-400 hover:text-white transition-colors p-2 cursor-pointer"
-          >
-            <LogOut className="w-6 h-6" />
-            <span className="text-xs mt-1">تسجيل خروج</span>
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
+        
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="bg-gray-800 border-t border-gray-700 py-4 px-4">
+            <div className="flex flex-col space-y-3">
+              <Link
+                to="/"
+                className="text-gray-300 hover:text-white font-medium py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                الرئيسية
+              </Link>
+              <Link
+                to="/search"
+                className="text-gray-300 hover:text-white font-medium py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                المنتجات
+              </Link>
+              <Link
+                to="/about"
+                className="text-gray-300 hover:text-white font-medium py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                من نحن
+              </Link>
+              <Link
+                to="/contact"
+                className="text-gray-300 hover:text-white font-medium py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                تواصل معنا
+              </Link>
+              <div className="flex items-center justify-between pt-3 border-t border-gray-700 mt-2">
+                <button
+                  onClick={() => {
+                    navigate("/search");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                </button>
+                <div className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer">
+                  <CartButton />
+                </div>
+                <button
+                  onClick={(e) => {
+                    handleProfileClick(e);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer"
+                >
+                  <User className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
     </>
   );

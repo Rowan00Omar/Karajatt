@@ -25,6 +25,7 @@ const validateBillingData = (req, res, next) => {
     (field) => !billingData[field] || billingData[field] === "NA"
   );
 
+  console.log('validat', missingFields)
   if (missingFields.length > 0) {
     return res.status(400).json({
       error: "Missing or invalid billing fields",

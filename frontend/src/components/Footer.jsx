@@ -1,113 +1,134 @@
+// Footer.js
 import React from "react";
 import { Link } from "react-router-dom";
-import { Mail,Phone, Home, ShoppingBag ,Book} from "lucide-react";
-
-import { FaTiktok, FaTwitter, FaInstagram,FaWhatsapp } from "react-icons/fa";
+import { Mail, Home, ShoppingBag, Book, Phone, MapPin } from "lucide-react";
+import { FaTiktok, FaTwitter, FaInstagram, FaFacebook } from "react-icons/fa";
 import Logo from "@/assets/LogoNoBack.png";
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-b from-gray-900 to-gray-800 text-gray-300 border-t border-gray-800 mt-auto">
-      <div className="container flex flex-col-reverse justify-between px-6 py-12 mx-auto space-y-8 md:flex-row md:space-y-0 max-w-6xl">
-        {/* Logo and Social Media */}
-        <div className="flex flex-col-reverse items-center justify-between space-y-8 md:flex-col md:space-y-0 md:items-start">
-          <div className="mx-auto my-3 text-center text-gray-400 text-sm md:hidden">
-            حقوق الملكية &copy; 2025, كل الحقوق محفوظة
+    <footer className="bg-gray-900 text-gray-300 py-8">
+      <div className="container px-6 mx-auto max-w-6xl">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          {/* Logo and Social Media */}
+          <div className="flex flex-col items-center md:items-start mb-6 md:mb-0">
+            <div className="mb-4">
+              <img
+                src={Logo}
+                className="h-10 w-auto"
+                alt="Karajat Logo"
+              />
+            </div>
+            
+            {/* Social Media Links */}
+            <div className="flex gap-3">
+              <a
+                href="https://www.tiktok.com/@1.karjatt?is_from_webapp=1&sender_device=pc"
+                className="bg-gray-800 hover:bg-blue-600 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                aria-label="TikTok"
+              >
+                <FaTiktok className="text-sm" />
+              </a>
+              <a
+                href="https://x.com/1_Karjatt"
+                className="bg-gray-800 hover:bg-blue-400 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Twitter"
+              >
+                <FaTwitter className="text-sm" />
+              </a>
+              <a
+                href="https://www.instagram.com/1.karjatt/?utm_source=ig_web_button_share_sheet"
+                className="bg-gray-800 hover:bg-pink-600 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Instagram"
+              >
+                <FaInstagram className="text-sm" />
+              </a>
+              <a
+                href="#"
+                className="bg-gray-800 hover:bg-blue-700 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                aria-label="Facebook"
+              >
+                <FaFacebook className="text-sm" />
+              </a>
+            </div>
           </div>
-          <div>
-            <img
-              src={Logo}
-              className="h-12 my-6 md:my-0 opacity-90 hover:opacity-100 transition-opacity"
-              alt="Karajat Logo"
-            />
+          
+          {/* Quick Links */}
+          <div className="mb-6 md:mb-0">
+            <div className="flex flex-wrap justify-center gap-6">
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-2">روابط سريعة</h3>
+                <ul className="space-y-1">
+                  <li>
+                    <Link
+                      to="/"
+                      className="hover:text-blue-400 transition-colors text-sm flex items-center gap-1"
+                    >
+                      <Home className="w-3 h-3" />
+                      الرئيسية
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/search"
+                      className="hover:text-blue-400 transition-colors text-sm flex items-center gap-1"
+                    >
+                      <ShoppingBag className="w-3 h-3" />
+                      المنتجات
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-2">السياسات</h3>
+                <ul className="space-y-1">
+                  <li>
+                    <Link
+                      to="/seller-policy"
+                      className="hover:text-blue-400 transition-colors text-sm flex items-center gap-1"
+                    >
+                      <Book className="w-3 h-3" />
+                      سياسات البائع
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/delivery-policy"
+                      className="hover:text-blue-400 transition-colors text-sm flex items-center gap-1"
+                    >
+                      <Book className="w-3 h-3" />
+                      سياسات التوصيل
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </div>
-          {/* Social Media Links */}
-          <div className="flex justify-center gap-6 mt-6 text-xl">
-            <a
-              href="https://www.tiktok.com/@1.karjatt?is_from_webapp=1&sender_device=pc"
-              className="text-gray-400 hover:text-white transition-colors"
-              aria-label="TikTok"
-            >
-              <FaTiktok />
-            </a>
-            <a
-              href="https://x.com/1_Karjatt"
-              className="text-gray-400 hover:text-white transition-colors"
-              aria-label="Twitter"
-            >
-              <FaTwitter />
-            </a>
-            <a
-              href="https://www.instagram.com/1.karjatt/?utm_source=ig_web_button_share_sheet"
-              className="text-gray-400 hover:text-white transition-colors"
-              aria-label="Instagram"
-            >
-              <FaInstagram />
-            </a>
+          
+          {/* Contact Info */}
+          <div className="text-center md:text-right">
+            <h3 className="text-sm font-semibold text-white mb-2">معلومات التواصل</h3>
+            <div className="space-y-1">
+              <a
+                href="mailto:Karjattoffical@gmail.com"
+                className="flex items-center gap-1 hover:text-blue-400 transition-colors text-sm justify-center md:justify-end"
+              >
+                <Mail className="w-3 h-3" />
+                Karjattoffical@gmail.com
+              </a>
+              <div className="flex items-center gap-1 text-sm justify-center md:justify-end">
+                <Phone className="w-3 h-3" />
+                +966 50 123 4567
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Nav Links */}
-        <div className="flex justify-around space-x-32 my-8 md:my-0 md:mx-12">
-          <div className="flex flex-col space-y-4 text-gray-300">
-            <Link
-              to="/"
-              className="hover:text-babyJanaBlue transition-colors flex items-center gap-2"
-            >
-              <Home className="w-5 h-5" />
-              الرئيسية
-            </Link>
-            <Link
-              to="/search"
-              className="hover:text-babyJanaBlue transition-colors flex items-center gap-2"
-            >
-              <ShoppingBag className="w-5 h-5" />
-              المنتجات
-            </Link>
-            
-          </div>
-          <div className="flex flex-col space-y-4 text-gray-300">
-            <Link
-              to="/seller-policy"
-              className="hover:text-babyJanaBlue transition-colors flex items-center gap-2"
-            >
-              <Book className="w-5 h-5" />
-              سياسات البائع
-            </Link>
-            <Link
-              to="/delivery-policy"
-              className="hover:text-babyJanaBlue transition-colors flex items-center gap-2"
-            >
-              <Book className="w-5 h-5" />
-              سياسات التوصيل
-            </Link>
-            
-          </div>
-        </div>
-
-        {/* Contact Info */}
-        <div className="flex flex-col justify-between text-gray-300 space-y-4 md:space-y-2">
-          <div
-            className="text-center md:text-right bg-gray-800/50 p-4 rounded-lg backdrop-blur-sm"
-            dir="rtl"
-          >
-            <span>للاستفسارات أو المشاكل، راسلنا على</span>
-            <a
-              href="mailto:Karjattofficial1@gmail.com"
-              dir="ltr"
-              className="text-babyJanaBlue hover:text-blue-400 transition-colors flex items-center gap-2 justify-center md:justify-start mt-2"
-            >
-              <Mail className="w-5 h-5" />
-              Karjattofficial1@gmail.com
-            </a>
-            <p className="text-babyJanaBlue hover:text-blue-400 transition-colors flex items-center gap-2 justify-center md:justify-start mt-2" dir="ltr">
-            <FaWhatsapp className="w-5 h-5" />
-            0503270803
-            </p>
-
-          </div>
-          <div className="hidden md:block text-sm text-gray-400">
-            حقوق الملكية &copy; 2025, كل الحقوق محفوظة
+        
+        {/* Copyright */}
+        <div className="border-t border-gray-800 mt-6 pt-4 text-center">
+          <div className="text-xs text-gray-400">
+            حقوق الملكية &copy; 2025, كراجات. كل الحقوق محفوظة
           </div>
         </div>
       </div>

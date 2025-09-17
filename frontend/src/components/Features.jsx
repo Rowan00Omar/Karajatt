@@ -1,99 +1,79 @@
+// Features.js
 import React from "react";
+import { CheckCircle, FileText, ShoppingBag, Shield, Truck, Star } from "lucide-react";
 
 const Features = () => {
+  const features = [
+    {
+      icon: <CheckCircle size={32} strokeWidth={2.5} />,
+      title: "ميزة “الفحص قبل التوصيل”",
+      description: "يتم فحص جميع القطع الموجودة في المخزن قبل التوصيل، لضمان أن كل قطعة غيار تصل إليك مؤكدة وجاهزة للتركيب."
+    },
+    {
+      icon: <FileText size={32} strokeWidth={2.5} />,
+      title: "تقارير مفصلة عن المنتجات",
+      description: "استعرض معلومات دقيقة حول كل قطعة غيار مثل المواصفات، مدى التوافق، وتجارب المستخدمين لمساعدتك في اتخاذ القرار الصحيح."
+    },
+    {
+      icon: <ShoppingBag size={32} strokeWidth={2.5} />,
+      title: "كل ما تحتاجه في مكان واحد",
+      description: "وفر وقتك وجهدك بالوصول إلى مجموعة شاملة من قطع الغيار الأصلية والبديلة، مباشرة من مكان واحد وبسهولة تامة."
+    },
+    {
+      icon: <Shield size={32} strokeWidth={2.5} />,
+      title: "ضمان الجودة",
+      description: "نضمن لك أعلى جودة لجميع المنتجات المقدمة، مع إمكانية الإرجاع خلال 14 يومًا في حال عدم الرضا."
+    },
+    {
+      icon: <Truck size={32} strokeWidth={2.5} />,
+      title: "توصيل سريع",
+      description: "نوفر خدمة توصيل سريعة وموثوقة لجميع مناطق المملكة، مع إمكانية تتبع الطلبية لحين وصولها إليك."
+    },
+    {
+      icon: <Star size={32} strokeWidth={2.5} />,
+      title: "دعم فني متخصص",
+      description: "فريق من الخبراء جاهز لمساعدتك في اختيار القطع المناسبة لسيارتك والإجابة على جميع استفساراتك الفنية."
+    }
+  ];
+
   return (
-    <div>
-      <section id="features">
-        {/* Flex Container */}
-        <div className="container flex flex-col px-4 mx-auto mt-10 space-y-12 md:space-y-0 md:flex-row mb-10">
-          <div className="flex flex-col space-y-8 md:w-1/2" dir="rtl">
-            {/* List Item 1 */}
-            <div className="flex flex-col space-y-3 md:space-y-0 md:space-x-reverse md:space-x-6 md:flex-row-reverse">
-              {/* Heading */}
-              <div className="rounded-r-full bg-brightSupBlue md:bg-transparent">
-                <div className="flex items-center space-x-reverse space-x-2">
-                  <div className="px-4 py-2 text-white rounded-full md:py-1 bg-babyJanaBlue">
-                    ١
-                  </div>
-                  <h3 className="text-base font-bold md:mb-4 md:hidden">
-                  ميزة “الفحص قبل التوصيل” — قطع مجربة، توصل وأنت مطمّن
-                  </h3>
-                </div>
-              </div>
-              <div>
-                <h3 className="hidden mb-4 text-lg font-bold md:block">
-                  ميزة “الفحص قبل التوصيل” — قطع مجربة، توصل وأنت مطمّن
-                </h3>
-                <p className="text-darkGrayishBlue">
-                  يتم الفحص قبل الشحن جميع القطع الموجودة في المخزن قبل التوصيل، لضمان
-                  أن كل قطعة غيار تصل إليك مطمئنة ومؤكدة.
-                </p>
-              </div>
-            </div>
-
-            {/* List Item 2 */}
-            <div className="flex flex-col space-y-3 md:space-y-0 md:space-x-reverse md:space-x-6 md:flex-row-reverse">
-              {/* Heading */}
-              <div className="rounded-r-full bg-brightSupBlue md:bg-transparent">
-                <div className="flex items-center space-x-reverse space-x-2">
-                  <div className="px-4 py-2 text-white rounded-full md:py-1 bg-babyJanaBlue">
-                    ٢
-                  </div>
-                  <h3 className="text-base font-bold md:mb-4 md:hidden">
-                    تقارير مفصلة عن المنتجات
-                  </h3>
-                </div>
-              </div>
-              <div>
-                <h3 className="hidden mb-4 text-lg font-bold md:block">
-                  تقارير مفصلة عن المنتجات
-                </h3>
-                <p className="text-darkGrayishBlue">
-                  استعرض معلومات دقيقة حول كل قطعة غيار مثل المواصفات، مدى
-                  التوافق، وتجارب المستخدمين لمساعدتك في اتخاذ القرار الصحيح.
-                </p>
-              </div>
-            </div>
-
-            {/* List Item 3 */}
-            <div className="flex flex-col space-y-3 md:space-y-0 md:space-x-reverse md:space-x-6 md:flex-row-reverse">
-              {/* Heading */}
-              <div className="rounded-r-full bg-brightSupBlue md:bg-transparent">
-                <div className="flex items-center space-x-reverse space-x-2">
-                  <div className="px-4 py-2 text-white rounded-full md:py-1 bg-babyJanaBlue">
-                    ٣
-                  </div>
-                  <h3 className="text-base font-bold md:mb-4 md:hidden">
-                    كل ما تحتاجه في مكان واحد
-                  </h3>
-                </div>
-              </div>
-              <div>
-                <h3 className="hidden mb-4 text-lg font-bold md:block">
-                  كل ما تحتاجه في مكان واحد
-                </h3>
-                <p className="text-darkGrayishBlue">
-                  وفر وقتك وجهدك بالوصول إلى مجموعة شاملة من قطع الغيار الأصلية
-                  والبديلة، مباشرة من مكان واحد وبسهولة تامة.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* What's Different */}
-          <div className="flex flex-col space-y-12 md:w-1/2" dir="rtl">
-            <h2 className="max-w-md text-4xl font-bold text-center md:text-right">
-              لماذا تختار كراجات؟
-            </h2>
-            <p className="max-w-sm text-center text-darkGrayishBlue md:text-right">
-              كراجات توفر لك كل ما تحتاجه سيارتك من قطع الغيار بسهولة وسرعة، دون
-              التعقيدات المعتادة. منصتنا مصممة خصيصًا لتلبية احتياجات مالكي
-              السيارات الحديثة ومحترفي الصيانة، لتجربة شراء سلسة وموثوقة.
-            </p>
-          </div>
+    <section id="features" className="py-20 bg-gray-50">
+      <div className="container mx-auto px-4">
+        {/* Title and Description */}
+        <div className="text-center mb-16" dir="rtl">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            لماذا تختار كراجات؟
+          </h2>
+          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+            كراجات توفر لك كل ما تحتاجه سيارتك من قطع الغيار بسهولة وسرعة، دون
+            التعقيدات المعتادة. منصتنا مصممة خصيصًا لتلبية احتياجات مالكي
+            السيارات الحديثة ومحترفي الصيانة، لتجربة شراء سلسة وموثوقة.
+          </p>
         </div>
-      </section>
-    </div>
+        
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" dir="rtl">
+          {features.map((feature, index) => (
+            <div 
+              key={index} 
+              className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+            >
+              <div className="flex items-center mb-4">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 ml-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold text-gray-800">
+                  {feature.title}
+                </h3>
+              </div>
+              <p className="text-gray-600">
+                {feature.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 };
 

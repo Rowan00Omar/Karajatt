@@ -2,79 +2,50 @@ const axios = require("axios");
 const config = require("../config/paymob");
 
 class PaymobService {
-  async getAuthToken() {
+  /**
+   * Create an Intention for wallet payments (STC Pay, Google Pay, etc.)
+   */
+  async createIntention(orderData) {
+    
     try {
-      const resp = await axios.post(`${config.baseUrl}/auth/tokens`, {
-        api_key: config.apiKey,
-      });
-      return resp.data.token;
+      const resp = await axios.post(
+        `${config.baseUrl}/v1/intention`,
+        {
+          amount: 1,// orderData.amount_cents, // in smallest currency unit 
+          currency: "SAR",
+          payment_methods: [config.integrationId], 
+          items: orderData.items || [],
+          billing_data: orderData.billing_data,
+          notification_url: `${process.env.FRONTEND_URL}/paymob-callback`,
+          redirection_url: `${process.env.FRONTEND_URL}/user/payment/result`,
+          // special_reference: orderData.reference,
+        },
+        {
+          headers: { Authorization: `Token ${config.secretKey}` },
+        }
+      );
+      console.log('createInention', resp)
+      return resp.data; // includes redirect_url
     } catch (err) {
+      console.error("Intention creation error:", err.response?.data || err.message);
       throw err;
     }
   }
 
-  async createOrder(authToken, orderData) {
+  /**
+   * Verify transaction status by ID
+   */
+  async verifyTransaction(transactionId) {
     try {
-      const resp = await axios.post(
-        `${config.baseUrl}/ecommerce/orders`,
+      const resp = await axios.get(
+        `${config.baseUrl}/v1/transactions/${transactionId}`,
         {
-          auth_token: authToken,
-          delivery_needed: false,
-          amount_cents: orderData.amount_cents,
-          currency: "SAR",
-          items: orderData.items || [],
-        },
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: { Authorization: `Token ${config.secretKey}` },
         }
       );
       return resp.data;
     } catch (err) {
-      throw err;
-    }
-  }
-
-  async getPaymentKey(authToken, paymentData) {
-    try {
-      const resp = await axios.post(
-        `${config.baseUrl}/acceptance/payment_keys`,
-        {
-          auth_token: authToken,
-          amount_cents: paymentData.amount_cents,
-          expiration: 3600,
-          order_id: paymentData.order_id,
-          billing_data: paymentData.billing_data,
-          currency: "SAR",
-          integration_id: parseInt(config.integrationId),
-          lock_order_when_paid: true,
-          return_url: `${process.env.FRONTEND_URL}/user/payment/result`,
-        },
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
-
-      return resp.data.token;
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  generatePaymentUrl(paymentToken) {
-    return `${config.baseUrl}/acceptance/iframes/${config.iframeId}?payment_token=${paymentToken}`;
-  }
-
-  async verifyTransaction(transactionId) {
-    try {
-      const authToken = await this.getAuthToken();
-      const response = await axios.get(
-        `${config.baseUrl}/acceptance/transactions/${transactionId}`,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
-      return response.data;
-    } catch (err) {
+      console.error("Verify transaction error:", err.response?.data || err.message);
       throw err;
     }
   }

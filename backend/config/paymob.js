@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const config = {
-  baseUrl: "https://ksa.paymob.com/api",
+  baseUrl: "https://ksa.paymob.com",
   checkoutUrl: "https://ksa.paymob.com/unifiedcheckout",
   apiKey: process.env.PAYMOB_API_KEY?.trim(),
   secretKey: process.env.PAYMOB_SECRET_KEY?.trim(),

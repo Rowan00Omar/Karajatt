@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Document, Page, pdfjs } from "react-pdf";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
 import { Helmet } from "react-helmet";
 
 import {
@@ -17,7 +15,11 @@ import {
   ArrowUpTrayIcon,
 } from "@heroicons/react/24/outline";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// import pdfWorker from "pdfjs-dist/build/pdf.worker.min.js";
+
+
+pdfjs.GlobalWorkerOptions.workerSrc =   "https://unpkg.com/pdfjs-dist@3.10.111/build/pdf.worker.min.js";
+//`https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const InspectionManagement = () => {
   const [orders, setOrders] = useState([]);

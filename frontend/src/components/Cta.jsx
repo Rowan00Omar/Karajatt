@@ -1,25 +1,43 @@
+// Cta.js
 import React from "react";
 import { Link } from "react-router-dom";
+
 const Cta = () => {
   return (
-    <div>
-      <section id="cta" className="bg-babyJanaBlue">
-        {/* Flex Container */}
-        <div className="container flex flex-col items-center justify-between px-6 py-24 mx-auto space-y-12 md:py-12 md:flex-row md:space-y-0">
-          {/* Heading */}
-          <h2 className="text-5xl font-bold leading-tight text-center text-white md:text-4xl md:max-w-xl md:text-left">
-            احصل على كل ما تريد الآن
-          </h2>
-          {/* Button */}
+    <section id="cta" className="relative py-20 bg-gradient-to-r from-blue-600 to-indigo-700 overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAzNGMwLTIuMjA5LTEuNzktNC00LTRzLTQgMS43OTEtNCA0IDEuNzkgNCA0IDQgNC0xLjc5MSA0LTQgNC0xLjc5MS00LTR6IiBmaWxsPSIjZmZmIi8+PC9nPjwvc3ZnPg==')]"></div>
+      </div>
+      
+      {/* Flex Container */}
+      <div className="relative z-10 container flex flex-col items-center justify-center px-6 mx-auto space-y-8 text-center">
+        {/* Heading */}
+        <h2 className="max-w-3xl text-4xl md:text-5xl font-bold leading-tight text-white">
+          هل أنت مستعد لتجربة شراء قطع الغيار المثالية؟
+        </h2>
+        
+        <p className="max-w-2xl text-xl text-blue-100">
+          انضم الآن إلى آلاف العملاء الراضين واستمتع بتجربة شراء سلسة وموثوقة
+        </p>
+        
+        {/* Button */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <Link
             to="/login"
-            className="p-3 px-6 pt-2 text-babyJanaBlue bg-white rounded-full shadow-2xl baseline hover:bg-gray-500"
+            className="px-8 py-4 text-lg font-bold text-blue-700 bg-white rounded-lg shadow-lg transition-transform transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-300"
           >
-            <button>ابدأ الآن</button>
+            ابدأ الآن
+          </Link>
+          <Link
+            to="/search"
+            className="px-8 py-4 text-lg font-bold text-white bg-transparent border-2 border-white rounded-lg transition-transform transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-white"
+          >
+            تصفح المنتجات
           </Link>
         </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
 };
 

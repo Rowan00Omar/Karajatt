@@ -5,6 +5,9 @@ import { ArrowRight, X } from "lucide-react";
 import Input from "../components/Input";
 import Button from "../components/Button";
 import { Helmet } from "react-helmet";
+import DeliveryMap from "../components/DeliveryMap";
+
+import googleMapsConfig from "../config/googleMaps";
 
 const BillingForm = () => {
   const navigate = useNavigate();
@@ -12,6 +15,8 @@ const BillingForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [userData, setUserData] = useState(null);
+  const [addressOption, setAddressOption] = useState("your"); // "your" or "our"
+  const [mapMarker, setMapMarker] = useState(null);
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -27,7 +32,79 @@ const BillingForm = () => {
     city: "Riyadh",
     country: "SA",
     state: "Riyadh",
+    lat: "",
+    lng: "",
   });
+
+  useEffect(() => {
+    if (addressOption === "your" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setMapMarker(loc);
+        setFormData({ ...formData, lat: loc.lat, lng: loc.lng });
+      });
+    } else if (addressOption === "our") {
+      const ourData = {
+        street: "طريق الملك فهد الفرعي",
+        building: "برج المملكة",
+        apartment: "1",
+        floor: "99",
+        postal_code: "12214",
+        city: "الرياض",
+        country: "SA",
+        state: "الرياض",
+        lat: googleMapsConfig.ourLocation.lat,
+        lng: googleMapsConfig.ourLocation.lng,
+      };
+      
+      setFormData((prev) => ({ ...prev, ...ourData }));
+      setMapMarker({ lat: ourData.lat, lng: ourData.lng });
+    }
+  }, [addressOption]);
+
+  const handleMapClick = (e) => {
+    if (addressOption === "your") {
+      const loc = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+      setMapMarker(loc);
+      setFormData({ ...formData, lat: loc.lat, lng: loc.lng });
+    }
+  };
+
+  const updateAddressOption = (option) => {
+    setAddressOption(option);
+
+    if (option === "our") {
+      // Prefill with "our location"
+      setFormData((prev) => ({
+        ...prev,
+        street: "طريق الملك فهد الفرعي",
+        building: "برج المملكة",
+        apartment: "1",
+        floor: "99",
+        postal_code: "12214",
+        city: "الرياض",
+        country: "SA",
+        state: "الرياض",
+        lat: googleMapsConfig.ourLocation.lat,
+        lng: googleMapsConfig.ourLocation.lng,
+      }));
+    } else if (option === "your") {
+      // Clear fields or keep whatever deliveryData provides
+      setFormData((prev) => ({
+        ...prev,
+        street: "",
+        building: "",
+        apartment: "",
+        floor: "",
+        postal_code: "",
+        city: "Riyadh",
+        country: "SA",
+        state: "Riyadh",
+        lat: "",
+        lng: "",
+      }));
+    }
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -58,33 +135,36 @@ const BillingForm = () => {
     fetchUserData();
   }, [navigate]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+const handleChange = (e) => {
+  const { name, value } = e.target;
 
-    if (name === "phone_number") {
-      let formattedNumber = value.replace(/\D/g, "");
+  if (name === "phone_number") {
+    // Keep only digits
+    let digitsOnly = value.replace(/\D/g, "");
 
-      if (!formattedNumber.startsWith("966")) {
-        if (formattedNumber.startsWith("0")) {
-          formattedNumber = formattedNumber.substring(1);
-        }
-
-        if (!formattedNumber.startsWith("966")) {
-          formattedNumber = "+966" + formattedNumber;
-        }
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        [name]: formattedNumber,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+    // Remove any accidental leading 0
+    if (digitsOnly.startsWith("0")) {
+      digitsOnly = digitsOnly.substring(1);
     }
-  };
+
+    // Limit to 9 digits (Saudi format after removing 0)
+    if (digitsOnly.length > 9) {
+      digitsOnly = digitsOnly.substring(0, 9);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: digitsOnly,
+    }));
+  } else {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+};
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -112,7 +192,7 @@ const BillingForm = () => {
           ? formData.phone_number
           : "+966" + formData.phone_number,
       };
-
+      console.log("formatted data", formattedData);
       const response = await axios.post(
         "/api/payments/checkout",
         {
@@ -211,7 +291,7 @@ const BillingForm = () => {
                     onChange={handleChange}
                     required
                   />
-                  <Input
+                  {/* <Input
                     type="tel"
                     name="phone_number"
                     placeholder="رقم الهاتف"
@@ -221,7 +301,26 @@ const BillingForm = () => {
                   />
                   <p className="text-sm text-gray-500">
                     سيتم إضافة رمز الدولة +966 تلقائياً
+                  </p> */}
+
+                  <div className="flex items-center border rounded-lg px-3 py-2" dir="ltr">
+                    <span className="text-gray-700 mr-2">+966</span>
+                    <Input
+                      type="tel"
+                      name="phone_number"
+                      placeholder="5xxxxxxxx"
+                      value={formData.phone_number}
+                      onChange={handleChange}
+                      pattern="[5][0-9]{8}" // force 9 digits starting with 5
+                      maxLength={9}
+                      className="flex-1 outline-none"
+                      required
+                    />
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    سيتم إضافة رمز الدولة +966 تلقائياً
                   </p>
+
                 </div>
 
                 {/* Address Information */}
@@ -229,48 +328,130 @@ const BillingForm = () => {
                   <h3 className="text-lg font-semibold text-gray-900">
                     معلومات العنوان
                   </h3>
-                  <Input
-                    type="text"
-                    name="street"
-                    placeholder="الشارع"
-                    value={formData.street}
-                    onChange={handleChange}
-                    required
-                  />
-                  <Input
-                    type="text"
-                    name="building"
-                    placeholder="رقم المبنى"
-                    value={formData.building}
-                    onChange={handleChange}
-                    required
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input
-                      type="text"
-                      name="apartment"
-                      placeholder="الشقة"
-                      value={formData.apartment}
-                      onChange={handleChange}
-                      required
-                    />
-                    <Input
-                      type="text"
-                      name="floor"
-                      placeholder="الطابق"
-                      value={formData.floor}
-                      onChange={handleChange}
-                      required
-                    />
+
+                  {/* Radio Selection */}
+                  <div className="flex gap-8">
+                    {["your", "our"].map((opt) => (
+                      <label
+                        key={opt}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <input
+                          type="radio"
+                          name="addressOption"
+                          value={opt}
+                          checked={addressOption === opt}
+                          onChange={() => updateAddressOption(opt)}
+                          className="accent-blue-600 w-4 h-4"
+                        />
+                        <span className="text-gray-800">
+                          {opt === "your" ? "موقعك" : "موقعنا"}
+                        </span>
+                      </label>
+                    ))}
                   </div>
-                  <Input
-                    type="text"
-                    name="postal_code"
-                    placeholder="الرمز البريدي"
-                    value={formData.postal_code}
-                    onChange={handleChange}
-                    required
-                  />
+
+                  {/* Conditional Map / Text */}
+                  {addressOption === "your" ? (
+                    <div className="space-y-4">
+                      <Input
+                        type="text"
+                        name="street"
+                        placeholder="الشارع"
+                        value={formData.street}
+                        onChange={handleChange}
+                        required={!formData.street}
+                      />
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <Input
+                          type="text"
+                          name="apartment"
+                          placeholder="الشقة"
+                          value={formData.apartment}
+                          onChange={handleChange}
+                          required={!formData.apartment}
+                        />
+                        <Input
+                          type="text"
+                          name="floor"
+                          placeholder="الطابق"
+                          value={formData.floor}
+                          onChange={handleChange}
+                          required={!formData.floor}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <Input
+                          type="text"
+                          name="building"
+                          placeholder="رقم المبنى"
+                          value={formData.building}
+                          onChange={handleChange}
+                          required={!formData.building}
+                        />
+                        <Input
+                          type="text"
+                          name="postal_code"
+                          placeholder="الرقم البريدي"
+                          value={formData.postal_code}
+                          onChange={handleChange}
+                          required={!formData.postal_code}
+                        />
+                      </div>
+                      <DeliveryMap
+                        mode="your"
+                        deliveryData={formData}
+                        setDeliveryData={setFormData}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <input
+                        type="text"
+                        name="street"
+                        value="طريق الملك فهد الفرعي"
+                        readOnly
+                        className="w-full p-2 border rounded bg-gray-100"
+                      />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input
+                          type="text"
+                          name="apartment"
+                          value="برج المملكة"
+                          readOnly
+                          className="w-full p-2 border rounded bg-gray-100"
+                        />
+                        <input
+                          type="text"
+                          name="floor"
+                          value="1"
+                          readOnly
+                          className="w-full p-2 border rounded bg-gray-100"
+                        />
+                        <input
+                          type="text"
+                          name="building"
+                          value="99"
+                          readOnly
+                          className="w-full p-2 border rounded bg-gray-100"
+                        />
+                        <input
+                          type="text"
+                          name="postal_code"
+                          value="12214"
+                          readOnly
+                          className="w-full p-2 border rounded bg-gray-100"
+                        />
+                      </div>
+
+                      <DeliveryMap
+                        mode="our"
+                        deliveryData={formData}
+                        setDeliveryData={setFormData}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 

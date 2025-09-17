@@ -44,7 +44,7 @@ exports.initiatePayment = async (req, res) => {
 
     // Validate amount
     const amountCents = Math.round(parseFloat(amount) * 100);
-    if (isNaN(amountCents) || amountCents <= 0) {
+    if (isNaN(amountCents) || amountCents <= -1) { //0
       return res.status(400).json({ error: "Invalid amount" });
     }
 
@@ -52,14 +52,14 @@ exports.initiatePayment = async (req, res) => {
     const processedBillingData = fillBillingDefaults(billingData);
 
     // Get auth token
-    const authToken = await PaymobService.getAuthToken();
+    // const authToken = await PaymobService.getAuthToken();
 
     // Create order
     const orderData = {
       amount_cents: amountCents,
       items: cartItems.map((item) => ({
         name: String(item.name || item.title || item.part_name || "Product"),
-        amount_cents: Math.round(
+        amount: Math.round(
           parseFloat(item.amount_cents || item.price) * 100
         ),
         description: String(
@@ -71,103 +71,16 @@ exports.initiatePayment = async (req, res) => {
         ),
         quantity: parseInt(item.quantity) || 1,
       })),
+      billing_data: processedBillingData
     };
 
-    const orderResp = await PaymobService.createOrder(authToken, orderData);
+    const restultIntention = await PaymobService.createIntention(orderData);
 
-    // Create order in local database
-    try {
-      const [orderResult] = await db.query(
-        `
-        INSERT INTO orders (
-          id, 
-          user_id, 
-          total_price, 
-          payment_status, 
-          payment_verified,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, ?, 'pending', false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        `,
-        [orderResp.id, userId || null, parseFloat(amount)]
-      );
-
-      
-    } catch (error) {
-      console.error("❌ Error creating order in database:", error);
-      throw new Error(`Failed to create order in database: ${error.message}`);
-    }
-
-    // Create order_items in local database
-    try {
-      for (const item of cartItems) {
-        const productId = item.product_id || item.id;
-        if (!productId) {
-          console.error('❌ Cart item missing product_id or id:', item);
-          throw new Error(`Cart item is missing product_id or id: ${JSON.stringify(item)}`);
-        }
-        await db.query(
-          `
-          INSERT INTO order_items (
-            order_id,
-            product_id,
-            quantity,
-            price,
-            created_at,
-            updated_at
-          ) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          `,
-          [
-            orderResp.id,
-            productId,
-            parseInt(item.quantity) || 1,
-            parseFloat(item.price || item.amount_cents || 0)
-          ]
-        );
-      }
-
-
-    } catch (error) {
-      throw new Error(`Failed to create order items in database: ${error.message}`);
-    }
-
-    // Get payment key
-    const paymentKeyData = {
-      amount_cents: amountCents,
-      order_id: orderResp.id,
-      billing_data: processedBillingData,
-    };
-
-    const paymentToken = await PaymobService.getPaymentKey(
-      authToken,
-      paymentKeyData
-    );
-
-    // Insert payment_token into payment_transactions, truncated to 1024 chars
-    try {
-      await db.query(
-        `
-        INSERT INTO payment_transactions (
-          order_id,
-          amount,
-          status,
-          payment_token,
-          created_at,
-          updated_at
-        ) VALUES (?, ?, 'pending', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        `,
-        [orderResp.id, parseFloat(amount), paymentToken.slice(0, 1024)]
-      );
-
-    } catch (error) {
-      throw new Error(`Failed to create payment transaction in database: ${error.message}`);
-    }
-
-    // Generate payment URL
-    const paymentUrl = PaymobService.generatePaymentUrl(paymentToken);
-
-    res.json({ success: true, paymentUrl, orderId: orderResp.id });
+    console.log('Intention', restultIntention);
+    return;
+    
   } catch (err) {
+    console.log('error', err)
     res.status(500).json({
       success: false,
       error: "Failed to initiate payment",
