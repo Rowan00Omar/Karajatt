@@ -1,16 +1,26 @@
 // Navbar.js
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Home, User, ChevronDown, LogOut, ShoppingBag, Menu, X } from "lucide-react";
+import {
+  Home,
+  User,
+  ChevronDown,
+  LogOut,
+  ShoppingBag,
+  Menu,
+  X,
+} from "lucide-react";
 import CartButton from "./CartButton";
 import useLogout from "@/hooks/useLogout.jsx";
 import Logo from "@/assets/LogoNoBack.png";
+// import AuthContext from "./AuthContext";
 
 const Navbar = () => {
   const logout = useLogout();
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const token = useState(() => localStorage.getItem("token"));
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
@@ -51,7 +61,7 @@ const Navbar = () => {
             </Link>
           )}
         </div>
-        
+
         {/* الروابط في المنتصف */}
         <div className="hidden md:flex items-center space-x-8">
           <Link
@@ -66,9 +76,8 @@ const Navbar = () => {
           >
             المنتجات
           </Link>
-        
         </div>
-        
+
         {/* الأيقونات على الشمال */}
         <div className="flex items-center space-x-4">
           <button
@@ -86,12 +95,15 @@ const Navbar = () => {
           >
             <User className="w-5 h-5" />
           </button>
-          <button
-            onClick={logout}
-            className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          {token &&
+          (
+            <button
+              onClick={logout}
+              className="text-gray-300 hover:text-white transition-colors p-2 cursor-pointer"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </nav>
 
@@ -109,10 +121,14 @@ const Navbar = () => {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="text-gray-300 hover:text-white"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
-        
+
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="bg-gray-800 border-t border-gray-700 py-4 px-4">

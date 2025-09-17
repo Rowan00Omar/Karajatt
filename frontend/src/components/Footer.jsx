@@ -107,17 +107,17 @@ const Footer = () => {
           </div>
           
           {/* Contact Info */}
-          <div className="text-center md:text-right">
+          <div className="text-center md:text-start">
             <h3 className="text-sm font-semibold text-white mb-2">معلومات التواصل</h3>
-            <div className="space-y-1">
+            <div className="space-y-1" dir="ltr">
               <a
                 href="mailto:Karjattoffical@gmail.com"
-                className="flex items-center gap-1 hover:text-blue-400 transition-colors text-sm justify-center md:justify-end"
+                className="flex items-center gap-1 hover:text-blue-400 transition-colors text-sm justify-center md:justify-start"
               >
                 <Mail className="w-3 h-3" />
                 Karjattoffical@gmail.com
               </a>
-              <div className="flex items-center gap-1 text-sm justify-center md:justify-end">
+              <div className="flex items-center gap-1 text-sm justify-center md:justify-start">
                 <Phone className="w-3 h-3" />
                 +966 50 123 4567
               </div>
